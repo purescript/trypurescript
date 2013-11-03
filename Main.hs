@@ -139,6 +139,11 @@ page input res = html $ renderHtml $ do
     H.body $ do
        H.h1 $ H.toHtml $ str "Try PureScript!"
        H.p $ H.toHtml $ str "Type PureScript code below and press 'Compile' to view the compiled Javascript."
+       H.p $ mconcat [ H.a ! A.href "http://functorial.com/purescript" $ H.toHtml $ str "Documentation"
+                     , H.toHtml $ str ", "
+                     , H.a ! A.href "http://github.com/paf31/purescript" $ H.toHtml $ str "Compiler Source"
+                     , H.toHtml $ str ", "
+                     , H.a ! A.href "http://github.com/paf31/trypurescript" $ H.toHtml $ str "Try PureScript Source" ]
        H.h2 $ H.toHtml $ str "Examples"
        H.ul $ forM_ examples $ \(name, (title, _)) -> do
          H.li $ H.a ! A.href (fromString $ "/example/" ++ name) $ H.toHtml title
