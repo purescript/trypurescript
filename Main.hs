@@ -25,6 +25,7 @@ import Data.Monoid
 import Data.String
 import Data.Maybe (mapMaybe)
 import Data.List (intercalate)
+import System.Console.CmdTheLine
 import Control.Applicative
 import Control.Monad (when, forM_)
 import Control.Monad.Trans
@@ -161,8 +162,8 @@ page input res = html $ renderHtml $ do
              H.h1 $ H.toHtml $ str "Externs"
              mono $ H.p $ H.toHtml exts
 
-main :: IO ()
-main = scotty 80 $ do
+server :: Int -> IO ()
+server port = scotty port $ do
   get "/" $ do
     page Nothing Nothing
   get "/example/:name" $ do
@@ -176,4 +177,21 @@ main = scotty 80 $ do
     code <- param "code"
     response <- lift $ compile code
     page (Just code) (Just response)
+
+term :: Term (IO ())
+term = server <$> port
+
+port :: Term Int
+port = value $ opt 80 $ (optInfo [ "p", "port" ])
+     { optDoc = "The port to listen on" }
+
+termInfo :: TermInfo
+termInfo = defTI
+  { termName = "trypurescript"
+  , version  = "0.1.0.0"
+  , termDoc  = "Try PureScript in the browser"
+  }
+
+main :: IO ()
+main = run (term, termInfo)
 
