@@ -128,12 +128,15 @@ examples =
       ("Mutable Variables",
         unlines [ "collatz :: Number -> Number"
                 , "collatz = \\n -> do"
-                , "  if n <= 1:"
-                , "    return 0"
-                , "  else if n % 2 == 0:"
-                , "    return collatz (n / 2)"
-                , "  else:"
-                , "    return collatz (3 * n + 1)"
+                , "  var m = n"
+                , "  var count = 0"
+                , "  while m > 1:"
+                , "    if m % 2 == 0:"
+                , "      m = m / 2"
+                , "    else:"
+                , "      m = 3 * m + 1"
+                , "    count = count + 1"
+                , "  return count"
                 ]))
   ]
 
