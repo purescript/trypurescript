@@ -124,6 +124,17 @@ examples =
                 , ""
                 , "main = console.log \"Hello World!\""
                 ]))
+  , ("blocks",
+      ("Mutable Variables",
+        unlines [ "collatz :: Number -> Number"
+                , "collatz = \\n -> do"
+                , "  if n <= 1:"
+                , "    return 0"
+                , "  else if n % 2 == 0:"
+                , "    return collatz (n / 2)"
+                , "  else:"
+                , "    return collatz (3 * n + 1)"
+                ]))
   ]
 
 page :: Maybe String -> Maybe Response -> ActionM ()
