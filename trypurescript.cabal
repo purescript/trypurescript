@@ -1,0 +1,21 @@
+name: trypurescript
+version: 0.1.0.0
+cabal-version: >=1.8
+build-type: Simple
+license: MIT
+license-file: LICENSE
+copyright: (c) Phil Freeman 2013
+maintainer: paf31@cantab.net
+synopsis: Interactive PureScript in the Browser
+description: A simple web app for trying out the PureScript compiler
+category: Web
+author: Phil Freeman
+data-dir: ""
+
+executable trypurescript
+    build-depends: base ==4.*, scotty -any, purescript ==0.1.2, containers -any,
+                   mtl -any, blaze-html -any
+    main-is: Main.hs
+    buildable: True
+    other-modules: Main
+
