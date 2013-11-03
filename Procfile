@@ -1,1 +1,1 @@
-web: ./dist/build/trypurescript/trypurescript
+web: ./dist/build/trypurescript/trypurescript -p $PORT
