@@ -83,7 +83,7 @@ examples =
       ("Algebraic Data Types",
         unlines [ "data Person = Person { name :: String, age :: Number }"
                 , ""
-                , "extern numberToString :: Number -> String"
+                , "foreign import numberToString :: Number -> String"
                 , ""
                 , "showPerson = \\p -> case p of"
                 , "  Person o -> o.name ++ \", aged \" ++ numberToString o.age"
@@ -95,8 +95,8 @@ examples =
                 , "(|>) :: forall a b c. (a -> b) -> (b -> c) -> a -> c"
                 , "(|>) = \\f -> \\g -> \\a -> g (f a)"
                 , ""
-                , "extern foo :: String -> Number"
-                , "extern bar :: Number -> Boolean"
+                , "foreign import foo :: String -> Number"
+                , "foreign import bar :: Number -> Boolean"
                 , ""
                 , "test = foo |> bar"
                 ]))
@@ -116,9 +116,9 @@ examples =
                 ]))
   , ("ffi",
       ("FFI",
-        unlines [ "extern data IO :: * -> *"
+        unlines [ "foreign import data IO :: * -> *"
                 , ""
-                , "extern console :: {"
+                , "foreign import console :: {"
                 , "  log :: String -> IO { }"
                 , "}"
                 , ""
