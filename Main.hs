@@ -52,8 +52,8 @@ compile input = do
         Left typeError -> do
           return $ Response $ Left typeError
         Right (_, env) -> do
-          let js = intercalate ";\n" . map (prettyPrintJS . optimize) . concat . mapMaybe (declToJs) $ decls
-          let externs = intercalate "\n" $ mapMaybe (externToPs env) decls
+          let js = intercalate ";\n" . map (prettyPrintJS . optimize) . concat . mapMaybe (declToJs Nothing global) $ decls
+          let externs = intercalate "\n" $ mapMaybe (externToPs 0 global env) decls
           return $ Response $ Right $ Compiled js externs
 
 str :: String -> String
@@ -137,6 +137,15 @@ examples =
                 , "      m = 3 * m + 1"
                 , "    count = count + 1"
                 , "  return count"
+                ]))
+  , ("modules",
+      ("Modules",
+        unlines [ "module Test where"
+                , ""
+                , "  incr :: Number -> Number"
+                , "  incr = \\x -> x + 1"
+                , ""
+                , "test = Test:incr 10"
                 ]))
   ]
 
