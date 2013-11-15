@@ -19,7 +19,7 @@ module Main (
 ) where
 
 import Web.Scotty
-import Language.PureScript
+import qualified Language.PureScript as P
 
 import Data.Monoid
 import Data.String
@@ -44,16 +44,14 @@ data Response = Response (Either String Compiled)
 compile :: String -> IO Response
 compile input | length input > 5000 = return $ Response $ Left "Please limit your input to 5000 characters"
 compile input = do
-  case runIndentParser parseDeclarations input of
+  case P.runIndentParser P.parseDeclarations input of
     Left parseError -> do
       return $ Response $ Left $ show parseError
     Right decls -> do
-      case check (typeCheckAll decls) of
-        Left typeError -> do
-          return $ Response $ Left typeError
-        Right (_, env) -> do
-          let js = intercalate ";\n" . map (prettyPrintJS . optimize) . concat . mapMaybe (declToJs Nothing global) $ decls
-          let externs = intercalate "\n" $ mapMaybe (externToPs 0 global env) decls
+      case P.compile decls of
+        Left error ->
+          return $ Response $ Left error
+        Right (js, externs, _) -> 
           return $ Response $ Right $ Compiled js externs
 
 str :: String -> String
