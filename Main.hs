@@ -116,9 +116,7 @@ examples =
       ("FFI",
         unlines [ "foreign import data IO :: * -> *"
                 , ""
-                , "foreign import console :: {"
-                , "  log :: String -> IO { }"
-                , "}"
+                , "foreign import console :: { log :: String -> IO { } }"
                 , ""
                 , "main = console.log \"Hello World!\""
                 ]))
@@ -145,6 +143,21 @@ examples =
                 , ""
                 , "test = Test:incr 10"
                 ]))
+  , ("rank2",
+      ("Rank N Types",
+       unlines [ "type Nat = forall a. a -> (a -> a) -> a"
+               , ""
+               , "zero :: Nat"
+               , "zero = \\a f -> a"
+               , ""
+               , "succ :: Nat -> Nat"
+               , "succ = \\n a f -> f (n a f)"
+               , ""
+               , "type Lens a b = forall f. (a -> f a) -> b -> f b"
+               , ""
+               , "compose :: forall a b c. Lens a b -> Lens b c -> Lens a c"
+               , "compose = \\l1 l2 f -> l2 (l1 f)"
+               ]))
   ]
 
 page :: Maybe String -> Maybe Response -> ActionM ()
