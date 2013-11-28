@@ -61,8 +61,21 @@ mono :: H.Html -> H.Html
 mono h = h ! A.class_ "mono"
 
 css :: String
-css = "body { font-family: 'Lato', sans-serif } \
-      \.mono { font-family: 'Ubuntu Mono', monospace; white-space: pre }"
+css = unlines
+  [ "body { font-family: 'Lato', sans-serif; color: #404040; margin: 0; }"
+  , ".mono { font-family: 'Ubuntu Mono', monospace; white-space: pre }"
+  , ".header { margin: 0; background: #202028; box-shadow: 0 0 10px #808080; color: #E0E0E0; }"
+  , ".splitter { margin: 0; height: 5px; background: #606068; }"
+  , ".center { width: 960px; margin: 0 auto; padding: 20px; }"
+  , "a { color: #808080; }"
+  , "@media (max-width:1000px) { .center { width: auto; } }"
+  , "ul.examples { list-style-type: none; margin-left: 0; padding-left: 0; }"
+  , "ul.examples li { float: left; padding-top: 5px; padding-bottom: 5px; margin-right: 2px; }"
+  , "ul.examples li a { background: #d0d0d0; color: #606060; padding-top: 3px; padding-bottom: 3px; font-weight: bold;  border-radius: 1px; border: 1px solid #c0c0c0; box-shadow: 1px 1px 0 0 #ffffff inset; text-decoration: none; padding-left: 15px; padding-right: 15px; }"
+  , "ul.examples li a:hover { background: #e0e0e0; }"
+  , "button { background: #d0d0d0; color: #606060; padding-top: 3px; padding-bottom: 3px; font-weight: bold;  border-radius: 1px; border: 1px solid #c0c0c0; box-shadow: 1px 1px 0 0 #ffffff inset; padding-left: 15px; padding-right: 15px; cursor: pointer; }"
+  , "button:hover { background: #e0e0e0; }"
+  ]
 
 gaq :: String
 gaq = unlines
@@ -171,35 +184,41 @@ page input res = html $ renderHtml $ do
       H.style $ H.toHtml $ str css
       H.script ! A.type_ "text/javascript" $ preEscapedToHtml gaq
     H.body $ do
-       H.h1 $ H.toHtml $ str "Try PureScript!"
-       H.p $ H.toHtml $ str "Type PureScript code below and press 'Compile' to view the compiled Javascript."
-       H.p $ mconcat [ H.a ! A.href "http://functorial.com/purescript" $ H.toHtml $ str "Documentation"
-                     , H.toHtml $ str ", "
-                     , H.a ! A.href "http://github.com/paf31/purescript" $ H.toHtml $ str "Compiler Source"
-                     , H.toHtml $ str ", "
-                     , H.a ! A.href "http://github.com/paf31/trypurescript" $ H.toHtml $ str "Try PureScript Source" ]
-       H.h2 $ H.toHtml $ str "Examples"
-       H.ul $ forM_ examples $ \(name, (title, _)) -> do
-         H.li $ H.a ! A.href (fromString $ "/example/" ++ name) $ H.toHtml title
-       H.h2 $ H.toHtml $ str "PureScript Code"
-       H.form ! A.action "/compile" ! A.method "POST" $ do
-           H.textarea ! A.name "code" ! A.rows "15" ! A.cols "100" $ maybe mempty (H.toHtml . str) input
-           H.div $ H.button ! A.type_ "submit" $ H.toHtml $ str "Compile"
-       case res of
-         Nothing -> mempty
-         Just (Response (Left err)) -> do
-           H.h1 $ H.toHtml $ str "Error!"
-           mono $ H.p $ H.toHtml $ err
-         Just (Response (Right (Compiled "" ""))) -> do
-           H.h1 $ H.toHtml $ str "Error!"
-           mono $ H.p $ H.toHtml $ str "Please enter some input"
-         Just (Response (Right (Compiled js exts))) -> do
-           when (not . null $ js) $ do
-             H.h1 $ H.toHtml $ str "Generated Javascript"
-             mono $ H.p $ H.toHtml js
-           when (not . null $ exts) $ do
-             H.h1 $ H.toHtml $ str "Externs"
-             mono $ H.p $ H.toHtml exts
+        H.div ! A.class_ "header" $ do
+           H.div ! A.class_ "center" $ do
+	       H.h1 $ H.toHtml $ str "Try PureScript!"
+	       H.p $ H.toHtml $ str "Type PureScript code below and press 'Compile' to view the compiled Javascript."
+	       H.p $ mconcat [ H.a ! A.href "http://functorial.com/purescript" $ H.toHtml $ str "Documentation"
+		             , H.toHtml $ str ", "
+		             , H.a ! A.href "http://github.com/paf31/purescript" $ H.toHtml $ str "Compiler Source"
+		             , H.toHtml $ str ", "
+		             , H.a ! A.href "http://github.com/paf31/trypurescript" $ H.toHtml $ str "Try PureScript Source" ]
+           H.div ! A.class_ "splitter" $ mempty
+        H.div ! A.class_ "main" $ do
+           H.div ! A.class_ "center" $ do
+	       H.h2 $ H.toHtml $ str "Examples"
+	       H.ul ! A.class_ "examples" $ forM_ examples $ \(name, (title, _)) -> do
+		 H.li $ H.a ! A.href (fromString $ "/example/" ++ name) $ H.toHtml title
+	       H.div ! A.style "clear: left;" $ mempty
+               H.h2 $ H.toHtml $ str "PureScript Code"
+	       H.form ! A.action "/compile" ! A.method "POST" $ do
+		   H.textarea ! A.name "code" ! A.rows "15" ! A.style "width: 100%" $ maybe mempty (H.toHtml . str) input
+		   H.div $ H.button ! A.type_ "submit" $ H.toHtml $ str "Compile"
+	       case res of
+		 Nothing -> mempty
+		 Just (Response (Left err)) -> do
+		   H.h1 $ H.toHtml $ str "Error!"
+		   mono $ H.p $ H.toHtml $ err
+		 Just (Response (Right (Compiled "" ""))) -> do
+		   H.h1 $ H.toHtml $ str "Error!"
+		   mono $ H.p $ H.toHtml $ str "Please enter some input"
+		 Just (Response (Right (Compiled js exts))) -> do
+		   when (not . null $ js) $ do
+		     H.h1 $ H.toHtml $ str "Generated Javascript"
+		     mono $ H.p $ H.toHtml js
+		   when (not . null $ exts) $ do
+		     H.h1 $ H.toHtml $ str "Externs"
+		     mono $ H.p $ H.toHtml exts
 
 server :: Int -> IO ()
 server port = scotty port $ do
