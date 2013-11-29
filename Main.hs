@@ -179,6 +179,7 @@ page input res = html $ renderHtml $ do
   H.html $ do
     H.head $ do
       H.title $ H.toHtml $ str "Try PureScript!"
+      H.meta ! A.name "viewport" ! A.content "width=device-width, initial-scale=1.0"
       H.link ! A.rel "stylesheet" ! A.type_ "text/css" ! A.href "http://fonts.googleapis.com/css?family=Lato:300,400,700"
       H.link ! A.rel "stylesheet" ! A.type_ "text/css" ! A.href "http://fonts.googleapis.com/css?family=Ubuntu+Mono"
       H.style $ H.toHtml $ str css
