@@ -114,11 +114,11 @@ examples =
   , ("arrays",
       ("Arrays",
         unlines [ "sum = \\arr -> case arr of"
-                , "  [x:xs] -> x + sum xs"
+                , "  x : xs -> x + sum xs"
                 , "  [] -> 0"
                 , ""
                 , "sumOfProducts = \\arr -> case arr of"
-                , "  [x,y:xs] -> x * y + sum xs"
+                , "  x : y : xs -> x * y + sum xs"
                 , "  _ -> 0"
                 ]))
   , ("rows",
@@ -136,16 +136,20 @@ examples =
   , ("blocks",
       ("Mutable Variables",
         unlines [ "collatz :: Number -> Number"
-                , "collatz = \\n -> do"
-                , "  var m = n"
-                , "  var count = 0"
-                , "  while m > 1:"
-                , "    if m % 2 == 0:"
-                , "      m = m / 2"
-                , "    else:"
-                , "      m = 3 * m + 1"
-                , "    count = count + 1"
-                , "  return count"
+                , "collatz = \\n -> "
+                , "  { "
+                , "    var m = n;"
+                , "    var count = 0;"
+                , "    while (m > 1) {"
+                , "      if (m % 2 == 0) {"
+                , "        m = m / 2;"
+                , "      } else {"
+                , "        m = 3 * m + 1;"
+                , "      }"
+                , "      count = count + 1;"
+                , "    }"
+                , "    return count;"
+                , "  }"
                 ]))
   , ("modules",
       ("Modules",
@@ -154,7 +158,7 @@ examples =
                 , "  incr :: Number -> Number"
                 , "  incr = \\x -> x + 1"
                 , ""
-                , "test = Test:incr 10"
+                , "test = Test.incr 10"
                 ]))
   , ("rank2",
       ("Rank N Types",
