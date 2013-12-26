@@ -96,15 +96,15 @@ examples =
                 , ""
                 , "foreign import numberToString :: Number -> String"
                 , ""
-                , "showPerson = \\p -> case p of"
-                , "  Person o -> o.name ++ \", aged \" ++ numberToString o.age"
+                , "showPerson (Person { name = name, age = age }) ="
+                , "  name ++ \", aged \" ++ numberToString age"
                 ]))
   , ("ops",
       ("Operators",
         unlines [ "infixl 5 |>"
                 , ""
                 , "(|>) :: forall a b c. (a -> b) -> (b -> c) -> a -> c"
-                , "(|>) = \\f -> \\g -> \\a -> g (f a)"
+                , "(|>) f g a = g (f a)"
                 , ""
                 , "foreign import foo :: String -> Number"
                 , "foreign import bar :: Number -> Boolean"
@@ -113,17 +113,15 @@ examples =
                 ]))
   , ("arrays",
       ("Arrays",
-        unlines [ "sum = \\arr -> case arr of"
-                , "  x : xs -> x + sum xs"
-                , "  [] -> 0"
+        unlines [ "sum (x:xs) = x + sum xs"
+                , "sum [] = 0"
                 , ""
-                , "sumOfProducts = \\arr -> case arr of"
-                , "  x : y : xs -> x * y + sum xs"
-                , "  _ -> 0"
+                , "sumOfProducts (x : y : xs) = x * y + sum xs"
+                , "sumOfProducts _ = 0"
                 ]))
   , ("rows",
       ("Row Polymorphism",
-        unlines [ "showPerson = \\o -> o.lastName ++ \", \" ++ o.firstName"
+        unlines [ "showPerson o = o.lastName ++ \", \" ++ o.firstName"
                 ]))
   , ("ffi",
       ("FFI",
@@ -136,7 +134,7 @@ examples =
   , ("blocks",
       ("Mutable Variables",
         unlines [ "collatz :: Number -> Number"
-                , "collatz = \\n -> "
+                , "collatz n ="
                 , "  { "
                 , "    var m = n;"
                 , "    var count = 0;"
@@ -156,7 +154,7 @@ examples =
         unlines [ "module Test where"
                 , ""
                 , "  incr :: Number -> Number"
-                , "  incr = \\x -> x + 1"
+                , "  incr x = x + 1"
                 , ""
                 , "test = Test.incr 10"
                 ]))
@@ -165,15 +163,15 @@ examples =
        unlines [ "type Nat = forall a. a -> (a -> a) -> a"
                , ""
                , "zero :: Nat"
-               , "zero = \\a f -> a"
+               , "zero a _ = a"
                , ""
                , "succ :: Nat -> Nat"
-               , "succ = \\n a f -> f (n a f)"
+               , "succ n a f = f (n a f)"
                , ""
                , "type Lens a b = forall f. (a -> f a) -> b -> f b"
                , ""
                , "compose :: forall a b c. Lens a b -> Lens b c -> Lens a c"
-               , "compose = \\l1 l2 f -> l2 (l1 f)"
+               , "compose l1 l2 f = l2 (l1 f)"
                ]))
   ]
 
