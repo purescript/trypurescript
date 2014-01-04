@@ -44,11 +44,11 @@ data Response = Response (Either String Compiled)
 compile :: String -> IO Response
 compile input | length input > 5000 = return $ Response $ Left "Please limit your input to 5000 characters"
 compile input = do
-  case P.runIndentParser P.parseDeclarations input of
+  case P.runIndentParser P.parseModules input of
     Left parseError -> do
       return $ Response $ Left $ show parseError
-    Right decls -> do
-      case P.compile decls of
+    Right modules -> do
+      case P.compile modules of
         Left error ->
           return $ Response $ Left error
         Right (js, externs, _) -> 
@@ -92,7 +92,9 @@ examples :: [(String, (String, String))]
 examples =
   [ ("adt",
       ("Algebraic Data Types",
-        unlines [ "data Person = Person { name :: String, age :: Number }"
+        unlines [ "module ADTs where"
+                , ""
+                , "data Person = Person { name :: String, age :: Number }"
                 , ""
                 , "foreign import numberToString :: Number -> String"
                 , ""
@@ -101,7 +103,9 @@ examples =
                 ]))
   , ("ops",
       ("Operators",
-        unlines [ "infixl 5 |>"
+        unlines [ "module Operators where"
+                , ""
+                , "infixl 5 |>"
                 , ""
                 , "(|>) :: forall a b c. (a -> b) -> (b -> c) -> a -> c"
                 , "(|>) f g a = g (f a)"
@@ -113,7 +117,9 @@ examples =
                 ]))
   , ("arrays",
       ("Arrays",
-        unlines [ "sum (x:xs) = x + sum xs"
+        unlines [ "module Arrays where"
+                , ""
+                , "sum (x:xs) = x + sum xs"
                 , "sum [] = 0"
                 , ""
                 , "sumOfProducts (x : y : xs) = x * y + sum xs"
@@ -121,11 +127,15 @@ examples =
                 ]))
   , ("rows",
       ("Row Polymorphism",
-        unlines [ "showPerson o = o.lastName ++ \", \" ++ o.firstName"
+        unlines [ "module RowPolymorphism where"
+                , ""
+                , "showPerson o = o.lastName ++ \", \" ++ o.firstName"
                 ]))
   , ("ffi",
       ("FFI",
-        unlines [ "foreign import data IO :: * -> *"
+        unlines [ "module FFI where"
+                , ""
+                , "foreign import data IO :: * -> *"
                 , ""
                 , "foreign import console :: { log :: String -> IO { } }"
                 , ""
@@ -133,7 +143,9 @@ examples =
                 ]))
   , ("blocks",
       ("Mutable Variables",
-        unlines [ "collatz :: Number -> Number"
+        unlines [ "module Mutable where"
+                , ""
+                , "collatz :: Number -> Number"
                 , "collatz n ="
                 , "  { "
                 , "    var m = n;"
@@ -151,16 +163,20 @@ examples =
                 ]))
   , ("modules",
       ("Modules",
-        unlines [ "module Test where"
+        unlines [ "module M1 where"
                 , ""
-                , "  incr :: Number -> Number"
-                , "  incr x = x + 1"
+                , "incr :: Number -> Number"
+                , "incr x = x + 1"
                 , ""
-                , "test = Test.incr 10"
+                , "module M2 where"
+                , ""
+                , "test = M1.incr 10"
                 ]))
   , ("rank2",
       ("Rank N Types",
-       unlines [ "type Nat = forall a. a -> (a -> a) -> a"
+       unlines [ "module RankNTypes where"
+               , ""
+               , "type Nat = forall a. a -> (a -> a) -> a"
                , ""
                , "zero :: Nat"
                , "zero a _ = a"
@@ -172,6 +188,17 @@ examples =
                , ""
                , "compose :: forall a b c. Lens a b -> Lens b c -> Lens a c"
                , "compose l1 l2 f = l2 (l1 f)"
+               ]))
+  , ("recursion",
+      ("Recursion",
+       unlines [ "module Recursion where"
+               , ""
+               , "isOdd :: Number -> Boolean"
+               , "isOdd n = !isEven (n - 1)"
+               , ""
+               , "isEven :: Number -> Boolean"
+               , "isEven 0 = true"
+               , "isEven n = !isOdd (n - 1)"
                ]))
   ]
 
