@@ -194,11 +194,12 @@ examples =
        unlines [ "module Recursion where"
                , ""
                , "isOdd :: Number -> Boolean"
-               , "isOdd n = !isEven (n - 1)"
+               , "isOdd 0 = false"
+               , "isOdd n = isEven (n - 1)"
                , ""
                , "isEven :: Number -> Boolean"
                , "isEven 0 = true"
-               , "isEven n = !isOdd (n - 1)"
+               , "isEven n = isOdd (n - 1)"
                ]))
   ]
 
