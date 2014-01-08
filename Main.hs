@@ -51,7 +51,7 @@ compile input = do
       case P.compile modules of
         Left error ->
           return $ Response $ Left error
-        Right (js, externs, _) -> 
+        Right (js, externs, _) ->
           return $ Response $ Right $ Compiled js externs
 
 str :: String -> String
@@ -200,6 +200,27 @@ examples =
                , "isEven :: Number -> Boolean"
                , "isEven 0 = true"
                , "isEven n = isOdd (n - 1)"
+               ]))
+  , ("do",
+      ("Do Notation",
+       unlines [ "module DoNotation where"
+               , ""
+               , "data Maybe a = Nothing | Just a"
+               , ""
+               , "bindMaybe Nothing _ = Nothing"
+               , "bindMaybe (Just a) f = f a"
+               , ""
+               , "maybe = { ret: Just, bind: bindMaybe }"
+               , ""
+               , "isEven n | n % 2 == 0 = Just {}"
+               , "isEven _ = Nothing"
+               , ""
+               , "evenSum a b = maybe do"
+               , "  n <- a"
+               , "  m <- b"
+               , "  let sum = n + m"
+               , "  isEven sum"
+               , "  return sum"
                ]))
   ]
 
