@@ -60,22 +60,27 @@ str = id
 mono :: H.Html -> H.Html
 mono h = h ! A.class_ "mono"
 
+examplesJs :: String
+examplesJs = unlines
+  [ "$('#examples').change(function() {"
+  , "  var name = $('#examples').val();"
+  , "  if (name) {"
+  , "    window.location = '/example/' + name;"
+  , "  }"
+  , "});"
+  ]
+
 css :: String
 css = unlines
   [ "body { font-family: 'Lato', sans-serif; color: #404040; margin: 0; }"
-  , ".mono { font-family: 'Ubuntu Mono', monospace; white-space: pre }"
+  , ".mono { font-family: 'Ubuntu Mono', monospace; white-space: pre; word-break: break-all; word-wrap: break-word; }"
   , ".header { margin: 0; background: #202028; box-shadow: 0 0 10px #808080; color: #E0E0E0; }"
   , ".splitter { margin: 0; height: 5px; background: #606068; }"
-  , ".center { width: 960px; margin: 0 auto; padding: 20px; }"
+  , ".center { margin: 0 auto; padding: 20px; }"
   , "a { color: #808080; }"
-  , "@media (max-width:1000px) { .center { width: auto; } }"
-  , "ul.examples { list-style-type: none; margin-left: 0; padding-left: 0; }"
-  , "ul.examples li { float: left; padding-top: 5px; padding-bottom: 5px; margin-right: 2px; }"
-  , "ul.examples li a { background: #d0d0d0; color: #606060; padding-top: 3px; padding-bottom: 3px; font-weight: bold;  border-radius: 1px; border: 1px solid #c0c0c0; box-shadow: 1px 1px 0 0 #ffffff inset; text-decoration: none; padding-left: 15px; padding-right: 15px; }"
-  , "ul.examples li a:hover { background: #e0e0e0; }"
   , "button { background: #d0d0d0; color: #606060; padding-top: 3px; padding-bottom: 3px; font-weight: bold;  border-radius: 1px; border: 1px solid #c0c0c0; box-shadow: 1px 1px 0 0 #ffffff inset; padding-left: 15px; padding-right: 15px; cursor: pointer; }"
   , "button:hover { background: #e0e0e0; }"
-  ]
+  , "#code, #js { margin: 10px; }"]
 
 gaq :: String
 gaq = unlines
@@ -87,6 +92,41 @@ gaq = unlines
   , " ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';"
   , " var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);"
   , "})();" ]
+
+ace :: Bool -> String
+ace js = unlines $
+  [ "var editor = ace.edit('code');"
+  , "editor.setTheme('ace/theme/dawn');"
+  , "editor.renderer.setShowGutter(false);"
+  , "var session = editor.getSession();"
+  , "session.setMode('ace/mode/haskell');"
+  , "session.setValue($('#textarea').val());"
+  , "session.setUseWrapMode(true);"
+  , "session.on('change', function(){"
+  , "  $('#textarea').val(editor.getSession().getValue());"
+  , "});"
+  , "if ($('#js')[0]) {"
+  , "  var js = ace.edit('js');"
+  , "  js.setTheme('ace/theme/dawn');"
+  , "  js.renderer.setShowGutter(false);"
+  , "  js.setReadOnly(true);"
+  , "  var session = js.getSession();"
+  , "  session.setUseWrapMode(true);"
+  ]
+  ++ (if js then
+        [ "  session.setMode('ace/mode/javascript');" ]
+      else
+        []) ++
+  [ "}"
+  , "function setHeight() {"
+  , "  var top = $('#code').offset().top;"
+  , "  var tot = $(window).height();"
+  , "  var height = Math.max(tot - top - 50, 200);"
+  , "  $('#code').height(height + 'px');"
+  , "  $('#js').height(height + 'px');"
+  , "}"
+  , "$(setHeight);"
+  , "$(window).on('resize', setHeight);" ]
 
 examples :: [(String, (String, String))]
 examples =
@@ -120,9 +160,9 @@ examples =
         unlines [ "module Arrays where"
                 , ""
                 , "sum (x:xs) = x + sum xs"
-                , "sum [] = 0"
+                , "sum _ = 0"
                 , ""
-                , "sumOfProducts (x : y : xs) = x * y + sum xs"
+                , "sumOfProducts (x : y : xs) = x * y + sumOfProducts xs"
                 , "sumOfProducts _ = 0"
                 ]))
   , ("rows",
@@ -224,8 +264,8 @@ examples =
                ]))
   ]
 
-page :: Maybe String -> Maybe Response -> ActionM ()
-page input res = html $ renderHtml $ do
+page :: Maybe String -> Maybe String -> Maybe Response -> ActionM ()
+page ex input res = html $ renderHtml $ do
   H.docType
   H.html $ do
     H.head $ do
@@ -235,6 +275,10 @@ page input res = html $ renderHtml $ do
       H.link ! A.rel "stylesheet" ! A.type_ "text/css" ! A.href "http://fonts.googleapis.com/css?family=Ubuntu+Mono"
       H.style $ H.toHtml $ str css
       H.script ! A.type_ "text/javascript" $ preEscapedToHtml gaq
+      H.script ! A.type_ "text/javascript" ! A.src "//cdnjs.cloudflare.com/ajax/libs/jquery/1.10.2/jquery.js" $ mempty
+      H.script ! A.type_ "text/javascript" ! A.src "//cdnjs.cloudflare.com/ajax/libs/ace/1.1.01/ace.js" ! A.charset "utf-8" $ mempty
+      H.script ! A.type_ "text/javascript" ! A.src "//cdnjs.cloudflare.com/ajax/libs/ace/1.1.01/mode-haskell.js" $ mempty
+      H.script ! A.type_ "text/javascript" ! A.src "//cdnjs.cloudflare.com/ajax/libs/ace/1.1.01/theme-dawn.js" $ mempty
     H.body $ do
         H.div ! A.class_ "header" $ do
            H.div ! A.class_ "center" $ do
@@ -248,45 +292,49 @@ page input res = html $ renderHtml $ do
            H.div ! A.class_ "splitter" $ mempty
         H.div ! A.class_ "main" $ do
            H.div ! A.class_ "center" $ do
-	       H.h2 $ H.toHtml $ str "Examples"
-	       H.ul ! A.class_ "examples" $ forM_ examples $ \(name, (title, _)) -> do
-		 H.li $ H.a ! A.href (fromString $ "/example/" ++ name) $ H.toHtml title
-	       H.div ! A.style "clear: left;" $ mempty
-               H.h2 $ H.toHtml $ str "PureScript Code"
-	       H.form ! A.action "/compile" ! A.method "POST" $ do
-		   H.textarea ! A.name "code" ! A.rows "15" ! A.style "width: 100%" $ maybe mempty (H.toHtml . str) input
-		   H.div $ H.button ! A.type_ "submit" $ H.toHtml $ str "Compile"
-	       case res of
-		 Nothing -> mempty
-		 Just (Response (Left err)) -> do
-		   H.h1 $ H.toHtml $ str "Error!"
-		   mono $ H.p $ H.toHtml $ err
-		 Just (Response (Right (Compiled "" ""))) -> do
-		   H.h1 $ H.toHtml $ str "Error!"
-		   mono $ H.p $ H.toHtml $ str "Please enter some input"
-		 Just (Response (Right (Compiled js exts))) -> do
-		   when (not . null $ js) $ do
-		     H.h1 $ H.toHtml $ str "Generated Javascript"
-		     mono $ H.p $ H.toHtml js
-		   when (not . null $ exts) $ do
-		     H.h1 $ H.toHtml $ str "Externs"
-		     mono $ H.p $ H.toHtml exts
+	       let (success, text) = responseToJs res
+	       H.div $ do
+	         H.select ! A.style "float: right;" ! A.id "examples" $ do
+	           H.option ! A.value "" $ "Examples"
+	           H.option ! A.value "" $ ""
+	           forM_ examples $ \(name, (title, _)) -> case () of
+	             _ | ex == Just name -> H.option ! A.value (fromString name) ! A.selected "selected" $ H.toHtml title
+	             _ ->  H.option ! A.value (fromString name) $ H.toHtml title
+		   H.script ! A.type_ "text/javascript" $ preEscapedToHtml examplesJs
+	       H.div ! A.style "clear: right;" $ mempty
+	       H.div ! A.style "position: relative; "$ do
+	         H.div ! A.style "position: absolute; width: 50%;" $ do
+                   H.h2 $ H.toHtml $ str "PureScript Code"
+	           H.form ! A.action "/compile" ! A.method "POST" $ do
+		     H.div ! A.id "code" $ mempty
+		     H.textarea ! A.name "code" ! A.id "textarea" ! A.style "display: none;" $ maybe mempty (H.toHtml . str) input
+		     H.div $ H.button ! A.type_ "submit" $ H.toHtml $ str "Compile"
+	         H.div ! A.style "position: absolute; width: 50%; left: 50%;" $ do
+		   H.h2 $ H.toHtml $ str "Generated Javascript"
+	           H.div ! A.id "js" $ H.toHtml . str $ text
+	       H.script ! A.type_ "text/javascript" $ preEscapedToHtml (ace success)
+
+responseToJs :: Maybe Response -> (Bool, String)
+responseToJs Nothing = (False, "")
+responseToJs (Just (Response (Left err))) = (False, err)
+responseToJs (Just (Response (Right (Compiled "" "")))) = (False, "Please enter some input")
+responseToJs (Just (Response (Right (Compiled js _)))) = (True, js)
 
 server :: Int -> IO ()
 server port = scotty port $ do
   get "/" $ do
-    page Nothing Nothing
+    page Nothing (Just "-- Type PureScript code here and click 'Compile' ...\r\n-- \r\n-- Or select an example from the list at the top right of the page") Nothing
   get "/example/:name" $ do
     name <- param "name"
     case lookup name examples of
       Nothing -> raise "No such example"
       Just (_, code) -> do
         response <- lift $ compile code
-        page (Just code) (Just response)
+        page (Just name) (Just code) (Just response)
   post "/compile" $ do
     code <- param "code"
     response <- lift $ compile code
-    page (Just code) (Just response)
+    page Nothing (Just code) (Just response)
 
 term :: Term (IO ())
 term = server <$> port
