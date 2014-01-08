@@ -13,7 +13,7 @@ author: Phil Freeman
 data-dir: ""
 
 executable trypurescript
-    build-depends: base ==4.*, scotty -any, purescript ==0.2.3, containers -any,
+    build-depends: base ==4.*, scotty -any, purescript ==0.2.7, containers -any,
                    mtl -any, blaze-html -any, cmdtheline -any
     main-is: Main.hs
     buildable: True
