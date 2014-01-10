@@ -41,6 +41,9 @@ data Compiled = Compiled { js      :: String
 
 data Response = Response (Either String Compiled)
 
+options :: P.Options
+options = P.defaultOptions { P.optionsTco = True }
+
 compile :: String -> IO Response
 compile input | length input > 5000 = return $ Response $ Left "Please limit your input to 5000 characters"
 compile input = do
@@ -48,7 +51,7 @@ compile input = do
     Left parseError -> do
       return $ Response $ Left $ show parseError
     Right modules -> do
-      case P.compile modules of
+      case P.compile options modules of
         Left error ->
           return $ Response $ Left error
         Right (js, externs, _) ->
