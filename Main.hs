@@ -265,6 +265,15 @@ examples =
                , "  isEven sum"
                , "  return sum"
                ]))
+  , ("tco",
+      ("Tail-Call Elimination",
+       unlines [ "module TailCall where"
+               , ""
+               , "factHelper prod 0 = prod"
+               , "factHelper prod n = factHelper (prod * n) (n - 1)"
+               , ""
+               , "fact = factHelper 1"
+               ]))
   ]
 
 page :: Maybe String -> Maybe String -> Maybe Response -> ActionM ()
