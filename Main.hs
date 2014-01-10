@@ -180,9 +180,9 @@ examples =
                 , ""
                 , "foreign import data IO :: * -> *"
                 , ""
-                , "foreign import console :: { log :: String -> IO { } }"
+                , "foreign import log \"function log(s) { return function() { console.log(s) }; }\" :: String -> IO { }"
                 , ""
-                , "main = console.log \"Hello World!\""
+                , "main = log \"Hello World!\""
                 ]))
   , ("blocks",
       ("Mutable Variables",
