@@ -246,24 +246,32 @@ examples =
                ]))
   , ("do",
       ("Do Notation",
-       unlines [ "module DoNotation where"
+       unlines [ "module Prelude where"
+               , ""
+               , "class Monad m where"
+               , "  ret :: forall a. a -> m a"
+               , "  (>>=) :: forall a b. m a -> (a -> m b) -> m b"
+               , ""
+               , "module DoNotation where"
+               , ""
+               , "import Prelude"
                , ""
                , "data Maybe a = Nothing | Just a"
                , ""
-               , "bindMaybe Nothing _ = Nothing"
-               , "bindMaybe (Just a) f = f a"
-               , ""
-               , "maybe = { ret: Just, bind: bindMaybe }"
+               , "instance Prelude.Monad Maybe where"
+               , "  ret = Just"
+               , "  (>>=) Nothing _ = Nothing"
+               , "  (>>=)  (Just a) f = f a"
                , ""
                , "isEven n | n % 2 == 0 = Just {}"
                , "isEven _ = Nothing"
                , ""
-               , "evenSum a b = maybe do"
+               , "evenSum a b = do"
                , "  n <- a"
                , "  m <- b"
                , "  let sum = n + m"
                , "  isEven sum"
-               , "  return sum"
+               , "  ret sum"
                ]))
   , ("tco",
       ("Tail-Call Elimination",
@@ -273,6 +281,30 @@ examples =
                , "factHelper prod n = factHelper (prod * n) (n - 1)"
                , ""
                , "fact = factHelper 1"
+               ]))
+  , ("typeclasses",
+      ("Type Classes",
+       unlines [ "module TypeClasses where"
+               , ""
+               , "class Show a where"
+               , "  show :: a -> String"
+               , ""
+               , "instance Show String where"
+               , "  show s = s"
+               , ""
+               , "instance Show Boolean where"
+               , "  show true = \"true\""
+               , "  show false = \"false\""
+               , ""
+               , "instance (Show a) => Show [a] where"
+               , "  show arr = \"[\" ++ showArray arr ++ \"]\""
+               , ""
+               , "showArray :: forall a. (Show a) => [a] -> String"
+               , "showArray [] = \"\""
+               , "showArray [x] = show x"
+               , "showArray (x:xs) = show x ++ \", \" ++ showArray xs"
+               , ""
+               , "test = show [true, false]"
                ]))
   ]
 
