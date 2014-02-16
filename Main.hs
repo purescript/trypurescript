@@ -34,10 +34,6 @@ import Text.Blaze.Html
 import Text.Blaze.Html.Renderer.Text
 import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as A
-import qualified Paths_trypurescript as Paths
-
-getPreludeFilename :: IO FilePath
-getPreludeFilename = Paths.getDataFileName "prelude.purs"
 
 data Compiled = Compiled { js      :: String
                          , externs :: String
@@ -49,11 +45,6 @@ options :: P.Options
 options = P.defaultOptions { P.optionsTco = True
                            , P.optionsMagicDo = True
                            , P.optionsModules = ["Main"] }
-
-loadModule :: FilePath -> IO (Either String [P.Module])
-loadModule moduleFile = do
-  moduleText <- readFile moduleFile
-  return . either (Left . show) Right $ P.runIndentParser "" P.parseModules moduleText
 
 compile :: [P.Module] -> String -> IO Response
 compile _ input | length input > 5000 = return $ Response $ Left "Please limit your input to 5000 characters"
@@ -73,6 +64,156 @@ str = id
 
 mono :: H.Html -> H.Html
 mono h = h ! A.class_ "mono"
+
+prelude :: String
+prelude = unlines
+  [
+  "module Prelude where",
+  "",
+  "infixr 0 $",
+  "",
+  "($) :: forall a b. (a -> b) -> a -> b",
+  "($) f x = f x",
+  "",
+  "class Monad m where",
+  "  ret :: forall a. a -> m a",
+  "  (>>=) :: forall a b. m a -> (a -> m b) -> m b",
+  "",
+  "infixl 7 *",
+  "infixl 7 /",
+  "infixl 7 %",
+  "",
+  "infixl 6 -",
+  "infixl 6 +",
+  "",
+  "class Num a where",
+  "  (+) :: a -> a -> a",
+  "  (-) :: a -> a -> a",
+  "  (*) :: a -> a -> a",
+  "  (/) :: a -> a -> a",
+  "  (%) :: a -> a -> a",
+  "  negate :: a -> a",
+  "",
+  "foreign import numAdd :: Number -> Number -> Number",
+  "foreign import numSub :: Number -> Number -> Number",
+  "foreign import numMul :: Number -> Number -> Number",
+  "foreign import numDiv :: Number -> Number -> Number",
+  "foreign import numMod :: Number -> Number -> Number",
+  "foreign import numNegate :: Number -> Number",
+  "",
+  "instance Num Number where",
+  "  (+) = numAdd",
+  "  (-) = numSub",
+  "  (*) = numMul",
+  "  (/) = numDiv",
+  "  (%) = numMod",
+  "  negate = numNegate",
+  "",
+  "infixl 4 ==",
+  "infixl 4 /=",
+  "",
+  "class Eq a where",
+  "  (==) :: a -> a -> Boolean",
+  "  (/=) :: a -> a -> Boolean",
+  "",
+  "foreign import unsafeRefEq :: forall a. a -> a -> Boolean",
+  "foreign import unsafeRefIneq :: forall a. a -> a -> Boolean",
+  "",
+  "instance Eq String where",
+  "  (==) = unsafeRefEq",
+  "  (/=) = unsafeRefIneq",
+  "",
+  "instance Eq Number where",
+  "  (==) = unsafeRefEq",
+  "  (/=) = unsafeRefIneq",
+  "",
+  "instance Eq Boolean where",
+  "  (==) = unsafeRefEq",
+  "  (/=) = unsafeRefIneq",
+  "",
+  "instance (Eq a) => Eq [a] where",
+  "  (==) [] [] = true",
+  "  (==) (x:xs) (y:ys) = x == y && xs == ys",
+  "  (==) _ _ = false",
+  "  (/=) xs ys = not (xs == ys)",
+  "",
+  "infixl 4 <",
+  "infixl 4 >",
+  "infixl 4 <=",
+  "infixl 4 >=",
+  "",
+  "class Ord a where",
+  "  (<) :: a -> a -> Boolean",
+  "  (>) :: a -> a -> Boolean",
+  "  (<=) :: a -> a -> Boolean",
+  "  (>=) :: a -> a -> Boolean",
+  "",
+  "foreign import numLess :: Number -> Number -> Boolean",
+  "foreign import numLessEq :: Number -> Number -> Boolean",
+  "foreign import numGreater :: Number -> Number -> Boolean",
+  "foreign import numGreaterEq :: Number -> Number -> Boolean",
+  "",
+  "instance Ord Number where",
+  "  (<) = numLess",
+  "  (>) = numGreater",
+  "  (<=) = numLessEq",
+  "  (>=) = numGreaterEq",
+  "",
+  "infixl 10 &",
+  "infixl 10 |",
+  "infixl 10 ^",
+  "",
+  "class Bits b where",
+  "  (&) :: b -> b -> b",
+  "  (|) :: b -> b -> b",
+  "  (^) :: b -> b -> b",
+  "  shl :: b -> Number -> b",
+  "  shr :: b -> Number -> b",
+  "  zshr :: b -> Number -> b",
+  "  complement :: b -> b",
+  "",
+  "foreign import numShl :: Number -> Number -> Number",
+  "foreign import numShr :: Number -> Number -> Number",
+  "foreign import numZshr :: Number -> Number -> Number",
+  "foreign import numAnd :: Number -> Number -> Number",
+  "foreign import numOr :: Number -> Number -> Number",
+  "foreign import numXor :: Number -> Number -> Number",
+  "foreign import numComplement :: Number -> Number",
+  "",
+  "instance Bits Number where",
+  "  (&) = numAnd",
+  "  (|) = numOr",
+  "  (^) = numXor",
+  "  shl = numShl",
+  "  shr = numShr",
+  "  zshr = numZshr",
+  "  complement = numComplement",
+  "",
+  "infixl 8 !!",
+  "",
+  "foreign import (!!) :: forall a. [a] -> Number -> a",
+  "",
+  "infixr 2 ||",
+  "infixr 3 &&",
+  "",
+  "class BoolLike b where",
+  "  (&&) :: b -> b -> b",
+  "  (||) :: b -> b -> b",
+  "  not :: b -> b",
+  "",
+  "foreign import boolAnd :: Boolean -> Boolean -> Boolean",
+  "foreign import boolOr :: Boolean -> Boolean -> Boolean",
+  "foreign import boolNot :: Boolean -> Boolean",
+  "",
+  "instance BoolLike Boolean where",
+  "  (&&) = boolAnd",
+  "  (||) = boolOr",
+  "  not = boolNot",
+  "",
+  "infixr 5 ++",
+  "",
+  "foreign import (++) :: String -> String -> String"
+  ]
 
 examplesJs :: String
 examplesJs = unlines
@@ -389,8 +530,7 @@ responseToJs (Just (Response (Right (Compiled js _)))) = (True, js)
 
 server :: Int -> IO ()
 server port = do
-  preludeFilename <- getPreludeFilename
-  Right prelude <- loadModule preludeFilename
+  let preludeModules = either (error . show) id $ P.runIndentParser "" P.parseModules prelude
   scotty port $ do
     get "/" $ do
       page Nothing (Just "-- Type PureScript code here and click 'Compile' ...\r\n-- \r\n-- Or select an example from the list at the top right of the page") Nothing
@@ -399,11 +539,11 @@ server port = do
       case lookup name examples of
         Nothing -> raise "No such example"
         Just (_, code) -> do
-          response <- lift $ compile prelude code
+          response <- lift $ compile preludeModules code
           page (Just name) (Just code) (Just response)
     post "/compile" $ do
       code <- param "code"
-      response <- lift $ compile prelude code
+      response <- lift $ compile preludeModules code
       page Nothing (Just code) (Just response)
 
 term :: Term (IO ())

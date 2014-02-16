@@ -11,7 +11,6 @@ description: A simple web app for trying out the PureScript compiler
 category: Web
 author: Phil Freeman
 data-dir: ""
-data-files: prelude.purs
 
 executable trypurescript
     build-depends: base ==4.*, scotty -any, purescript ==0.4.0, containers -any,
