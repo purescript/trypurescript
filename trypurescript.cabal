@@ -1,5 +1,5 @@
 name: trypurescript
-version: 0.3.0.0
+version: 0.4.0.0
 cabal-version: >=1.8
 build-type: Simple
 license: MIT
@@ -11,9 +11,10 @@ description: A simple web app for trying out the PureScript compiler
 category: Web
 author: Phil Freeman
 data-dir: ""
+data-files: prelude.purs
 
 executable trypurescript
-    build-depends: base ==4.*, scotty -any, purescript ==0.3.0, containers -any,
+    build-depends: base ==4.*, scotty -any, purescript ==0.4.0, containers -any,
                    mtl -any, blaze-html -any, cmdtheline -any
     main-is: Main.hs
     buildable: True

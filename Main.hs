@@ -34,6 +34,10 @@ import Text.Blaze.Html
 import Text.Blaze.Html.Renderer.Text
 import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as A
+import qualified Paths_trypurescript as Paths
+
+getPreludeFilename :: IO FilePath
+getPreludeFilename = Paths.getDataFileName "prelude.purs"
 
 data Compiled = Compiled { js      :: String
                          , externs :: String
@@ -42,16 +46,23 @@ data Compiled = Compiled { js      :: String
 data Response = Response (Either String Compiled)
 
 options :: P.Options
-options = P.defaultOptions { P.optionsTco = True }
+options = P.defaultOptions { P.optionsTco = True
+                           , P.optionsMagicDo = True
+                           , P.optionsModules = ["Main"] }
 
-compile :: String -> IO Response
-compile input | length input > 5000 = return $ Response $ Left "Please limit your input to 5000 characters"
-compile input = do
-  case P.runIndentParser P.parseModules input of
+loadModule :: FilePath -> IO (Either String [P.Module])
+loadModule moduleFile = do
+  moduleText <- readFile moduleFile
+  return . either (Left . show) Right $ P.runIndentParser "" P.parseModules moduleText
+
+compile :: [P.Module] -> String -> IO Response
+compile _ input | length input > 5000 = return $ Response $ Left "Please limit your input to 5000 characters"
+compile prelude input = do
+  case P.runIndentParser "" P.parseModules input of
     Left parseError -> do
       return $ Response $ Left $ show parseError
     Right modules -> do
-      case P.compile options modules of
+      case P.compile options (prelude ++ modules) of
         Left error ->
           return $ Response $ Left error
         Right (js, externs, _) ->
@@ -135,7 +146,9 @@ examples :: [(String, (String, String))]
 examples =
   [ ("adt",
       ("Algebraic Data Types",
-        unlines [ "module ADTs where"
+        unlines [ "module Main where"
+                , ""
+                , "import Prelude"
                 , ""
                 , "data Person = Person { name :: String, age :: Number }"
                 , ""
@@ -146,21 +159,25 @@ examples =
                 ]))
   , ("ops",
       ("Operators",
-        unlines [ "module Operators where"
+        unlines [ "module Main where"
                 , ""
-                , "infixl 5 |>"
+                , "import Prelude"
                 , ""
-                , "(|>) :: forall a b c. (a -> b) -> (b -> c) -> a -> c"
-                , "(|>) f g a = g (f a)"
+                , "infixl 5 >>>"
+                , ""
+                , "(>>>) :: forall a b c. (a -> b) -> (b -> c) -> a -> c"
+                , "(>>>) f g a = g (f a)"
                 , ""
                 , "foreign import foo :: String -> Number"
                 , "foreign import bar :: Number -> Boolean"
                 , ""
-                , "test = foo |> bar"
+                , "test = foo >>> bar"
                 ]))
   , ("arrays",
       ("Arrays",
-        unlines [ "module Arrays where"
+        unlines [ "module Main where"
+                , ""
+                , "import Prelude"
                 , ""
                 , "sum (x:xs) = x + sum xs"
                 , "sum _ = 0"
@@ -170,13 +187,15 @@ examples =
                 ]))
   , ("rows",
       ("Row Polymorphism",
-        unlines [ "module RowPolymorphism where"
+        unlines [ "module Main where"
+                , ""
+                , "import Prelude"
                 , ""
                 , "showPerson o = o.lastName ++ \", \" ++ o.firstName"
                 ]))
   , ("ffi",
       ("FFI",
-        unlines [ "module FFI where"
+        unlines [ "module Main where"
                 , ""
                 , "foreign import data IO :: * -> *"
                 , ""
@@ -186,7 +205,9 @@ examples =
                 ]))
   , ("blocks",
       ("Mutable Variables",
-        unlines [ "module Mutable where"
+        unlines [ "module Main where"
+                , ""
+                , "import Prelude"
                 , ""
                 , "collatz :: Number -> Number"
                 , "collatz n ="
@@ -208,16 +229,18 @@ examples =
       ("Modules",
         unlines [ "module M1 where"
                 , ""
+                , "import Prelude"
+                , ""
                 , "incr :: Number -> Number"
                 , "incr x = x + 1"
                 , ""
-                , "module M2 where"
+                , "module Main where"
                 , ""
                 , "test = M1.incr 10"
                 ]))
   , ("rank2",
       ("Rank N Types",
-       unlines [ "module RankNTypes where"
+       unlines [ "module Main where"
                , ""
                , "type Nat = forall a. a -> (a -> a) -> a"
                , ""
@@ -234,7 +257,9 @@ examples =
                ]))
   , ("recursion",
       ("Recursion",
-       unlines [ "module Recursion where"
+       unlines [ "module Main where"
+               , ""
+               , "import Prelude"
                , ""
                , "isOdd :: Number -> Boolean"
                , "isOdd 0 = false"
@@ -246,13 +271,7 @@ examples =
                ]))
   , ("do",
       ("Do Notation",
-       unlines [ "module Prelude where"
-               , ""
-               , "class Monad m where"
-               , "  ret :: forall a. a -> m a"
-               , "  (>>=) :: forall a b. m a -> (a -> m b) -> m b"
-               , ""
-               , "module DoNotation where"
+       unlines [ "module Main where"
                , ""
                , "import Prelude"
                , ""
@@ -275,7 +294,9 @@ examples =
                ]))
   , ("tco",
       ("Tail-Call Elimination",
-       unlines [ "module TailCall where"
+       unlines [ "module Main where"
+               , ""
+               , "import Prelude"
                , ""
                , "factHelper prod 0 = prod"
                , "factHelper prod n = factHelper (prod * n) (n - 1)"
@@ -284,7 +305,9 @@ examples =
                ]))
   , ("typeclasses",
       ("Type Classes",
-       unlines [ "module TypeClasses where"
+       unlines [ "module Main where"
+               , ""
+               , "import Prelude"
                , ""
                , "class Show a where"
                , "  show :: a -> String"
@@ -365,20 +388,23 @@ responseToJs (Just (Response (Right (Compiled "" "")))) = (False, "Please enter 
 responseToJs (Just (Response (Right (Compiled js _)))) = (True, js)
 
 server :: Int -> IO ()
-server port = scotty port $ do
-  get "/" $ do
-    page Nothing (Just "-- Type PureScript code here and click 'Compile' ...\r\n-- \r\n-- Or select an example from the list at the top right of the page") Nothing
-  get "/example/:name" $ do
-    name <- param "name"
-    case lookup name examples of
-      Nothing -> raise "No such example"
-      Just (_, code) -> do
-        response <- lift $ compile code
-        page (Just name) (Just code) (Just response)
-  post "/compile" $ do
-    code <- param "code"
-    response <- lift $ compile code
-    page Nothing (Just code) (Just response)
+server port = do
+  preludeFilename <- getPreludeFilename
+  Right prelude <- loadModule preludeFilename
+  scotty port $ do
+    get "/" $ do
+      page Nothing (Just "-- Type PureScript code here and click 'Compile' ...\r\n-- \r\n-- Or select an example from the list at the top right of the page") Nothing
+    get "/example/:name" $ do
+      name <- param "name"
+      case lookup name examples of
+        Nothing -> raise "No such example"
+        Just (_, code) -> do
+          response <- lift $ compile prelude code
+          page (Just name) (Just code) (Just response)
+    post "/compile" $ do
+      code <- param "code"
+      response <- lift $ compile prelude code
+      page Nothing (Just code) (Just response)
 
 term :: Term (IO ())
 term = server <$> port
