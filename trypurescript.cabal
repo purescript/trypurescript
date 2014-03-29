@@ -1,5 +1,5 @@
 name: trypurescript
-version: 0.4.0.0
+version: 0.5.0.0
 cabal-version: >=1.8
 build-type: Simple
 license: MIT
@@ -10,11 +10,13 @@ synopsis: Interactive PureScript in the Browser
 description: A simple web app for trying out the PureScript compiler
 category: Web
 author: Phil Freeman
+data-files: prelude/prelude.purs
 data-dir: ""
 
 executable trypurescript
-    build-depends: base ==4.*, scotty -any, purescript ==0.4.0, containers -any,
-                   mtl -any, blaze-html -any, cmdtheline -any, monad-unify >= 0.2.0.1
+    build-depends: base ==4.*, scotty -any, purescript ==0.4.10, containers -any,
+                   mtl -any, blaze-html -any, cmdtheline -any, monad-unify >= 0.2 && < 0.3,
+                   utf8-string -any
     main-is: Main.hs
     buildable: True
     other-modules: Main

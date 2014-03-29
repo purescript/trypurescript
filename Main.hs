@@ -21,6 +21,8 @@ module Main (
 import Web.Scotty
 import qualified Language.PureScript as P
 
+import Data.Version (showVersion)
+
 import Data.Monoid
 import Data.String
 import Data.Maybe (mapMaybe)
@@ -34,6 +36,12 @@ import Text.Blaze.Html
 import Text.Blaze.Html.Renderer.Text
 import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as A
+import qualified System.IO.UTF8 as U
+
+import qualified Paths_trypurescript as Paths
+
+preludeFilename :: IO FilePath
+preludeFilename = Paths.getDataFileName "prelude/prelude.purs"
 
 data Compiled = Compiled { js      :: String
                          , externs :: String
@@ -42,9 +50,7 @@ data Compiled = Compiled { js      :: String
 data Response = Response (Either String Compiled)
 
 options :: P.Options
-options = P.defaultOptions { P.optionsTco = True
-                           , P.optionsMagicDo = True
-                           , P.optionsModules = ["Main"] }
+options = P.defaultOptions { P.optionsModules = ["Main"] }
 
 compile :: [P.Module] -> String -> IO Response
 compile _ input | length input > 5000 = return $ Response $ Left "Please limit your input to 5000 characters"
@@ -64,156 +70,6 @@ str = id
 
 mono :: H.Html -> H.Html
 mono h = h ! A.class_ "mono"
-
-prelude :: String
-prelude = unlines
-  [
-  "module Prelude where",
-  "",
-  "infixr 0 $",
-  "",
-  "($) :: forall a b. (a -> b) -> a -> b",
-  "($) f x = f x",
-  "",
-  "class Monad m where",
-  "  ret :: forall a. a -> m a",
-  "  (>>=) :: forall a b. m a -> (a -> m b) -> m b",
-  "",
-  "infixl 7 *",
-  "infixl 7 /",
-  "infixl 7 %",
-  "",
-  "infixl 6 -",
-  "infixl 6 +",
-  "",
-  "class Num a where",
-  "  (+) :: a -> a -> a",
-  "  (-) :: a -> a -> a",
-  "  (*) :: a -> a -> a",
-  "  (/) :: a -> a -> a",
-  "  (%) :: a -> a -> a",
-  "  negate :: a -> a",
-  "",
-  "foreign import numAdd :: Number -> Number -> Number",
-  "foreign import numSub :: Number -> Number -> Number",
-  "foreign import numMul :: Number -> Number -> Number",
-  "foreign import numDiv :: Number -> Number -> Number",
-  "foreign import numMod :: Number -> Number -> Number",
-  "foreign import numNegate :: Number -> Number",
-  "",
-  "instance Num Number where",
-  "  (+) = numAdd",
-  "  (-) = numSub",
-  "  (*) = numMul",
-  "  (/) = numDiv",
-  "  (%) = numMod",
-  "  negate = numNegate",
-  "",
-  "infixl 4 ==",
-  "infixl 4 /=",
-  "",
-  "class Eq a where",
-  "  (==) :: a -> a -> Boolean",
-  "  (/=) :: a -> a -> Boolean",
-  "",
-  "foreign import unsafeRefEq :: forall a. a -> a -> Boolean",
-  "foreign import unsafeRefIneq :: forall a. a -> a -> Boolean",
-  "",
-  "instance Eq String where",
-  "  (==) = unsafeRefEq",
-  "  (/=) = unsafeRefIneq",
-  "",
-  "instance Eq Number where",
-  "  (==) = unsafeRefEq",
-  "  (/=) = unsafeRefIneq",
-  "",
-  "instance Eq Boolean where",
-  "  (==) = unsafeRefEq",
-  "  (/=) = unsafeRefIneq",
-  "",
-  "instance (Eq a) => Eq [a] where",
-  "  (==) [] [] = true",
-  "  (==) (x:xs) (y:ys) = x == y && xs == ys",
-  "  (==) _ _ = false",
-  "  (/=) xs ys = not (xs == ys)",
-  "",
-  "infixl 4 <",
-  "infixl 4 >",
-  "infixl 4 <=",
-  "infixl 4 >=",
-  "",
-  "class Ord a where",
-  "  (<) :: a -> a -> Boolean",
-  "  (>) :: a -> a -> Boolean",
-  "  (<=) :: a -> a -> Boolean",
-  "  (>=) :: a -> a -> Boolean",
-  "",
-  "foreign import numLess :: Number -> Number -> Boolean",
-  "foreign import numLessEq :: Number -> Number -> Boolean",
-  "foreign import numGreater :: Number -> Number -> Boolean",
-  "foreign import numGreaterEq :: Number -> Number -> Boolean",
-  "",
-  "instance Ord Number where",
-  "  (<) = numLess",
-  "  (>) = numGreater",
-  "  (<=) = numLessEq",
-  "  (>=) = numGreaterEq",
-  "",
-  "infixl 10 &",
-  "infixl 10 |",
-  "infixl 10 ^",
-  "",
-  "class Bits b where",
-  "  (&) :: b -> b -> b",
-  "  (|) :: b -> b -> b",
-  "  (^) :: b -> b -> b",
-  "  shl :: b -> Number -> b",
-  "  shr :: b -> Number -> b",
-  "  zshr :: b -> Number -> b",
-  "  complement :: b -> b",
-  "",
-  "foreign import numShl :: Number -> Number -> Number",
-  "foreign import numShr :: Number -> Number -> Number",
-  "foreign import numZshr :: Number -> Number -> Number",
-  "foreign import numAnd :: Number -> Number -> Number",
-  "foreign import numOr :: Number -> Number -> Number",
-  "foreign import numXor :: Number -> Number -> Number",
-  "foreign import numComplement :: Number -> Number",
-  "",
-  "instance Bits Number where",
-  "  (&) = numAnd",
-  "  (|) = numOr",
-  "  (^) = numXor",
-  "  shl = numShl",
-  "  shr = numShr",
-  "  zshr = numZshr",
-  "  complement = numComplement",
-  "",
-  "infixl 8 !!",
-  "",
-  "foreign import (!!) :: forall a. [a] -> Number -> a",
-  "",
-  "infixr 2 ||",
-  "infixr 3 &&",
-  "",
-  "class BoolLike b where",
-  "  (&&) :: b -> b -> b",
-  "  (||) :: b -> b -> b",
-  "  not :: b -> b",
-  "",
-  "foreign import boolAnd :: Boolean -> Boolean -> Boolean",
-  "foreign import boolOr :: Boolean -> Boolean -> Boolean",
-  "foreign import boolNot :: Boolean -> Boolean",
-  "",
-  "instance BoolLike Boolean where",
-  "  (&&) = boolAnd",
-  "  (||) = boolOr",
-  "  not = boolNot",
-  "",
-  "infixr 5 ++",
-  "",
-  "foreign import (++) :: String -> String -> String"
-  ]
 
 examplesJs :: String
 examplesJs = unlines
@@ -302,7 +158,7 @@ examples =
       ("Operators",
         unlines [ "module Main where"
                 , ""
-                , "import Prelude"
+                , "import Prelude ()"
                 , ""
                 , "infixl 5 >>>"
                 , ""
@@ -349,22 +205,19 @@ examples =
         unlines [ "module Main where"
                 , ""
                 , "import Prelude"
+                , "import Control.Monad.Eff"
+                , "import Control.Monad.ST"
                 , ""
                 , "collatz :: Number -> Number"
-                , "collatz n ="
-                , "  { "
-                , "    var m = n;"
-                , "    var count = 0;"
-                , "    while (m > 1) {"
-                , "      if (m % 2 == 0) {"
-                , "        m = m / 2;"
-                , "      } else {"
-                , "        m = 3 * m + 1;"
-                , "      }"
-                , "      count = count + 1;"
-                , "    }"
-                , "    return count;"
-                , "  }"
+                , "collatz n = runPure (runST (do"
+                , "  r <- newSTRef n"
+                , "  count <- newSTRef 0"
+                , "  untilE $ do"
+                , "    modifySTRef count $ (+) 1"
+                , "    m <- readSTRef r"
+                , "    writeSTRef r $ if m % 2 == 0 then m / 2 else 3 * m + 1"
+                , "    return $ m == 1"
+                , "  readSTRef count))"
                 ]))
   , ("modules",
       ("Modules",
@@ -418,8 +271,8 @@ examples =
                , ""
                , "data Maybe a = Nothing | Just a"
                , ""
-               , "instance Prelude.Monad Maybe where"
-               , "  ret = Just"
+               , "instance monadMaybe :: Prelude.Monad Maybe where"
+               , "  return = Just"
                , "  (>>=) Nothing _ = Nothing"
                , "  (>>=)  (Just a) f = f a"
                , ""
@@ -431,7 +284,7 @@ examples =
                , "  m <- b"
                , "  let sum = n + m"
                , "  isEven sum"
-               , "  ret sum"
+               , "  return sum"
                ]))
   , ("tco",
       ("Tail-Call Elimination",
@@ -448,25 +301,25 @@ examples =
       ("Type Classes",
        unlines [ "module Main where"
                , ""
-               , "import Prelude"
+               , "import Prelude ((++))"
                , ""
                , "class Show a where"
                , "  show :: a -> String"
                , ""
-               , "instance Show String where"
+               , "instance showString :: Show String where"
                , "  show s = s"
                , ""
-               , "instance Show Boolean where"
+               , "instance showBoolean :: Show Boolean where"
                , "  show true = \"true\""
                , "  show false = \"false\""
                , ""
-               , "instance (Show a) => Show [a] where"
-               , "  show arr = \"[\" ++ showArray arr ++ \"]\""
-               , ""
-               , "showArray :: forall a. (Show a) => [a] -> String"
-               , "showArray [] = \"\""
-               , "showArray [x] = show x"
-               , "showArray (x:xs) = show x ++ \", \" ++ showArray xs"
+               , "instance showArray :: (Show a) => Show [a] where"
+               , "  show arr = \"[\" ++ go arr ++ \"]\""
+               , "    where"
+               , "    go :: forall a. (Show a) => [a] -> String"
+               , "    go [] = \"\""
+               , "    go [x] = show x"
+               , "    go (x:xs) = show x ++ \", \" ++ go xs"
                , ""
                , "test = show [true, false]"
                ]))
@@ -530,10 +383,20 @@ responseToJs (Just (Response (Right (Compiled js _)))) = (True, js)
 
 server :: Int -> IO ()
 server port = do
+  prelude <- preludeFilename >>= U.readFile
   let preludeModules = either (error . show) id $ P.runIndentParser "" P.parseModules prelude
   scotty port $ do
     get "/" $ do
-      page Nothing (Just "-- Type PureScript code here and click 'Compile' ...\r\n-- \r\n-- Or select an example from the list at the top right of the page") Nothing
+      page Nothing (Just (unlines [ "-- Type PureScript code here and click 'Compile' ..."
+                                  , "-- "
+                                  , "-- Or select an example from the list at the top right of the page"
+                                  , ""
+                                  , "module Main where"
+                                  , ""
+                                  , "import Debug.Trace"
+                                  , ""
+                                  , "main = trace \"Hello, World!\""
+                                  ])) Nothing
     get "/example/:name" $ do
       name <- param "name"
       case lookup name examples of
@@ -556,7 +419,7 @@ port = value $ opt 80 $ (optInfo [ "p", "port" ])
 termInfo :: TermInfo
 termInfo = defTI
   { termName = "trypurescript"
-  , version  = "0.1.0.0"
+  , version  = showVersion Paths.version
   , termDoc  = "Try PureScript in the browser"
   }
 
