@@ -13,10 +13,11 @@ author: Phil Freeman
 data-dir: ""
  
 executable trypurescript
-    build-depends: bytestring >=0.10.0.2 && <0.11, base ==4.*,
-                   scotty -any, purescript ==0.4.10.1, containers -any, mtl -any,
-                   blaze-html -any, cmdtheline -any, monad-unify >=0.2.1 && <0.3,
-                   utf8-string -any, file-embed >=0.0.6
+    build-depends: blaze-markup >=0.5.1.5 && <0.6,
+                   bytestring >=0.10.0.2 && <0.11, base ==4.*, scotty -any,
+                   purescript ==0.4.10.1, containers -any, mtl -any, blaze-html -any,
+                   cmdtheline -any, monad-unify >=0.2.1 && <0.3, utf8-string -any,
+                   file-embed >=0.0.6
     main-is: Main.hs
     buildable: True
     other-modules: Main

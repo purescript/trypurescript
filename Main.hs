@@ -33,6 +33,7 @@ import Control.Monad (when, forM_)
 import Control.Monad.Trans
 import qualified Data.Map as M
 import Text.Blaze.Html
+import Text.Blaze.Internal
 import Text.Blaze.Html.Renderer.Text
 import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as A
@@ -76,9 +77,6 @@ str = id
 mono :: H.Html -> H.Html
 mono h = h ! A.class_ "mono"
 
-examplesJs :: String
-examplesJs = BU.toString $(embedFile "assets/examples.js")
-
 css :: String
 css = BU.toString $(embedFile "assets/style.css")
 
@@ -114,7 +112,7 @@ page ex input res = html $ renderHtml $ do
     H.head $ do
       H.title $ H.toHtml $ str "Try PureScript!"
       H.meta ! A.name "viewport" ! A.content "width=device-width, initial-scale=1.0"
-      H.link ! A.rel "stylesheet" ! A.type_ "text/css" ! A.href "http://fonts.googleapis.com/css?family=Lato:300,400,700"
+      H.link ! A.rel "stylesheet" ! A.type_ "text/css" ! A.href "http://fonts.googleapis.com/css?family=PT+Serif:400,700"
       H.link ! A.rel "stylesheet" ! A.type_ "text/css" ! A.href "http://fonts.googleapis.com/css?family=Ubuntu+Mono"
       H.style $ H.toHtml $ str css
       H.script ! A.type_ "text/javascript" $ preEscapedToHtml gaq
@@ -123,40 +121,33 @@ page ex input res = html $ renderHtml $ do
       H.script ! A.type_ "text/javascript" ! A.src "//cdnjs.cloudflare.com/ajax/libs/ace/1.1.01/mode-haskell.js" $ mempty
       H.script ! A.type_ "text/javascript" ! A.src "//cdnjs.cloudflare.com/ajax/libs/ace/1.1.01/theme-dawn.js" $ mempty
     H.body $ do
-        H.div ! A.class_ "header" $ do
-           H.div ! A.class_ "center" $ do
+        H.a ! A.href "https://github.com/purescript" $
+            H.img ! A.style "position: absolute; top: 0; right: 0; border: 0;"
+                  ! A.src "https://github-camo.global.ssl.fastly.net/365986a132ccd6a44c23a9169022c0b5c890c387/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f7265645f6161303030302e706e67"
+                  ! A.alt "Fork me on GitHub"
+                  ! customAttribute "data-canonical-src" "https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png"
+        H.div ! A.class_ "wrapper" $ do
+           H.div ! A.class_ "header" $ do
 	       H.h1 $ H.toHtml $ str "Try PureScript!"
-	       H.p $ H.toHtml $ str "Type PureScript code below and press 'Compile' to view the compiled Javascript."
-	       H.p $ mconcat [ H.a ! A.href "http://functorial.com/purescript" $ H.toHtml $ str "Documentation"
-		             , H.toHtml $ str ", "
-		             , H.a ! A.href "http://github.com/paf31/purescript" $ H.toHtml $ str "Compiler Source"
-		             , H.toHtml $ str ", "
-		             , H.a ! A.href "http://github.com/paf31/trypurescript" $ H.toHtml $ str "Try PureScript Source" ]
-           H.div ! A.class_ "splitter" $ mempty
-        H.div ! A.class_ "main" $ do
-           H.div ! A.class_ "center" $ do
+           H.div ! A.class_ "body" $ do
+	       H.p $ H.toHtml $ str "Type PureScript code below and press 'Compile', or select one of the examples below:"
+	
+	       H.h2 $ H.toHtml $ str "Examples"
+	       H.ul $ do
+	         forM_ examples $ \(name, (title, _)) ->
+	           H.li $ H.a ! A.href (fromString $ "/example/" ++ name) $ H.toHtml title
+	
 	       let (success, text) = responseToJs res
-	       H.div $ do
-	         H.select ! A.style "float: right;" ! A.id "examples" $ do
-	           H.option ! A.value "" $ "Examples"
-	           H.option ! A.value "" $ ""
-	           forM_ examples $ \(name, (title, _)) -> case () of
-	             _ | ex == Just name -> H.option ! A.value (fromString name) ! A.selected "selected" $ H.toHtml title
-	             _ ->  H.option ! A.value (fromString name) $ H.toHtml title
-		   H.script ! A.type_ "text/javascript" $ preEscapedToHtml examplesJs
-	       H.div ! A.style "clear: right;" $ mempty
-	       H.div ! A.style "position: relative; "$ do
-	         H.div ! A.style "position: absolute; width: 50%;" $ do
-                   H.h2 $ H.toHtml $ str "PureScript Code"
-	           H.form ! A.action "/compile" ! A.method "POST" $ do
-		     H.div ! A.id "code" $ mempty
-		     H.textarea ! A.name "code" ! A.id "textarea" ! A.style "display: none;" $ maybe mempty (H.toHtml . str) input
-		     H.div $ H.button ! A.type_ "submit" $ H.toHtml $ str "Compile"
-	         H.div ! A.style "position: absolute; width: 50%; left: 50%;" $ do
-		   H.h2 $ H.toHtml $ str "Generated Javascript"
-	           H.div ! A.id "js" $ H.toHtml . str $ text
-	       H.script ! A.type_ "text/javascript" $ preEscapedToHtml $ str $ "var compiledSuccessfully = " ++ if success then "true;" else "false;"
+	
+	       H.h2 $ H.toHtml $ str "PureScript Code"
+	       H.form ! A.action "/compile" ! A.method "POST" $ do
+		 H.div ! A.id "code" $ mempty
+		 H.textarea ! A.name "code" ! A.id "textarea" ! A.style "display: none;" $ maybe mempty (H.toHtml . str) input
+		 H.div $ H.button ! A.type_ "submit" $ H.toHtml $ str "Compile"
 	       H.script ! A.type_ "text/javascript" $ preEscapedToHtml ace
+	
+	       H.h2 $ H.toHtml $ str "Generated Javascript"
+	       H.pre $ H.code $ H.toHtml . str $ text
 
 responseToJs :: Maybe Response -> (Bool, String)
 responseToJs Nothing = (False, "")
