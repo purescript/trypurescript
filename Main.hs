@@ -12,7 +12,7 @@
 --
 -----------------------------------------------------------------------------
 
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings, TemplateHaskell #-}
 
 module Main (
     main
@@ -40,8 +40,13 @@ import qualified System.IO.UTF8 as U
 
 import qualified Paths_trypurescript as Paths
 
-preludeFilename :: IO FilePath
-preludeFilename = Paths.getDataFileName "prelude/prelude.purs"
+import qualified Data.ByteString as B
+import qualified Data.ByteString.UTF8 as BU
+
+import Data.FileEmbed
+
+prelude :: String
+prelude = BU.toString $(embedFile "prelude/prelude.purs")
 
 data Compiled = Compiled { js      :: String
                          , externs :: String
@@ -72,257 +77,34 @@ mono :: H.Html -> H.Html
 mono h = h ! A.class_ "mono"
 
 examplesJs :: String
-examplesJs = unlines
-  [ "$('#examples').change(function() {"
-  , "  var name = $('#examples').val();"
-  , "  if (name) {"
-  , "    window.location = '/example/' + name;"
-  , "  }"
-  , "});"
-  ]
+examplesJs = BU.toString $(embedFile "assets/examples.js")
 
 css :: String
-css = unlines
-  [ "body { font-family: 'Lato', sans-serif; color: #404040; margin: 0; }"
-  , ".mono { font-family: 'Ubuntu Mono', monospace; white-space: pre; word-break: break-all; word-wrap: break-word; }"
-  , ".header { margin: 0; background: #202028; box-shadow: 0 0 10px #808080; color: #E0E0E0; }"
-  , ".splitter { margin: 0; height: 5px; background: #606068; }"
-  , ".center { margin: 0 auto; padding: 20px; }"
-  , "a { color: #808080; }"
-  , "button { background: #d0d0d0; color: #606060; padding-top: 3px; padding-bottom: 3px; font-weight: bold;  border-radius: 1px; border: 1px solid #c0c0c0; box-shadow: 1px 1px 0 0 #ffffff inset; padding-left: 15px; padding-right: 15px; cursor: pointer; }"
-  , "button:hover { background: #e0e0e0; }"
-  , "#code, #js { margin: 10px; }"]
+css = BU.toString $(embedFile "assets/style.css")
 
 gaq :: String
-gaq = unlines
-  [ "var _gaq = _gaq || [];"
-  , "_gaq.push(['_setAccount', 'UA-33896432-1']);"
-  , "_gaq.push(['_trackPageview']);"
-  , "(function() {"
-  , " var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;"
-  , " ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';"
-  , " var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);"
-  , "})();" ]
+gaq = BU.toString $(embedFile "assets/gaq.js")
 
-ace :: Bool -> String
-ace js = unlines $
-  [ "var editor = ace.edit('code');"
-  , "editor.setTheme('ace/theme/dawn');"
-  , "editor.renderer.setShowGutter(false);"
-  , "var session = editor.getSession();"
-  , "session.setMode('ace/mode/haskell');"
-  , "session.setValue($('#textarea').val());"
-  , "session.setUseWrapMode(true);"
-  , "session.on('change', function(){"
-  , "  $('#textarea').val(editor.getSession().getValue());"
-  , "});"
-  , "if ($('#js')[0]) {"
-  , "  var js = ace.edit('js');"
-  , "  js.setTheme('ace/theme/dawn');"
-  , "  js.renderer.setShowGutter(false);"
-  , "  js.setReadOnly(true);"
-  , "  var session = js.getSession();"
-  , "  session.setUseWrapMode(true);"
-  ]
-  ++ (if js then
-        [ "  session.setMode('ace/mode/javascript');" ]
-      else
-        []) ++
-  [ "}"
-  , "function setHeight() {"
-  , "  var top = $('#code').offset().top;"
-  , "  var tot = $(window).height();"
-  , "  var height = Math.max(tot - top - 50, 200);"
-  , "  $('#code').height(height + 'px');"
-  , "  $('#js').height(height + 'px');"
-  , "}"
-  , "$(setHeight);"
-  , "$(window).on('resize', setHeight);" ]
+ace :: String
+ace = BU.toString $(embedFile "assets/ace.js")
+
+defaultCode :: String
+defaultCode = BU.toString $(embedFile "examples/default.purs")
 
 examples :: [(String, (String, String))]
 examples =
-  [ ("adt",
-      ("Algebraic Data Types",
-        unlines [ "module Main where"
-                , ""
-                , "import Prelude"
-                , ""
-                , "data Person = Person { name :: String, age :: Number }"
-                , ""
-                , "foreign import numberToString :: Number -> String"
-                , ""
-                , "showPerson (Person { name = name, age = age }) ="
-                , "  name ++ \", aged \" ++ numberToString age"
-                ]))
-  , ("ops",
-      ("Operators",
-        unlines [ "module Main where"
-                , ""
-                , "import Prelude ()"
-                , ""
-                , "infixl 5 >>>"
-                , ""
-                , "(>>>) :: forall a b c. (a -> b) -> (b -> c) -> a -> c"
-                , "(>>>) f g a = g (f a)"
-                , ""
-                , "foreign import foo :: String -> Number"
-                , "foreign import bar :: Number -> Boolean"
-                , ""
-                , "test = foo >>> bar"
-                ]))
-  , ("arrays",
-      ("Arrays",
-        unlines [ "module Main where"
-                , ""
-                , "import Prelude"
-                , ""
-                , "sum (x:xs) = x + sum xs"
-                , "sum _ = 0"
-                , ""
-                , "sumOfProducts (x : y : xs) = x * y + sumOfProducts xs"
-                , "sumOfProducts _ = 0"
-                ]))
-  , ("rows",
-      ("Row Polymorphism",
-        unlines [ "module Main where"
-                , ""
-                , "import Prelude"
-                , ""
-                , "showPerson o = o.lastName ++ \", \" ++ o.firstName"
-                ]))
-  , ("ffi",
-      ("FFI",
-        unlines [ "module Main where"
-                , ""
-                , "foreign import data IO :: * -> *"
-                , ""
-                , "foreign import log \"function log(s) { return function() { console.log(s) }; }\" :: String -> IO { }"
-                , ""
-                , "main = log \"Hello World!\""
-                ]))
-  , ("blocks",
-      ("Mutable Variables",
-        unlines [ "module Main where"
-                , ""
-                , "import Prelude"
-                , "import Control.Monad.Eff"
-                , "import Control.Monad.ST"
-                , ""
-                , "collatz :: Number -> Number"
-                , "collatz n = runPure (runST (do"
-                , "  r <- newSTRef n"
-                , "  count <- newSTRef 0"
-                , "  untilE $ do"
-                , "    modifySTRef count $ (+) 1"
-                , "    m <- readSTRef r"
-                , "    writeSTRef r $ if m % 2 == 0 then m / 2 else 3 * m + 1"
-                , "    return $ m == 1"
-                , "  readSTRef count))"
-                ]))
-  , ("modules",
-      ("Modules",
-        unlines [ "module M1 where"
-                , ""
-                , "import Prelude"
-                , ""
-                , "incr :: Number -> Number"
-                , "incr x = x + 1"
-                , ""
-                , "module Main where"
-                , ""
-                , "test = M1.incr 10"
-                ]))
-  , ("rank2",
-      ("Rank N Types",
-       unlines [ "module Main where"
-               , ""
-               , "type Nat = forall a. a -> (a -> a) -> a"
-               , ""
-               , "zero :: Nat"
-               , "zero a _ = a"
-               , ""
-               , "succ :: Nat -> Nat"
-               , "succ n a f = f (n a f)"
-               , ""
-               , "type Lens a b = forall f. (a -> f a) -> b -> f b"
-               , ""
-               , "compose :: forall a b c. Lens a b -> Lens b c -> Lens a c"
-               , "compose l1 l2 f = l2 (l1 f)"
-               ]))
-  , ("recursion",
-      ("Recursion",
-       unlines [ "module Main where"
-               , ""
-               , "import Prelude"
-               , ""
-               , "isOdd :: Number -> Boolean"
-               , "isOdd 0 = false"
-               , "isOdd n = isEven (n - 1)"
-               , ""
-               , "isEven :: Number -> Boolean"
-               , "isEven 0 = true"
-               , "isEven n = isOdd (n - 1)"
-               ]))
-  , ("do",
-      ("Do Notation",
-       unlines [ "module Main where"
-               , ""
-               , "import Prelude"
-               , ""
-               , "data Maybe a = Nothing | Just a"
-               , ""
-               , "instance monadMaybe :: Prelude.Monad Maybe where"
-               , "  return = Just"
-               , "  (>>=) Nothing _ = Nothing"
-               , "  (>>=)  (Just a) f = f a"
-               , ""
-               , "isEven n | n % 2 == 0 = Just {}"
-               , "isEven _ = Nothing"
-               , ""
-               , "evenSum a b = do"
-               , "  n <- a"
-               , "  m <- b"
-               , "  let sum = n + m"
-               , "  isEven sum"
-               , "  return sum"
-               ]))
-  , ("tco",
-      ("Tail-Call Elimination",
-       unlines [ "module Main where"
-               , ""
-               , "import Prelude"
-               , ""
-               , "factHelper prod 0 = prod"
-               , "factHelper prod n = factHelper (prod * n) (n - 1)"
-               , ""
-               , "fact = factHelper 1"
-               ]))
-  , ("typeclasses",
-      ("Type Classes",
-       unlines [ "module Main where"
-               , ""
-               , "import Prelude ((++))"
-               , ""
-               , "class Show a where"
-               , "  show :: a -> String"
-               , ""
-               , "instance showString :: Show String where"
-               , "  show s = s"
-               , ""
-               , "instance showBoolean :: Show Boolean where"
-               , "  show true = \"true\""
-               , "  show false = \"false\""
-               , ""
-               , "instance showArray :: (Show a) => Show [a] where"
-               , "  show arr = \"[\" ++ go arr ++ \"]\""
-               , "    where"
-               , "    go :: forall a. (Show a) => [a] -> String"
-               , "    go [] = \"\""
-               , "    go [x] = show x"
-               , "    go (x:xs) = show x ++ \", \" ++ go xs"
-               , ""
-               , "test = show [true, false]"
-               ]))
+  [ ("adt",         ("Algebraic Data Types",  BU.toString $(embedFile "examples/adt.purs")))
+  , ("ops",         ("Operators",             BU.toString $(embedFile "examples/operators.purs")))
+  , ("arrays",      ("Arrays",                BU.toString $(embedFile "examples/arrays.purs")))
+  , ("rows",        ("Row Polymorphism",      BU.toString $(embedFile "examples/rows.purs")))
+  , ("ffi",         ("FFI",                   BU.toString $(embedFile "examples/ffi.purs")))
+  , ("mutable",     ("Mutable Variables",     BU.toString $(embedFile "examples/mutable.purs")))
+  , ("modules",     ("Modules",               BU.toString $(embedFile "examples/modules.purs")))
+  , ("rank2",       ("Rank N Types",          BU.toString $(embedFile "examples/rankn.purs")))
+  , ("recursion",   ("Recursion",             BU.toString $(embedFile "examples/recursion.purs")))
+  , ("do",          ("Do Notation",           BU.toString $(embedFile "examples/do.purs")))
+  , ("tco",         ("Tail-Call Elimination", BU.toString $(embedFile "examples/tco.purs")))
+  , ("typeclasses", ("Type Classes",          BU.toString $(embedFile "examples/typeclasses.purs")))
   ]
 
 page :: Maybe String -> Maybe String -> Maybe Response -> ActionM ()
@@ -373,7 +155,8 @@ page ex input res = html $ renderHtml $ do
 	         H.div ! A.style "position: absolute; width: 50%; left: 50%;" $ do
 		   H.h2 $ H.toHtml $ str "Generated Javascript"
 	           H.div ! A.id "js" $ H.toHtml . str $ text
-	       H.script ! A.type_ "text/javascript" $ preEscapedToHtml (ace success)
+	       H.script ! A.type_ "text/javascript" $ preEscapedToHtml $ str $ "var compiledSuccessfully = " ++ if success then "true;" else "false;"
+	       H.script ! A.type_ "text/javascript" $ preEscapedToHtml ace
 
 responseToJs :: Maybe Response -> (Bool, String)
 responseToJs Nothing = (False, "")
@@ -383,20 +166,10 @@ responseToJs (Just (Response (Right (Compiled js _)))) = (True, js)
 
 server :: Int -> IO ()
 server port = do
-  prelude <- preludeFilename >>= U.readFile
   let preludeModules = either (error . show) id $ P.runIndentParser "" P.parseModules prelude
   scotty port $ do
     get "/" $ do
-      page Nothing (Just (unlines [ "-- Type PureScript code here and click 'Compile' ..."
-                                  , "-- "
-                                  , "-- Or select an example from the list at the top right of the page"
-                                  , ""
-                                  , "module Main where"
-                                  , ""
-                                  , "import Debug.Trace"
-                                  , ""
-                                  , "main = trace \"Hello, World!\""
-                                  ])) Nothing
+      page Nothing (Just defaultCode) Nothing
     get "/example/:name" $ do
       name <- param "name"
       case lookup name examples of
