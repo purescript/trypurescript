@@ -1,8 +1,15 @@
 module Main where
 
-foreign import data IO :: * -> *
+import Control.Monad.Eff
 
-foreign import log "function log(s) { return function() { console.log(s) }; }" :: String -> IO { }
+foreign import data Random :: !
 
-main = log "Hello World!"
+foreign import random 
+  "function random() { \
+  \  return function() { \
+  \    return Math.random(); \
+  \  }; \
+  \}" :: Eff (random :: Random) Number
+
+main = Debug.Trace.print <$> random
 
