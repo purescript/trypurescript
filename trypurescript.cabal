@@ -15,7 +15,7 @@ data-dir: ""
 executable trypurescript
     build-depends: blaze-markup >=0.5.1.5 && <0.6,
                    bytestring >=0.10.0.2 && <0.11, base ==4.*, scotty -any,
-                   purescript ==0.4.11, containers -any, mtl -any, blaze-html -any,
+                   purescript ==0.4.11.1, containers -any, mtl -any, blaze-html -any,
                    cmdtheline -any, monad-unify >=0.2.1 && <0.3, utf8-string -any,
                    file-embed >=0.0.6
     main-is: Main.hs
