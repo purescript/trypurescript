@@ -10,7 +10,7 @@ data Maybe a = Nothing | Just a
 
 instance functorMaybe :: Functor Maybe where
   (<$>) _ Nothing = Nothing
-  (<$>) f (Just a) = Just a
+  (<$>) f (Just a) = Just (f a)
 
 instance applyMaybe :: Apply Maybe where
   (<*>) = ap
