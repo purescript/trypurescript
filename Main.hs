@@ -56,7 +56,9 @@ data Compiled = Compiled { js      :: String
 data Response = Response (Either String Compiled)
 
 options :: P.Options
-options = P.defaultOptions { P.optionsModules = ["Main"] }
+options = P.defaultOptions { P.optionsModules = ["Main"]
+                           , P.optionsBrowserNamespace = Just "PS"
+                           }
 
 compile :: [P.Module] -> String -> IO Response
 compile _ input | length input > 5000 = return $ Response $ Left "Please limit your input to 5000 characters"
@@ -189,4 +191,5 @@ termInfo = defTI
 
 main :: IO ()
 main = run (term, termInfo)
+
 
