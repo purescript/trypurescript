@@ -4,7 +4,7 @@ data Maybe a = Nothing | Just a
 
 --
 -- In order to define an instance of Monad for the Maybe type,
--- we need to provide instaces for its superclasses:
+-- we need to provide instances for its superclasses:
 -- Functor, Apply, Applicative and Bind.
 --
 
