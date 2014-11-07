@@ -12,7 +12,7 @@
 --
 -----------------------------------------------------------------------------
 
-{-# LANGUAGE OverloadedStrings, TemplateHaskell #-}
+{-# LANGUAGE DataKinds, OverloadedStrings, TemplateHaskell #-}
 
 module Main (
     main
@@ -55,10 +55,8 @@ data Compiled = Compiled { js      :: String
 
 data Response = Response (Either String Compiled)
 
-options :: P.Options
-options = P.defaultOptions { P.optionsModules = ["Main"]
-                           , P.optionsBrowserNamespace = Just "PS"
-                           }
+options :: P.Options P.Compile
+options = P.defaultCompileOptions { P.optionsAdditional = P.CompileOptions "PS" ["Main"] [] }
 
 compile :: [P.Module] -> String -> IO Response
 compile _ input | length input > 5000 = return $ Response $ Left "Please limit your input to 5000 characters"
@@ -67,7 +65,7 @@ compile prelude input = do
     Left parseError -> do
       return $ Response $ Left $ show parseError
     Right modules -> do
-      case P.compile options (prelude ++ modules) of
+      case P.compile options (prelude ++ modules) [] of
         Left error ->
           return $ Response $ Left error
         Right (js, externs, _) ->

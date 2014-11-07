@@ -29,8 +29,8 @@ instance monadMaybe :: Monad Maybe
 -- function to make sure the sum is even.
 --
 
-guard :: Boolean -> Maybe {}
-guard true = Just {}
+guard :: Boolean -> Maybe Unit
+guard true = Just unit
 guard false = Nothing
 
 evenSum :: Maybe Number -> Maybe Number -> Maybe Number
