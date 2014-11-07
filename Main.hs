@@ -19,9 +19,12 @@ module Main (
 ) where
 
 import Web.Scotty
+import qualified Web.Scotty as Scotty
 import qualified Language.PureScript as P
 
 import Data.Version (showVersion)
+
+import Network.HTTP.Types (status500)
 
 import Data.Monoid
 import Data.String
@@ -43,6 +46,7 @@ import qualified Paths_trypurescript as Paths
 
 import qualified Data.ByteString as B
 import qualified Data.ByteString.UTF8 as BU
+import qualified Data.ByteString.Lazy.UTF8 as BUL
 
 import Data.FileEmbed
 
@@ -53,7 +57,7 @@ data Compiled = Compiled { js      :: String
                          , externs :: String
                          }
 
-data Response = Response (Either String Compiled)
+newtype Response = Response { runResponse :: Either String Compiled }
 
 options :: P.Options P.Compile
 options = P.defaultCompileOptions { P.optionsAdditional = P.CompileOptions "PS" ["Main"] [] }
@@ -140,7 +144,7 @@ page ex input res = html $ renderHtml $ do
 	       let (success, text) = responseToJs res
 	
 	       H.h2 $ H.toHtml $ str "PureScript Code"
-	       H.form ! A.action "/compile" ! A.method "POST" $ do
+	       H.form ! A.action "/compile/html" ! A.method "POST" $ do
 		 H.div ! A.id "code" $ mempty
 		 H.textarea ! A.name "code" ! A.id "textarea" ! A.style "display: none;" $ maybe mempty (H.toHtml . str) input
 		 H.div $ H.button ! A.type_ "submit" $ H.toHtml $ str "Compile"
@@ -168,10 +172,19 @@ server port = do
         Just (_, code) -> do
           response <- lift $ compile preludeModules code
           page (Just name) (Just code) (Just response)
-    post "/compile" $ do
+    post "/compile/html" $ do
       code <- param "code"
       response <- lift $ compile preludeModules code
       page Nothing (Just code) (Just response)
+    post "/compile/text" $ do
+      code <- BUL.toString <$> body
+      response <- lift $ compile preludeModules code
+      case runResponse response of
+        Left err -> do
+          status status500
+          Scotty.text . fromString $ err
+        Right comp -> 
+          Scotty.text . fromString $ js comp
 
 term :: Term (IO ())
 term = server <$> port
