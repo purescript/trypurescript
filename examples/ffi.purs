@@ -7,7 +7,7 @@ foreign import data Random :: !
 foreign import random """
   function random() {
     return Math.random();
-  }""" :: Eff (random :: Random) Number
+  }""" :: forall eff. Eff (random :: Random | eff) Number
 
-main = Debug.Trace.print <$> random
+main = random >>= Debug.Trace.print
 
