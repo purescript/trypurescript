@@ -1,43 +1,37 @@
 module Main where
 
-data Maybe a = Nothing | Just a
+import Debug.Trace
 
---
--- In order to define an instance of Monad for the Maybe type,
--- we need to provide instances for its superclasses:
--- Functor, Apply, Applicative and Bind.
---
+instance functorArray :: Functor [] where
+  (<$>) _ [] = []
+  (<$>) f (x:xs) = f x : (f <$> xs)
 
-instance functorMaybe :: Functor Maybe where
-  (<$>) _ Nothing = Nothing
-  (<$>) f (Just a) = Just (f a)
-
-instance applyMaybe :: Apply Maybe where
+instance applyArray :: Apply [] where
   (<*>) = ap
 
-instance applicativeMaybe :: Applicative Maybe where
-  pure = Just
+instance applicativeArray :: Applicative [] where
+  pure a = [a]
 
-instance bindMaybe :: Bind Maybe where
-  (>>=) Nothing _ = Nothing
-  (>>=) (Just a) f = f a
+concat :: forall a. [a] -> [a] -> [a]
+concat []     ys = ys
+concat (x:xs) ys = x : concat xs ys
 
-instance monadMaybe :: Monad Maybe
+instance bindArray :: Bind [] where
+  (>>=) [] _ = []
+  (>>=) (x:xs) f = concat (f x) (xs >>= f)
 
---
--- In this example, we find the sum of two numbers, using the guard
--- function to make sure the sum is even.
---
+instance monadArray :: Monad []
 
-guard :: Boolean -> Maybe Unit
-guard true = Just unit
-guard false = Nothing
+guard :: Boolean -> [Unit]
+guard true = [unit]
+guard false = []
 
-evenSum :: Maybe Number -> Maybe Number -> Maybe Number
-evenSum a b = do
-  n <- a
-  m <- b
-  let sum = n + m
-  guard $ sum % 2 == 0
-  return sum
-
+triples :: [Number] -> [[Number]]
+triples ns = do
+  x <- ns
+  y <- ns
+  z <- ns
+  guard $ x * x + y * y == z * z
+  return [x, y, z]
+  
+main = print $ triples [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]

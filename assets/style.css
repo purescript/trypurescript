@@ -20,7 +20,7 @@
 
 body
 {
-  font: 18px "PT Serif", Georgia, Times, Serif;
+  font: 18px Roboto, sans-serif;
   line-height: 150%;
   color: #404040;
   margin: 0;
@@ -74,19 +74,21 @@ a {
 }
 
 button {
-  background: #d0d0d0;
-  color: #606060;
-  padding-top: 3px;
-  padding-bottom: 3px;
-  font-weight: bold;
-  border-radius: 1px;
-  border: 1px solid #c0c0c0;
-  box-shadow: 1px 1px 0 0 #ffffff inset;
-  padding-left: 15px;
-  padding-right: 15px;
+  background: #800000;
+  color: #ffffff;
+  padding: 10px 15px;
+  font-size: 12px;
+  border: 0;
+  box-shadow: 2px 2px 4px #BBAAAA;
   cursor: pointer;
 }
 
 button:hover {
-  background: #e0e0e0;
+  background: #9B4242;
+}
+
+iframe {
+  width: 100%;
+  border: 1px solid #f0f0f0;
+  box-shadow: 0 0 10px #F6F6F6;
 }

@@ -1,13 +1,15 @@
 module Main where
 
-import Prelude ()
+import Debug.Trace
 
-infixl 5 >>>
+type FilePath = String
 
-(>>>) :: forall a b c. (a -> b) -> (b -> c) -> a -> c
-(>>>) f g a = g (f a)
+infixl 5 </>
 
-foreign import foo :: String -> Number
-foreign import bar :: Number -> Boolean
+(</>) :: FilePath -> FilePath -> FilePath
+(</>) p1 p2 = p1 <> "/" <> p2
 
-test = foo >>> bar
+filepath :: FilePath
+filepath = "usr" </> "local" </> "bin"
+
+main = trace filepath

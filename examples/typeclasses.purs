@@ -1,24 +1,17 @@
 module Main where
 
-import Prelude ((++))
+import Debug.Trace
 
-class Show a where
-  show :: a -> String
+class Sized a where
+  size :: a -> Number
 
-instance showString :: Show String where
-  show s = s
+instance sizedNumber :: Sized Number where
+  size n = n
 
-instance showBoolean :: Show Boolean where
-  show true = "true"
-  show false = "false"
+instance sizedArray :: (Sized a) => Sized [a] where
+  size [] = 0
+  size (x : xs) = size x + size xs
 
-instance showArray :: (Show a) => Show [a] where
-  show arr = "[" ++ go arr ++ "]"
-    where
-    go :: forall a. (Show a) => [a] -> String
-    go [] = ""
-    go [x] = show x
-    go (x:xs) = show x ++ ", " ++ go xs
-
-test = show [true, false]
-
+main = do
+  print $ size 100
+  print $ size [1, 2, 3, 4, 5]
