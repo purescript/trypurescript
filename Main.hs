@@ -31,6 +31,9 @@ import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as BC8
 import qualified Data.ByteString.Lazy.Char8 as BLC8
 
+import qualified Data.Aeson as A
+import Data.Aeson ((.=))
+
 import qualified Data.Map as M
 
 import Control.Applicative
@@ -165,10 +168,9 @@ server port = do
       response <- lift $ compile preludeModules code
       case runResponse response of
         Left err -> do
-          status status500
-          Scotty.text . fromString $ err
+          Scotty.json $ A.object [ "error" .= err ]
         Right comp -> 
-          Scotty.text . fromString $ js comp
+          Scotty.json $ A.object [ "js" .= js comp ]
 
 main :: IO ()
 main = do

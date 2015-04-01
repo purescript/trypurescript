@@ -13,7 +13,7 @@ author: Phil Freeman
 data-dir: ""
  
 executable trypurescript
-    build-depends: blaze-markup >=0.5.1.5 && <0.6,
+    build-depends: blaze-markup >=0.5.1.5 && <0.6, aeson -any,
                    bytestring >=0.10.0.2 && <0.11, base ==4.*, scotty -any,
                    purescript ==0.6.9.3, containers -any, mtl -any, blaze-html -any,
                    optparse-applicative -any, http-types >= 0.8.5, file-embed >=0.0.6
