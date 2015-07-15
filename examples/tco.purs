@@ -1,11 +1,12 @@
 module Main where
 
-import Debug.Trace
+import Prelude
+import Control.Monad.Eff.Console (print)
 
-fact :: Number -> Number
+fact :: Int -> Int
 fact = go 1
   where
   go prod 0 = prod
   go prod n = go (prod * n) (n - 1)
 
-main = print $ fact 20
+main = print $ fact 10

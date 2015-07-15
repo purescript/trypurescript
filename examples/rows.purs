@@ -1,11 +1,12 @@
 module Main where
 
-import Debug.Trace
+import Prelude
+import Control.Monad.Eff.Console (log)
 
 showPerson o = o.lastName ++ ", " ++ o.firstName
 
-main = trace $ showPerson 
+main = log $ showPerson 
   { firstName: "John"
   , lastName: "Smith"
-  , age: "30"
+  , age: 30
   }

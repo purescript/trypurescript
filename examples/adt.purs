@@ -1,14 +1,15 @@
 module Main where
-  
-import Debug.Trace
+    
+import Prelude
+import Control.Monad.Eff.Console (log)
 
-data Person = Person String Number 
-            
+data Person = Person String Int 
+                        
 showPerson :: Person -> String
 showPerson (Person name age) =
   name ++ ", aged " ++ show age
-    
+        
 person :: Person
 person = Person "John Smith" 30
 
-main = trace (showPerson person)
+main = log (showPerson person)

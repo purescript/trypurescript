@@ -1,5 +1,6 @@
 module Main where
 
-import Debug.Trace
+import Prelude
+import Control.Monad.Eff.Console (log)
 
-main = trace "Hello, World!"
+main = log "Hello, World!"

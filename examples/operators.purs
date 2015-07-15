@@ -1,6 +1,7 @@
 module Main where
-
-import Debug.Trace
+    
+import Prelude
+import Control.Monad.Eff.Console (log)
 
 type FilePath = String
 
@@ -12,4 +13,5 @@ infixl 5 </>
 filepath :: FilePath
 filepath = "usr" </> "local" </> "bin"
 
-main = trace filepath
+main = log filepath
+

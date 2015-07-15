@@ -1,13 +1,28 @@
 /* Page layout */
 
+body
+{
+  font-family: 'Roboto', sans-serif;
+  line-height: 150%;
+  color: #404040;
+  margin: 0;
+  color: rgb(29, 34, 45);
+  overflow-y: scroll;
+}
+
 .wrapper {
-  max-width: 750px;
   margin: 0 auto;
-  padding: 20px;
 }
 
 .header {
   border-bottom: 1px solid #ddd;
+  background-color: rgb(29, 34, 45);
+  padding: 25px 40px;
+  color: white;
+}
+
+.body {
+  padding: 40px;
 }
 
 .footer {
@@ -18,24 +33,21 @@
 
 /* Typography */
 
-body
-{
-  font: 18px Roboto, sans-serif;
-  line-height: 150%;
-  color: #404040;
-  margin: 0;
-}
-
 h1, h2, h3 {
   line-height: 110%;
 }
 
 h1 {
-  margin: 40px 0 20px 0;
+  font-size: 2em;
+  font-weight: 300;
 }
 
 h2, h3 {
   margin: 40px 0 10px 0;
+}
+
+a, a:visited, a:active, a:hover {
+  color: #c4953a;
 }
 
 .info {
@@ -69,22 +81,25 @@ pre code {
   padding: 0;
 }
 
-a {
-  color: #800000;
-}
-
 button {
-  background: #800000;
-  color: #ffffff;
-  padding: 10px 15px;
+  background: white;
+  color: #c4953a;
   font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
   border: 0;
-  box-shadow: 2px 2px 4px #BBAAAA;
   cursor: pointer;
+  border-top: 1px solid #c4953a;
+  padding: 8px 0px 6px 22px;
+  text-align: right;
 }
 
 button:hover {
-  background: #9B4242;
+  opacity: 0.7;
+}
+
+button:focus {
+  outline: 0;
 }
 
 iframe {

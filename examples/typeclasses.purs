@@ -1,17 +1,37 @@
 module Main where
 
-import Debug.Trace
+import Prelude
+import Control.Monad.Eff.Console (log)
 
-class Sized a where
-  size :: a -> Number
+class Printf r where
+  printfWith :: String -> r
+  
+instance printfString :: Printf String where
+  printfWith = id
+  
+instance printfShow :: (Show a, Printf r) => Printf (a -> r) where
+  printfWith s a = printfWith (s <> show a)
 
-instance sizedNumber :: Sized Number where
-  size n = n
+-- | A newtype for literal strings
+newtype Lit = Lit String
 
-instance sizedArray :: (Sized a) => Sized [a] where
-  size [] = 0
-  size (x : xs) = size x + size xs
+instance showLit :: Show Lit where
+  show (Lit s) = s
+
+printf :: forall r. (Printf r) => r
+printf = printfWith ""
+
+-- | We can create custom formatters using different argument
+-- | types.
+debug :: String -> Int -> String -> String
+debug uri status msg  = 
+  printf (Lit "[") 
+         uri
+         (Lit "] ") 
+         status 
+         (Lit ": ") 
+         msg
 
 main = do
-  print $ size 100
-  print $ size [1, 2, 3, 4, 5]
+  log $ debug "http://www.purescript.org" 200 "OK"
+  log $ debug "http://bad.purescript.org" 404 "Not found"

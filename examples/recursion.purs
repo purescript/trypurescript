@@ -1,12 +1,13 @@
 module Main where
 
-import Debug.Trace
+import Prelude
+import Control.Monad.Eff.Console (print)
 
-isOdd :: Number -> Boolean
+isOdd :: Int -> Boolean
 isOdd 0 = false
 isOdd n = isEven (n - 1)
 
-isEven :: Number -> Boolean
+isEven :: Int -> Boolean
 isEven 0 = true
 isEven n = isOdd (n - 1)
 
