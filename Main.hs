@@ -116,10 +116,9 @@ compile _ _ input | length input > 20000 = return $ Response $ Left "Please limi
 compile prelude foreigns input = do
   case either Left (Right . map snd) $ P.parseModulesFromFiles (const "<file>") [(undefined, input)] of
     Left parseError -> do
-      return $ Response $ Left $ show parseError
-    Right modules -> do
-      let allModules = map (Left P.RebuildNever, ) prelude ++ map (Left P.RebuildAlways, ) modules
-      case runTry (P.make (makeActions foreigns) allModules) of
+      return $ Response $ Left $ P.prettyPrintMultipleErrors False parseError
+    Right modules ->
+      case runTry (P.make (makeActions foreigns) (prelude ++ modules)) of
         Left err ->
           return $ Response $ Left (P.prettyPrintMultipleErrors False err)
         Right (_, fs) ->
