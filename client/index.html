@@ -1,0 +1,84 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Try PureScript!</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Roboto:300,600">
+  <link rel="stylesheet" type="text/css" href="css/index.css">
+  <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/jquery/1.10.2/jquery.js"></script>
+  <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/ace/1.1.01/ace.js" charset="utf-8"></script>
+  <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/ace/1.1.01/mode-haskell.js"></script>
+  <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/ace/1.1.01/theme-dawn.js"></script>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <h1>Try PureScript!</h1>
+    </div>
+
+    <div class="body">
+      <div class="editor">
+        <div id="code">
+        </div>
+
+        <textarea name="code" id="textarea" style="display: none;">module Main where
+
+import Prelude
+
+import Data.Int
+import Data.Maybe
+import Data.Array ((..))
+import Data.Monoid (mempty)
+import Data.Foldable (fold)
+
+import Control.Monad.Eff
+
+import Graphics.Drawing
+import Graphics.Canvas (getCanvasElementById, getContext2D)
+
+main = do
+  Just canvas <- getCanvasElementById "canvas"
+  ctx <- getContext2D canvas
+
+  render ctx $
+    translate 400.0 400.0 $
+      scale 200.0 200.0 $
+        go 4
+  where
+  s = 0.375
+
+  go 0 = mempty
+  go n =
+    let dr = scale s s (go (n - 1))
+    in filled (fillColor (lighten (1.0 - toNumber n / 6.0) black)) (closed pentagon)
+       <> fold do i <- 0..4
+                  return (rotate (Math.pi / 2.5 * (toNumber i + 0.5)) (translate 0.0 (Math.cos (Math.pi / 5.0) * (1.0 + s)) dr))
+
+  pentagon = do
+    i <- 0..5
+    let theta = Math.pi / 2.5 * toNumber i
+    return { x: Math.sin theta, y: Math.cos theta }</textarea>
+      </div>
+
+      <div class="separator">
+      </div>
+
+      <div class="results">
+      </div>
+
+      <script type="text/javascript" src="js/index.js"></script>
+    </div>
+
+    <div class="footer">
+
+      <p>
+        <button id="compile">Compile and Run</button>
+      </p>
+
+      <p>
+        <small>Modify the source code and click <strong>Compile and Run</strong>.</small>
+      </p>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,121 @@
+/* Page layout */
+
+html, body {
+  height: 100%;
+}
+
+body
+{
+  font-family: 'Roboto', sans-serif;
+  line-height: 150%;
+  color: #404040;
+  margin: 0;
+  color: rgb(29, 34, 45);
+}
+
+.wrapper {
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.header {
+  border-bottom: 1px solid #ddd;
+  background-color: rgb(29, 34, 45);
+  padding: 25px 40px;
+  color: white;
+}
+
+.body {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+}
+
+.editor, .results {
+  display: flex;
+  flex-basis: 50%;
+  flex-grow: 1;
+}
+
+#code {
+  flex-basis: 100vh;
+  width: 100%;
+}
+
+.separator {
+  flex-basis: 10px;
+  flex-grow: 0;
+  background-color: rgb(250, 250, 250);
+}
+
+.footer {
+  border-top: 1px solid #ddd;
+  background-color: rgb(250, 250, 250);
+  padding: 15px 40px;
+}
+
+/* Typography */
+
+h1, h2, h3 {
+  line-height: 110%;
+}
+
+h1 {
+  font-size: 2em;
+  font-weight: 300;
+}
+
+h2, h3 {
+  margin: 40px 0 10px 0;
+}
+
+a, a:visited, a:active, a:hover {
+  color: #c4953a;
+}
+
+.info {
+  margin-top: -6px;
+  font-size: 12px;
+  font-variant: small-caps;
+}
+
+blockquote {
+  font-style: italic;
+  display: block;
+  padding: 10px 40px;
+  margin: 0;
+}
+
+pre code {
+  background: none;
+  border: 0;
+  padding: 0;
+}
+
+button {
+  background: none;
+  color: #c4953a;
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+  border: 0;
+  cursor: pointer;
+  border-top: 1px solid #c4953a;
+  padding: 8px 0px 6px 0px;
+  text-align: right;
+}
+
+button:hover {
+  opacity: 0.7;
+}
+
+button:focus {
+  outline: 0;
+}
+
+iframe {
+  width: 100%;
+  border: 0;
+}
