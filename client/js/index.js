@@ -31,21 +31,10 @@ $(function() {
             method: 'POST',
             contentType: 'text/plain',
             success: function(res) {
-                if (res.errors && res.errors.length) {
-                    $('.results').empty();
-
-                    for (var i = 0; i < res.errors.length; i++) {
-                        $('.results').append(
-                            $('<pre>')
-                                .append($('<code>')
-                                    .append("Error:\n")
-                                    .append(res.errors[i].message)))
-                        .append($('<pre>')
-                            .append($('<code>')
-                                .append("See ")
-                                .append($('<a>').attr('href', res.errors[i].errorLink).append("here"))
-                                .append(" for more information.")));
-                    }
+              if (res.error) {
+                  $('.results')
+                      .empty()
+                      .append($('<pre>').append($('<code>').append(res.error)));
                 } else if (res.js) {
                     $.get('js/bundle.js').done(function(bundle) {
                         var $iframe = $('<iframe>');
