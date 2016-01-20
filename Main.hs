@@ -160,8 +160,6 @@ server port = do
     get "/" $
       Scotty.text "POST api.purescript.org/compile"
     post "/compile" $ do
-      -- Enable CORS requests
-      Scotty.setHeader "Access-Control-Allow-Origin" "*"
       code <- BLC8.unpack <$> body
       response <- lift $ compile code
       case response of
