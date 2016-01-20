@@ -25,7 +25,7 @@ $(function() {
         var code = $('#textarea').val();
 
         $.ajax({
-            url: 'http://localhost:8081/compile',
+            url: 'http://compile.purescript.org/compile',
             dataType: 'json',
             data: code,
             method: 'POST',
