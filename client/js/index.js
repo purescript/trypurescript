@@ -70,6 +70,10 @@ $(function() {
                             , '    document.getElementById("console").appendChild(div);'
                             , '  }'
                             , '};'
+                            , 'window.onerror = function(e) {'
+                            , '  console.log(e);'
+                            , '  return true;'
+                            , '};'
                             ].join('\n');
 
                         var replaced = res.js.replace(/require\("[^"]*"\)/g, function(s) {
