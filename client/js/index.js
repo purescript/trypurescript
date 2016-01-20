@@ -48,7 +48,7 @@ $(function() {
                         iframe.write(
                             [ '<html>'
                             , '  <head>'
-                            , '    <title>PureScript Playground</title>'
+                            , '    <title>Try PureScript!</title>'
                             , '  </head>'
                             , '  <body>'
                             , '    <div id="console"></div>'
