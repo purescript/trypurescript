@@ -91,6 +91,9 @@ $(function() {
                         script.appendChild(iframe.createTextNode(scripts));
                         var head = iframe.getElementsByTagName('head')[0];
                         head.appendChild(script);
+                    }).fail(function(err) {
+
+                        console.log("Could not load JS bundle: " + err);
                     });
                 }
             },
