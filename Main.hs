@@ -127,9 +127,9 @@ externsFiles =
   , "Graphics.Drawing"
   ]
 
-server :: Int -> IO ()
-server port = do
-  externs <- mapM (readExterns . ("externs" </>) . (++ ".json")) externsFiles
+server :: FilePath -> Int -> IO ()
+server externsPath port = do
+  externs <- mapM (readExterns . (externsPath </>) . (++ ".json")) externsFiles
 
   let initEnv = foldl' (flip P.applyExternsFileToEnvironment) P.initEnvironment externs
 
@@ -171,5 +171,5 @@ server port = do
 
 main :: IO ()
 main = do
-  [port] <- getArgs
-  server (read port)
+  [externsPath, port] <- getArgs
+  server externsPath (read port)
