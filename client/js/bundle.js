@@ -417,7 +417,7 @@ var PS = { };
   });
   var semigroupString = new Semigroup($foreign.concatString);
   var semigroupOrdering = new Semigroup(function (v) {
-      return function (y) {
+      return function (v1) {
           if (v instanceof LT) {
               return LT.value;
           };
@@ -425,9 +425,9 @@ var PS = { };
               return GT.value;
           };
           if (v instanceof EQ) {
-              return y;
+              return v1;
           };
-          throw new Error("Failed pattern match at Prelude line 413, column 1 - line 418, column 1: " + [ v.constructor.name, y.constructor.name ]);
+          throw new Error("Failed pattern match at Prelude line 413, column 1 - line 418, column 1: " + [ v.constructor.name, v1.constructor.name ]);
       };
   });
   var semigroupArray = new Semigroup($foreign.concatArray);
@@ -663,17 +663,17 @@ var PS = { };
           return function (ys) {
               return $dollar(compare(ordInt)(0))($foreign.ordArrayImpl(function (x) {
                   return function (y) {
-                      var $78 = compare(dictOrd)(x)(y);
-                      if ($78 instanceof EQ) {
+                      var $79 = compare(dictOrd)(x)(y);
+                      if ($79 instanceof EQ) {
                           return 0;
                       };
-                      if ($78 instanceof LT) {
+                      if ($79 instanceof LT) {
                           return 1;
                       };
-                      if ($78 instanceof GT) {
+                      if ($79 instanceof GT) {
                           return negate(ringInt)(1);
                       };
-                      throw new Error("Failed pattern match at Prelude line 660, column 1 - line 666, column 1: " + [ $78.constructor.name ]);
+                      throw new Error("Failed pattern match at Prelude line 660, column 1 - line 666, column 1: " + [ $79.constructor.name ]);
                   };
               })(xs)(ys));
           };
@@ -682,8 +682,8 @@ var PS = { };
   var $less = function (dictOrd) {
       return function (a1) {
           return function (a2) {
-              var $79 = compare(dictOrd)(a1)(a2);
-              if ($79 instanceof LT) {
+              var $80 = compare(dictOrd)(a1)(a2);
+              if ($80 instanceof LT) {
                   return true;
               };
               return false;
@@ -693,8 +693,8 @@ var PS = { };
   var $less$eq = function (dictOrd) {
       return function (a1) {
           return function (a2) {
-              var $80 = compare(dictOrd)(a1)(a2);
-              if ($80 instanceof GT) {
+              var $81 = compare(dictOrd)(a1)(a2);
+              if ($81 instanceof GT) {
                   return false;
               };
               return true;
@@ -704,8 +704,8 @@ var PS = { };
   var $greater = function (dictOrd) {
       return function (a1) {
           return function (a2) {
-              var $81 = compare(dictOrd)(a1)(a2);
-              if ($81 instanceof GT) {
+              var $82 = compare(dictOrd)(a1)(a2);
+              if ($82 instanceof GT) {
                   return true;
               };
               return false;
@@ -715,8 +715,8 @@ var PS = { };
   var $greater$eq = function (dictOrd) {
       return function (a1) {
           return function (a2) {
-              var $82 = compare(dictOrd)(a1)(a2);
-              if ($82 instanceof LT) {
+              var $83 = compare(dictOrd)(a1)(a2);
+              if ($83 instanceof LT) {
                   return false;
               };
               return true;
@@ -2264,38 +2264,38 @@ var PS = { };
           return semigroupMaybe(dictSemigroup);
       }, Nothing.value);
   };
-  var maybe$prime = function (g) {
-      return function (f) {
-          return function (v) {
-              if (v instanceof Nothing) {
-                  return g(Prelude.unit);
+  var maybe$prime = function (v) {
+      return function (v1) {
+          return function (v2) {
+              if (v2 instanceof Nothing) {
+                  return v(Prelude.unit);
               };
-              if (v instanceof Just) {
-                  return f(v.value0);
+              if (v2 instanceof Just) {
+                  return v1(v2.value0);
               };
-              throw new Error("Failed pattern match at Data.Maybe line 39, column 1 - line 40, column 1: " + [ g.constructor.name, f.constructor.name, v.constructor.name ]);
+              throw new Error("Failed pattern match at Data.Maybe line 39, column 1 - line 40, column 1: " + [ v.constructor.name, v1.constructor.name, v2.constructor.name ]);
           };
       };
   };
-  var maybe = function (b) {
-      return function (f) {
-          return function (v) {
-              if (v instanceof Nothing) {
-                  return b;
+  var maybe = function (v) {
+      return function (v1) {
+          return function (v2) {
+              if (v2 instanceof Nothing) {
+                  return v;
               };
-              if (v instanceof Just) {
-                  return f(v.value0);
+              if (v2 instanceof Just) {
+                  return v1(v2.value0);
               };
-              throw new Error("Failed pattern match at Data.Maybe line 26, column 1 - line 27, column 1: " + [ b.constructor.name, f.constructor.name, v.constructor.name ]);
+              throw new Error("Failed pattern match at Data.Maybe line 26, column 1 - line 27, column 1: " + [ v.constructor.name, v1.constructor.name, v2.constructor.name ]);
           };
       };
   };
   var isNothing = maybe(true)(Prelude["const"](false));
   var isJust = maybe(false)(Prelude["const"](true));
-  var functorMaybe = new Prelude.Functor(function (fn) {
-      return function (v) {
-          if (v instanceof Just) {
-              return new Just(fn(v.value0));
+  var functorMaybe = new Prelude.Functor(function (v) {
+      return function (v1) {
+          if (v1 instanceof Just) {
+              return new Just(v(v1.value0));
           };
           return Nothing.value;
       };
@@ -2309,12 +2309,12 @@ var PS = { };
   };
   var extendMaybe = new Control_Extend.Extend(function () {
       return functorMaybe;
-  }, function (f) {
-      return function (v) {
-          if (v instanceof Nothing) {
+  }, function (v) {
+      return function (v1) {
+          if (v1 instanceof Nothing) {
               return Nothing.value;
           };
-          return new Just(f(v));
+          return new Just(v(v1));
       };
   });
   var eqMaybe = function (dictEq) {
@@ -2364,27 +2364,27 @@ var PS = { };
   var applyMaybe = new Prelude.Apply(function () {
       return functorMaybe;
   }, function (v) {
-      return function (x) {
+      return function (v1) {
           if (v instanceof Just) {
-              return Prelude["<$>"](functorMaybe)(v.value0)(x);
+              return Prelude["<$>"](functorMaybe)(v.value0)(v1);
           };
           if (v instanceof Nothing) {
               return Nothing.value;
           };
-          throw new Error("Failed pattern match at Data.Maybe line 121, column 1 - line 145, column 1: " + [ v.constructor.name, x.constructor.name ]);
+          throw new Error("Failed pattern match at Data.Maybe line 121, column 1 - line 145, column 1: " + [ v.constructor.name, v1.constructor.name ]);
       };
   });
   var bindMaybe = new Prelude.Bind(function () {
       return applyMaybe;
   }, function (v) {
-      return function (k) {
+      return function (v1) {
           if (v instanceof Just) {
-              return k(v.value0);
+              return v1(v.value0);
           };
           if (v instanceof Nothing) {
               return Nothing.value;
           };
-          throw new Error("Failed pattern match at Data.Maybe line 180, column 1 - line 199, column 1: " + [ v.constructor.name, k.constructor.name ]);
+          throw new Error("Failed pattern match at Data.Maybe line 180, column 1 - line 199, column 1: " + [ v.constructor.name, v1.constructor.name ]);
       };
   });
   var booleanAlgebraMaybe = function (dictBooleanAlgebra) {
@@ -2456,9 +2456,9 @@ var PS = { };
   var altMaybe = new Control_Alt.Alt(function () {
       return functorMaybe;
   }, function (v) {
-      return function (r) {
+      return function (v1) {
           if (v instanceof Nothing) {
-              return r;
+              return v1;
           };
           return v;
       };
@@ -2528,11 +2528,11 @@ var PS = { };
       });
   };
   var semigroupFirst = new Prelude.Semigroup(function (v) {
-      return function (second) {
+      return function (v1) {
           if (v instanceof Data_Maybe.Just) {
               return v;
           };
-          return second;
+          return v1;
       };
   });
   var runFirst = function (v) {
@@ -2551,8 +2551,8 @@ var PS = { };
       return functorFirst;
   }, function (f) {
       return function (v) {
-          return Control_Extend.extend(Data_Maybe.extendMaybe)(function ($33) {
-              return f(First($33));
+          return Control_Extend.extend(Data_Maybe.extendMaybe)(function ($34) {
+              return f(First($34));
           })(v);
       };
   });
@@ -2586,15 +2586,15 @@ var PS = { };
       return applyFirst;
   }, function (v) {
       return function (f) {
-          return Prelude.bind(Data_Maybe.bindMaybe)(v)(function ($34) {
-              return runFirst(f($34));
+          return Prelude.bind(Data_Maybe.bindMaybe)(v)(function ($35) {
+              return runFirst(f($35));
           });
       };
   });
   var applicativeFirst = new Prelude.Applicative(function () {
       return applyFirst;
-  }, function ($35) {
-      return First(Prelude.pure(Data_Maybe.applicativeMaybe)($35));
+  }, function ($36) {
+      return First(Prelude.pure(Data_Maybe.applicativeMaybe)($36));
   });
   var monadFirst = new Prelude.Monad(function () {
       return applicativeFirst;
@@ -2635,15 +2635,15 @@ var PS = { };
           return "Last (" + (Prelude.show(Data_Maybe.showMaybe(dictShow))(v) + ")");
       });
   };
-  var semigroupLast = new Prelude.Semigroup(function (last) {
-      return function (v) {
-          if (v instanceof Data_Maybe.Just) {
+  var semigroupLast = new Prelude.Semigroup(function (v) {
+      return function (v1) {
+          if (v1 instanceof Data_Maybe.Just) {
+              return v1;
+          };
+          if (v1 instanceof Data_Maybe.Nothing) {
               return v;
           };
-          if (v instanceof Data_Maybe.Nothing) {
-              return last;
-          };
-          throw new Error("Failed pattern match at Data.Maybe.Last line 57, column 1 - line 61, column 1: " + [ last.constructor.name, v.constructor.name ]);
+          throw new Error("Failed pattern match at Data.Maybe.Last line 57, column 1 - line 61, column 1: " + [ v.constructor.name, v1.constructor.name ]);
       };
   });
   var runLast = function (v) {
@@ -2662,8 +2662,8 @@ var PS = { };
       return functorLast;
   }, function (f) {
       return function (v) {
-          return Control_Extend.extend(Data_Maybe.extendMaybe)(function ($33) {
-              return f(Last($33));
+          return Control_Extend.extend(Data_Maybe.extendMaybe)(function ($34) {
+              return f(Last($34));
           })(v);
       };
   });
@@ -2697,15 +2697,15 @@ var PS = { };
       return applyLast;
   }, function (v) {
       return function (f) {
-          return Prelude.bind(Data_Maybe.bindMaybe)(v)(function ($34) {
-              return runLast(f($34));
+          return Prelude.bind(Data_Maybe.bindMaybe)(v)(function ($35) {
+              return runLast(f($35));
           });
       };
   });
   var applicativeLast = new Prelude.Applicative(function () {
       return applyLast;
-  }, function ($35) {
-      return Last(Prelude.pure(Data_Maybe.applicativeMaybe)($35));
+  }, function ($36) {
+      return Last(Prelude.pure(Data_Maybe.applicativeMaybe)($36));
   });
   var monadLast = new Prelude.Monad(function () {
       return applicativeLast;
@@ -2972,8 +2972,8 @@ var PS = { };
   var traverse_ = function (dictApplicative) {
       return function (dictFoldable) {
           return function (f) {
-              return foldr(dictFoldable)(function ($159) {
-                  return Control_Apply["*>"](dictApplicative["__superclass_Prelude.Apply_0"]())(f($159));
+              return foldr(dictFoldable)(function ($161) {
+                  return Control_Apply["*>"](dictApplicative["__superclass_Prelude.Apply_0"]())(f($161));
               })(Prelude.pure(dictApplicative)(Prelude.unit));
           };
       };
@@ -3026,8 +3026,8 @@ var PS = { };
                   };
                   if (v instanceof Data_Maybe.Just) {
                       return new Data_Maybe.Just((function () {
-                          var $85 = cmp(v.value0)(v1);
-                          if ($85 instanceof Prelude.GT) {
+                          var $87 = cmp(v.value0)(v1);
+                          if ($87 instanceof Prelude.GT) {
                               return v.value0;
                           };
                           return v1;
@@ -3058,8 +3058,8 @@ var PS = { };
                   };
                   if (v instanceof Data_Maybe.Just) {
                       return new Data_Maybe.Just((function () {
-                          var $89 = cmp(v.value0)(v1);
-                          if ($89 instanceof Prelude.LT) {
+                          var $91 = cmp(v.value0)(v1);
+                          if ($91 instanceof Prelude.LT) {
                               return v.value0;
                           };
                           return v1;
@@ -3117,28 +3117,28 @@ var PS = { };
               throw new Error("Failed pattern match at Data.Foldable line 103, column 1 - line 111, column 1: " + [ f.constructor.name, v.constructor.name ]);
           };
       };
-  }, function (f) {
+  }, function (v) {
       return function (z) {
-          return function (v) {
-              if (v instanceof Data_Maybe.Nothing) {
+          return function (v1) {
+              if (v1 instanceof Data_Maybe.Nothing) {
                   return z;
               };
-              if (v instanceof Data_Maybe.Just) {
-                  return f(z)(v.value0);
+              if (v1 instanceof Data_Maybe.Just) {
+                  return v(z)(v1.value0);
               };
-              throw new Error("Failed pattern match at Data.Foldable line 103, column 1 - line 111, column 1: " + [ f.constructor.name, z.constructor.name, v.constructor.name ]);
+              throw new Error("Failed pattern match at Data.Foldable line 103, column 1 - line 111, column 1: " + [ v.constructor.name, z.constructor.name, v1.constructor.name ]);
           };
       };
-  }, function (f) {
+  }, function (v) {
       return function (z) {
-          return function (v) {
-              if (v instanceof Data_Maybe.Nothing) {
+          return function (v1) {
+              if (v1 instanceof Data_Maybe.Nothing) {
                   return z;
               };
-              if (v instanceof Data_Maybe.Just) {
-                  return f(v.value0)(z);
+              if (v1 instanceof Data_Maybe.Just) {
+                  return v(v1.value0)(z);
               };
-              throw new Error("Failed pattern match at Data.Foldable line 103, column 1 - line 111, column 1: " + [ f.constructor.name, z.constructor.name, v.constructor.name ]);
+              throw new Error("Failed pattern match at Data.Foldable line 103, column 1 - line 111, column 1: " + [ v.constructor.name, z.constructor.name, v1.constructor.name ]);
           };
       };
   });
@@ -3292,8 +3292,8 @@ var PS = { };
       return function (c) {
           return function (u) {
               return function (xs) {
-                  return Data_Monoid_Endo.runEndo(Data_Monoid_Dual.runDual(foldMap(dictFoldable)(Data_Monoid_Dual.monoidDual(Data_Monoid_Endo.monoidEndo))(function ($160) {
-                      return Data_Monoid_Dual.Dual(Data_Monoid_Endo.Endo(Prelude.flip(c)($160)));
+                  return Data_Monoid_Endo.runEndo(Data_Monoid_Dual.runDual(foldMap(dictFoldable)(Data_Monoid_Dual.monoidDual(Data_Monoid_Endo.monoidEndo))(function ($162) {
+                      return Data_Monoid_Dual.Dual(Data_Monoid_Endo.Endo(Prelude.flip(c)($162)));
                   })(xs)))(u);
               };
           };
@@ -3303,8 +3303,8 @@ var PS = { };
       return function (c) {
           return function (u) {
               return function (xs) {
-                  return Data_Monoid_Endo.runEndo(foldMap(dictFoldable)(Data_Monoid_Endo.monoidEndo)(function ($161) {
-                      return Data_Monoid_Endo.Endo(c($161));
+                  return Data_Monoid_Endo.runEndo(foldMap(dictFoldable)(Data_Monoid_Endo.monoidEndo)(function ($163) {
+                      return Data_Monoid_Endo.Endo(c($163));
                   })(xs))(u);
               };
           };
@@ -3319,14 +3319,14 @@ var PS = { };
       return function (p) {
           return foldl(dictFoldable)(function (r) {
               return function (x) {
-                  var $158 = p(x);
-                  if ($158) {
+                  var $160 = p(x);
+                  if ($160) {
                       return new Data_Maybe.Just(x);
                   };
-                  if (!$158) {
+                  if (!$160) {
                       return r;
                   };
-                  throw new Error("Failed pattern match at Data.Foldable line 233, column 1 - line 234, column 1: " + [ $158.constructor.name ]);
+                  throw new Error("Failed pattern match at Data.Foldable line 233, column 1 - line 234, column 1: " + [ $160.constructor.name ]);
               };
           })(Data_Maybe.Nothing.value);
       };
@@ -3334,26 +3334,26 @@ var PS = { };
   var any = function (dictFoldable) {
       return function (dictBooleanAlgebra) {
           return function (p) {
-              return function ($162) {
-                  return Data_Monoid_Disj.runDisj(foldMap(dictFoldable)(Data_Monoid_Disj.monoidDisj(dictBooleanAlgebra))(function ($163) {
-                      return Data_Monoid_Disj.Disj(p($163));
-                  })($162));
+              return function ($164) {
+                  return Data_Monoid_Disj.runDisj(foldMap(dictFoldable)(Data_Monoid_Disj.monoidDisj(dictBooleanAlgebra))(function ($165) {
+                      return Data_Monoid_Disj.Disj(p($165));
+                  })($164));
               };
           };
       };
   };
   var elem = function (dictFoldable) {
       return function (dictEq) {
-          return function ($164) {
-              return any(dictFoldable)(Prelude.booleanAlgebraBoolean)(Prelude["=="](dictEq)($164));
+          return function ($166) {
+              return any(dictFoldable)(Prelude.booleanAlgebraBoolean)(Prelude["=="](dictEq)($166));
           };
       };
   };
   var notElem = function (dictFoldable) {
       return function (dictEq) {
           return function (x) {
-              return function ($165) {
-                  return !elem(dictFoldable)(dictEq)(x)($165);
+              return function ($167) {
+                  return !elem(dictFoldable)(dictEq)(x)($167);
               };
           };
       };
@@ -3366,10 +3366,10 @@ var PS = { };
   var all = function (dictFoldable) {
       return function (dictBooleanAlgebra) {
           return function (p) {
-              return function ($166) {
-                  return Data_Monoid_Conj.runConj(foldMap(dictFoldable)(Data_Monoid_Conj.monoidConj(dictBooleanAlgebra))(function ($167) {
-                      return Data_Monoid_Conj.Conj(p($167));
-                  })($166));
+              return function ($168) {
+                  return Data_Monoid_Conj.runConj(foldMap(dictFoldable)(Data_Monoid_Conj.monoidConj(dictBooleanAlgebra))(function ($169) {
+                      return Data_Monoid_Conj.Conj(p($169));
+                  })($168));
               };
           };
       };
@@ -3545,15 +3545,15 @@ var PS = { };
           throw new Error("Failed pattern match at Data.Traversable line 76, column 1 - line 82, column 1: " + [ v.constructor.name ]);
       };
   }, function (dictApplicative) {
-      return function (f) {
-          return function (v) {
-              if (v instanceof Data_Maybe.Nothing) {
+      return function (v) {
+          return function (v1) {
+              if (v1 instanceof Data_Maybe.Nothing) {
                   return Prelude.pure(dictApplicative)(Data_Maybe.Nothing.value);
               };
-              if (v instanceof Data_Maybe.Just) {
-                  return Prelude["<$>"]((dictApplicative["__superclass_Prelude.Apply_0"]())["__superclass_Prelude.Functor_0"]())(Data_Maybe.Just.create)(f(v.value0));
+              if (v1 instanceof Data_Maybe.Just) {
+                  return Prelude["<$>"]((dictApplicative["__superclass_Prelude.Apply_0"]())["__superclass_Prelude.Functor_0"]())(Data_Maybe.Just.create)(v(v1.value0));
               };
-              throw new Error("Failed pattern match at Data.Traversable line 76, column 1 - line 82, column 1: " + [ f.constructor.name, v.constructor.name ]);
+              throw new Error("Failed pattern match at Data.Traversable line 76, column 1 - line 82, column 1: " + [ v.constructor.name, v1.constructor.name ]);
           };
       };
   });
@@ -3684,10 +3684,10 @@ var PS = { };
   var functorStateR = new Prelude.Functor(function (f) {
       return function (k) {
           return function (s) {
-              var $74 = stateR(k)(s);
+              var $75 = stateR(k)(s);
               return {
-                  accum: $74.accum, 
-                  value: f($74.value)
+                  accum: $75.accum, 
+                  value: f($75.value)
               };
           };
       };
@@ -3695,10 +3695,10 @@ var PS = { };
   var functorStateL = new Prelude.Functor(function (f) {
       return function (k) {
           return function (s) {
-              var $77 = stateL(k)(s);
+              var $78 = stateL(k)(s);
               return {
-                  accum: $77.accum, 
-                  value: f($77.value)
+                  accum: $78.accum, 
+                  value: f($78.value)
               };
           };
       };
@@ -3717,11 +3717,11 @@ var PS = { };
   }, function (f) {
       return function (x) {
           return function (s) {
-              var $80 = stateR(x)(s);
-              var $81 = stateR(f)($80.accum);
+              var $81 = stateR(x)(s);
+              var $82 = stateR(f)($81.accum);
               return {
-                  accum: $81.accum, 
-                  value: $81.value($80.value)
+                  accum: $82.accum, 
+                  value: $82.value($81.value)
               };
           };
       };
@@ -3731,11 +3731,11 @@ var PS = { };
   }, function (f) {
       return function (x) {
           return function (s) {
-              var $86 = stateL(f)(s);
-              var $87 = stateL(x)($86.accum);
+              var $87 = stateL(f)(s);
+              var $88 = stateL(x)($87.accum);
               return {
-                  accum: $87.accum, 
-                  value: $86.value($87.value)
+                  accum: $88.accum, 
+                  value: $87.value($88.value)
               };
           };
       };
@@ -4907,27 +4907,27 @@ var PS = { };
   var Prelude = PS["Prelude"];     
   var when = function (dictMonad) {
       return function (v) {
-          return function (m) {
+          return function (v1) {
               if (v) {
-                  return m;
+                  return v1;
               };
               if (!v) {
                   return Prelude["return"](dictMonad["__superclass_Prelude.Applicative_0"]())(Prelude.unit);
               };
-              throw new Error("Failed pattern match at Control.Monad line 8, column 1 - line 9, column 1: " + [ v.constructor.name, m.constructor.name ]);
+              throw new Error("Failed pattern match at Control.Monad line 8, column 1 - line 9, column 1: " + [ v.constructor.name, v1.constructor.name ]);
           };
       };
   };
   var unless = function (dictMonad) {
       return function (v) {
-          return function (m) {
+          return function (v1) {
               if (!v) {
-                  return m;
+                  return v1;
               };
               if (v) {
                   return Prelude["return"](dictMonad["__superclass_Prelude.Applicative_0"]())(Prelude.unit);
               };
-              throw new Error("Failed pattern match at Control.Monad line 13, column 1 - line 14, column 1: " + [ v.constructor.name, m.constructor.name ]);
+              throw new Error("Failed pattern match at Control.Monad line 13, column 1 - line 14, column 1: " + [ v.constructor.name, v1.constructor.name ]);
           };
       };
   };
@@ -5423,15 +5423,15 @@ var PS = { };
           });
       };
   };
-  var functorEither = new Prelude.Functor(function (f) {
-      return function (v) {
-          if (v instanceof Left) {
-              return new Left(v.value0);
+  var functorEither = new Prelude.Functor(function (v) {
+      return function (v1) {
+          if (v1 instanceof Left) {
+              return new Left(v1.value0);
           };
-          if (v instanceof Right) {
-              return new Right(f(v.value0));
+          if (v1 instanceof Right) {
+              return new Right(v(v1.value0));
           };
-          throw new Error("Failed pattern match at Data.Either line 52, column 1 - line 56, column 1: " + [ f.constructor.name, v.constructor.name ]);
+          throw new Error("Failed pattern match at Data.Either line 52, column 1 - line 56, column 1: " + [ v.constructor.name, v1.constructor.name ]);
       };
   });
   var foldableEither = new Data_Foldable.Foldable(function (dictMonoid) {
@@ -5446,28 +5446,28 @@ var PS = { };
               throw new Error("Failed pattern match at Data.Either line 201, column 1 - line 209, column 1: " + [ f.constructor.name, v.constructor.name ]);
           };
       };
-  }, function (f) {
+  }, function (v) {
       return function (z) {
-          return function (v) {
-              if (v instanceof Left) {
+          return function (v1) {
+              if (v1 instanceof Left) {
                   return z;
               };
-              if (v instanceof Right) {
-                  return f(z)(v.value0);
+              if (v1 instanceof Right) {
+                  return v(z)(v1.value0);
               };
-              throw new Error("Failed pattern match at Data.Either line 201, column 1 - line 209, column 1: " + [ f.constructor.name, z.constructor.name, v.constructor.name ]);
+              throw new Error("Failed pattern match at Data.Either line 201, column 1 - line 209, column 1: " + [ v.constructor.name, z.constructor.name, v1.constructor.name ]);
           };
       };
-  }, function (f) {
+  }, function (v) {
       return function (z) {
-          return function (v) {
-              if (v instanceof Left) {
+          return function (v1) {
+              if (v1 instanceof Left) {
                   return z;
               };
-              if (v instanceof Right) {
-                  return f(v.value0)(z);
+              if (v1 instanceof Right) {
+                  return v(v1.value0)(z);
               };
-              throw new Error("Failed pattern match at Data.Either line 201, column 1 - line 209, column 1: " + [ f.constructor.name, z.constructor.name, v.constructor.name ]);
+              throw new Error("Failed pattern match at Data.Either line 201, column 1 - line 209, column 1: " + [ v.constructor.name, z.constructor.name, v1.constructor.name ]);
           };
       };
   });
@@ -5486,26 +5486,26 @@ var PS = { };
           throw new Error("Failed pattern match at Data.Either line 217, column 1 - line 223, column 1: " + [ v.constructor.name ]);
       };
   }, function (dictApplicative) {
-      return function (f) {
-          return function (v) {
-              if (v instanceof Left) {
-                  return Prelude.pure(dictApplicative)(new Left(v.value0));
+      return function (v) {
+          return function (v1) {
+              if (v1 instanceof Left) {
+                  return Prelude.pure(dictApplicative)(new Left(v1.value0));
               };
-              if (v instanceof Right) {
-                  return Prelude["<$>"]((dictApplicative["__superclass_Prelude.Apply_0"]())["__superclass_Prelude.Functor_0"]())(Right.create)(f(v.value0));
+              if (v1 instanceof Right) {
+                  return Prelude["<$>"]((dictApplicative["__superclass_Prelude.Apply_0"]())["__superclass_Prelude.Functor_0"]())(Right.create)(v(v1.value0));
               };
-              throw new Error("Failed pattern match at Data.Either line 217, column 1 - line 223, column 1: " + [ f.constructor.name, v.constructor.name ]);
+              throw new Error("Failed pattern match at Data.Either line 217, column 1 - line 223, column 1: " + [ v.constructor.name, v1.constructor.name ]);
           };
       };
   });
   var extendEither = new Control_Extend.Extend(function () {
       return functorEither;
-  }, function (f) {
-      return function (v) {
-          if (v instanceof Left) {
-              return new Left(v.value0);
+  }, function (v) {
+      return function (v1) {
+          if (v1 instanceof Left) {
+              return new Left(v1.value0);
           };
-          return new Right(f(v));
+          return new Right(v(v1));
       };
   });
   var eqEither = function (dictEq) {
@@ -5546,16 +5546,16 @@ var PS = { };
           });
       };
   };
-  var either = function (f) {
-      return function (g) {
-          return function (v) {
-              if (v instanceof Left) {
-                  return f(v.value0);
+  var either = function (v) {
+      return function (v1) {
+          return function (v2) {
+              if (v2 instanceof Left) {
+                  return v(v2.value0);
               };
-              if (v instanceof Right) {
-                  return g(v.value0);
+              if (v2 instanceof Right) {
+                  return v1(v2.value0);
               };
-              throw new Error("Failed pattern match at Data.Either line 28, column 1 - line 29, column 1: " + [ f.constructor.name, g.constructor.name, v.constructor.name ]);
+              throw new Error("Failed pattern match at Data.Either line 28, column 1 - line 29, column 1: " + [ v.constructor.name, v1.constructor.name, v2.constructor.name ]);
           };
       };
   };
@@ -5566,58 +5566,58 @@ var PS = { };
           return new Prelude.Bounded(new Left(Prelude.bottom(dictBounded)), new Right(Prelude.top(dictBounded1)));
       };
   };
-  var bifunctorEither = new Data_Bifunctor.Bifunctor(function (f) {
-      return function (g) {
-          return function (v) {
-              if (v instanceof Left) {
-                  return new Left(f(v.value0));
+  var bifunctorEither = new Data_Bifunctor.Bifunctor(function (v) {
+      return function (v1) {
+          return function (v2) {
+              if (v2 instanceof Left) {
+                  return new Left(v(v2.value0));
               };
-              if (v instanceof Right) {
-                  return new Right(g(v.value0));
+              if (v2 instanceof Right) {
+                  return new Right(v1(v2.value0));
               };
-              throw new Error("Failed pattern match at Data.Either line 56, column 1 - line 92, column 1: " + [ f.constructor.name, g.constructor.name, v.constructor.name ]);
+              throw new Error("Failed pattern match at Data.Either line 56, column 1 - line 92, column 1: " + [ v.constructor.name, v1.constructor.name, v2.constructor.name ]);
           };
       };
   });
   var bifoldableEither = new Data_Bifoldable.Bifoldable(function (dictMonoid) {
-      return function (f) {
-          return function (g) {
-              return function (v) {
-                  if (v instanceof Left) {
-                      return f(v.value0);
+      return function (v) {
+          return function (v1) {
+              return function (v2) {
+                  if (v2 instanceof Left) {
+                      return v(v2.value0);
                   };
-                  if (v instanceof Right) {
-                      return g(v.value0);
+                  if (v2 instanceof Right) {
+                      return v1(v2.value0);
                   };
-                  throw new Error("Failed pattern match at Data.Either line 209, column 1 - line 217, column 1: " + [ f.constructor.name, g.constructor.name, v.constructor.name ]);
+                  throw new Error("Failed pattern match at Data.Either line 209, column 1 - line 217, column 1: " + [ v.constructor.name, v1.constructor.name, v2.constructor.name ]);
               };
           };
       };
-  }, function (f) {
-      return function (g) {
+  }, function (v) {
+      return function (v1) {
           return function (z) {
-              return function (v) {
-                  if (v instanceof Left) {
-                      return f(z)(v.value0);
+              return function (v2) {
+                  if (v2 instanceof Left) {
+                      return v(z)(v2.value0);
                   };
-                  if (v instanceof Right) {
-                      return g(z)(v.value0);
+                  if (v2 instanceof Right) {
+                      return v1(z)(v2.value0);
                   };
-                  throw new Error("Failed pattern match at Data.Either line 209, column 1 - line 217, column 1: " + [ f.constructor.name, g.constructor.name, z.constructor.name, v.constructor.name ]);
+                  throw new Error("Failed pattern match at Data.Either line 209, column 1 - line 217, column 1: " + [ v.constructor.name, v1.constructor.name, z.constructor.name, v2.constructor.name ]);
               };
           };
       };
-  }, function (f) {
-      return function (g) {
+  }, function (v) {
+      return function (v1) {
           return function (z) {
-              return function (v) {
-                  if (v instanceof Left) {
-                      return f(v.value0)(z);
+              return function (v2) {
+                  if (v2 instanceof Left) {
+                      return v(v2.value0)(z);
                   };
-                  if (v instanceof Right) {
-                      return g(v.value0)(z);
+                  if (v2 instanceof Right) {
+                      return v1(v2.value0)(z);
                   };
-                  throw new Error("Failed pattern match at Data.Either line 209, column 1 - line 217, column 1: " + [ f.constructor.name, g.constructor.name, z.constructor.name, v.constructor.name ]);
+                  throw new Error("Failed pattern match at Data.Either line 209, column 1 - line 217, column 1: " + [ v.constructor.name, v1.constructor.name, z.constructor.name, v2.constructor.name ]);
               };
           };
       };
@@ -5637,16 +5637,16 @@ var PS = { };
           throw new Error("Failed pattern match at Data.Either line 223, column 1 - line 229, column 1: " + [ v.constructor.name ]);
       };
   }, function (dictApplicative) {
-      return function (f) {
-          return function (g) {
-              return function (v) {
-                  if (v instanceof Left) {
-                      return Prelude["<$>"]((dictApplicative["__superclass_Prelude.Apply_0"]())["__superclass_Prelude.Functor_0"]())(Left.create)(f(v.value0));
+      return function (v) {
+          return function (v1) {
+              return function (v2) {
+                  if (v2 instanceof Left) {
+                      return Prelude["<$>"]((dictApplicative["__superclass_Prelude.Apply_0"]())["__superclass_Prelude.Functor_0"]())(Left.create)(v(v2.value0));
                   };
-                  if (v instanceof Right) {
-                      return Prelude["<$>"]((dictApplicative["__superclass_Prelude.Apply_0"]())["__superclass_Prelude.Functor_0"]())(Right.create)(g(v.value0));
+                  if (v2 instanceof Right) {
+                      return Prelude["<$>"]((dictApplicative["__superclass_Prelude.Apply_0"]())["__superclass_Prelude.Functor_0"]())(Right.create)(v1(v2.value0));
                   };
-                  throw new Error("Failed pattern match at Data.Either line 223, column 1 - line 229, column 1: " + [ f.constructor.name, g.constructor.name, v.constructor.name ]);
+                  throw new Error("Failed pattern match at Data.Either line 223, column 1 - line 229, column 1: " + [ v.constructor.name, v1.constructor.name, v2.constructor.name ]);
               };
           };
       };
@@ -5654,14 +5654,14 @@ var PS = { };
   var applyEither = new Prelude.Apply(function () {
       return functorEither;
   }, function (v) {
-      return function (r) {
+      return function (v1) {
           if (v instanceof Left) {
               return new Left(v.value0);
           };
           if (v instanceof Right) {
-              return Prelude["<$>"](functorEither)(v.value0)(r);
+              return Prelude["<$>"](functorEither)(v.value0)(v1);
           };
-          throw new Error("Failed pattern match at Data.Either line 92, column 1 - line 116, column 1: " + [ v.constructor.name, r.constructor.name ]);
+          throw new Error("Failed pattern match at Data.Either line 92, column 1 - line 116, column 1: " + [ v.constructor.name, v1.constructor.name ]);
       };
   });
   var bindEither = new Prelude.Bind(function () {
@@ -5704,9 +5704,9 @@ var PS = { };
   var altEither = new Control_Alt.Alt(function () {
       return functorEither;
   }, function (v) {
-      return function (r) {
+      return function (v1) {
           if (v instanceof Left) {
-              return r;
+              return v1;
           };
           return v;
       };
@@ -5753,27 +5753,27 @@ var PS = { };
   var monadErrorMaybe = new MonadError(function () {
       return Data_Maybe.monadMaybe;
   }, function (v) {
-      return function (f) {
+      return function (v1) {
           if (v instanceof Data_Maybe.Nothing) {
-              return f(Prelude.unit);
+              return v1(Prelude.unit);
           };
           if (v instanceof Data_Maybe.Just) {
               return new Data_Maybe.Just(v.value0);
           };
-          throw new Error("Failed pattern match at Control.Monad.Error.Class line 51, column 1 - line 54, column 32: " + [ v.constructor.name, f.constructor.name ]);
+          throw new Error("Failed pattern match at Control.Monad.Error.Class line 51, column 1 - line 54, column 32: " + [ v.constructor.name, v1.constructor.name ]);
       };
   }, Prelude["const"](Data_Maybe.Nothing.value));
   var monadErrorEither = new MonadError(function () {
       return Data_Either.monadEither;
   }, function (v) {
-      return function (h) {
+      return function (v1) {
           if (v instanceof Data_Either.Left) {
-              return h(v.value0);
+              return v1(v.value0);
           };
           if (v instanceof Data_Either.Right) {
               return new Data_Either.Right(v.value0);
           };
-          throw new Error("Failed pattern match at Control.Monad.Error.Class line 46, column 1 - line 51, column 1: " + [ v.constructor.name, h.constructor.name ]);
+          throw new Error("Failed pattern match at Control.Monad.Error.Class line 46, column 1 - line 51, column 1: " + [ v.constructor.name, v1.constructor.name ]);
       };
   }, Data_Either.Left.create);
   var catchError = function (dict) {
@@ -5784,14 +5784,14 @@ var PS = { };
           return function (act) {
               return function (handler) {
                   var handle = function (e) {
-                      var $10 = p(e);
-                      if ($10 instanceof Data_Maybe.Nothing) {
+                      var $12 = p(e);
+                      if ($12 instanceof Data_Maybe.Nothing) {
                           return throwError(dictMonadError)(e);
                       };
-                      if ($10 instanceof Data_Maybe.Just) {
-                          return handler($10.value0);
+                      if ($12 instanceof Data_Maybe.Just) {
+                          return handler($12.value0);
                       };
-                      throw new Error("Failed pattern match at Control.Monad.Error.Class line 41, column 3 - line 46, column 1: " + [ $10.constructor.name ]);
+                      throw new Error("Failed pattern match at Control.Monad.Error.Class line 41, column 3 - line 46, column 1: " + [ $12.constructor.name ]);
                   };
                   return catchError(dictMonadError)(act)(handle);
               };
@@ -7085,19 +7085,19 @@ var PS = { };
   };
   var withExceptT = function (dictFunctor) {
       return function (f) {
-          var mapLeft = function (f1) {
-              return function (v) {
-                  if (v instanceof Data_Either.Right) {
-                      return new Data_Either.Right(v.value0);
+          var mapLeft = function (v) {
+              return function (v1) {
+                  if (v1 instanceof Data_Either.Right) {
+                      return new Data_Either.Right(v1.value0);
                   };
-                  if (v instanceof Data_Either.Left) {
-                      return new Data_Either.Left(f1(v.value0));
+                  if (v1 instanceof Data_Either.Left) {
+                      return new Data_Either.Left(v(v1.value0));
                   };
-                  throw new Error("Failed pattern match at Control.Monad.Except.Trans line 43, column 3 - line 44, column 3: " + [ f1.constructor.name, v.constructor.name ]);
+                  throw new Error("Failed pattern match at Control.Monad.Except.Trans line 43, column 3 - line 44, column 3: " + [ v.constructor.name, v1.constructor.name ]);
               };
           };
-          return function ($66) {
-              return ExceptT(Prelude["<$>"](dictFunctor)(mapLeft(f))(runExceptT($66)));
+          return function ($67) {
+              return ExceptT(Prelude["<$>"](dictFunctor)(mapLeft(f))(runExceptT($67)));
           };
       };
   };
@@ -7134,10 +7134,10 @@ var PS = { };
           return applyExceptT((dictMonad["__superclass_Prelude.Bind_1"]())["__superclass_Prelude.Apply_0"]());
       }, function (m) {
           return function (k) {
-              return Prelude[">>="](dictMonad["__superclass_Prelude.Bind_1"]())(runExceptT(m))(Data_Either.either(function ($67) {
-                  return Prelude["return"](dictMonad["__superclass_Prelude.Applicative_0"]())(Data_Either.Left.create($67));
-              })(function ($68) {
-                  return runExceptT(k($68));
+              return Prelude[">>="](dictMonad["__superclass_Prelude.Bind_1"]())(runExceptT(m))(Data_Either.either(function ($68) {
+                  return Prelude["return"](dictMonad["__superclass_Prelude.Applicative_0"]())(Data_Either.Left.create($68));
+              })(function ($69) {
+                  return runExceptT(k($69));
               }));
           };
       });
@@ -7145,8 +7145,8 @@ var PS = { };
   var applicativeExceptT = function (dictApplicative) {
       return new Prelude.Applicative(function () {
           return applyExceptT(dictApplicative["__superclass_Prelude.Apply_0"]());
-      }, function ($69) {
-          return ExceptT(Prelude.pure(dictApplicative)(Data_Either.Right.create($69)));
+      }, function ($70) {
+          return ExceptT(Prelude.pure(dictApplicative)(Data_Either.Right.create($70)));
       });
   };
   var monadExceptT = function (dictMonad) {
@@ -7170,8 +7170,8 @@ var PS = { };
   var monadEffExceptT = function (dictMonadEff) {
       return new Control_Monad_Eff_Class.MonadEff(function () {
           return monadExceptT(dictMonadEff["__superclass_Prelude.Monad_0"]());
-      }, function ($70) {
-          return Control_Monad_Trans.lift(monadTransExceptT)(dictMonadEff["__superclass_Prelude.Monad_0"]())(Control_Monad_Eff_Class.liftEff(dictMonadEff)($70));
+      }, function ($71) {
+          return Control_Monad_Trans.lift(monadTransExceptT)(dictMonadEff["__superclass_Prelude.Monad_0"]())(Control_Monad_Eff_Class.liftEff(dictMonadEff)($71));
       });
   };
   var monadErrorExceptT = function (dictMonad) {
@@ -7179,14 +7179,14 @@ var PS = { };
           return monadExceptT(dictMonad);
       }, function (m) {
           return function (handler) {
-              return Prelude[">>="](dictMonad["__superclass_Prelude.Bind_1"]())(runExceptT(m))(Data_Either.either(function ($71) {
-                  return runExceptT(handler($71));
-              })(function ($72) {
-                  return Prelude.pure(dictMonad["__superclass_Prelude.Applicative_0"]())(Data_Either.Right.create($72));
+              return Prelude[">>="](dictMonad["__superclass_Prelude.Bind_1"]())(runExceptT(m))(Data_Either.either(function ($72) {
+                  return runExceptT(handler($72));
+              })(function ($73) {
+                  return Prelude.pure(dictMonad["__superclass_Prelude.Applicative_0"]())(Data_Either.Right.create($73));
               }));
           };
-      }, function ($73) {
-          return ExceptT(Prelude.pure(dictMonad["__superclass_Prelude.Applicative_0"]())(Data_Either.Left.create($73)));
+      }, function ($74) {
+          return ExceptT(Prelude.pure(dictMonad["__superclass_Prelude.Applicative_0"]())(Data_Either.Left.create($74)));
       });
   };
   var monadReaderExceptT = function (dictMonadReader) {
@@ -7200,7 +7200,7 @@ var PS = { };
       return new Control_Monad_Rec_Class.MonadRec(function () {
           return monadExceptT(dictMonadRec["__superclass_Prelude.Monad_0"]());
       }, function (f) {
-          return function ($74) {
+          return function ($75) {
               return ExceptT(Control_Monad_Rec_Class.tailRecM(dictMonadRec)(function (a) {
                   return Prelude.bind((dictMonadRec["__superclass_Prelude.Monad_0"]())["__superclass_Prelude.Bind_1"]())(runExceptT(f(a)))(function (v) {
                       return Prelude["return"]((dictMonadRec["__superclass_Prelude.Monad_0"]())["__superclass_Prelude.Applicative_0"]())((function () {
@@ -7216,7 +7216,7 @@ var PS = { };
                           throw new Error("Failed pattern match at Control.Monad.Except.Trans line 68, column 1 - line 76, column 1: " + [ v.constructor.name ]);
                       })());
                   });
-              })($74));
+              })($75));
           };
       });
   };
@@ -10526,17 +10526,17 @@ var PS = { };
       };
   };
   var maybeToEnum = function (dictEnum) {
-      return function (carda) {
-          return function (n) {
-              if (n <= runCardinality(maybeCardinality(dictEnum)(carda))) {
-                  var $36 = n === 0;
-                  if ($36) {
+      return function (v) {
+          return function (v1) {
+              if (v1 <= runCardinality(maybeCardinality(dictEnum)(v))) {
+                  var $39 = v1 === 0;
+                  if ($39) {
                       return Data_Maybe.Just.create(Data_Maybe.Nothing.value);
                   };
-                  if (!$36) {
-                      return Data_Maybe.Just.create(toEnum(dictEnum)(n - 1));
+                  if (!$39) {
+                      return Data_Maybe.Just.create(toEnum(dictEnum)(v1 - 1));
                   };
-                  throw new Error("Failed pattern match at Data.Enum line 138, column 1 - line 139, column 1: " + [ $36.constructor.name ]);
+                  throw new Error("Failed pattern match at Data.Enum line 138, column 1 - line 139, column 1: " + [ $39.constructor.name ]);
               };
               return Data_Maybe.Nothing.value;
           };
@@ -10546,14 +10546,14 @@ var PS = { };
       return function (from) {
           return function (to) {
               return Data_Unfoldable.unfoldr(Data_Unfoldable.unfoldableArray)(function (e) {
-                  var $37 = e <= to;
-                  if ($37) {
+                  var $40 = e <= to;
+                  if ($40) {
                       return Data_Maybe.Just.create(new Data_Tuple.Tuple(e, e + step | 0));
                   };
-                  if (!$37) {
+                  if (!$40) {
                       return Data_Maybe.Nothing.value;
                   };
-                  throw new Error("Failed pattern match at Data.Enum line 103, column 1 - line 104, column 1: " + [ $37.constructor.name ]);
+                  throw new Error("Failed pattern match at Data.Enum line 103, column 1 - line 104, column 1: " + [ $40.constructor.name ]);
               })(from);
           };
       };
@@ -10621,21 +10621,21 @@ var PS = { };
           return function (carda) {
               return function (cardb) {
                   return function (n) {
-                      var $46 = n >= 0 && n < runCardinality(carda);
-                      if ($46) {
+                      var $49 = n >= 0 && n < runCardinality(carda);
+                      if ($49) {
                           return Prelude["<$>"](Data_Maybe.functorMaybe)(Data_Either.Left.create)(toEnum(dictEnum)(n));
                       };
-                      if (!$46) {
-                          var $47 = n >= runCardinality(carda) && n < runCardinality(eitherCardinality(dictEnum)(dictEnum1)(carda)(cardb));
-                          if ($47) {
+                      if (!$49) {
+                          var $50 = n >= runCardinality(carda) && n < runCardinality(eitherCardinality(dictEnum)(dictEnum1)(carda)(cardb));
+                          if ($50) {
                               return Prelude["<$>"](Data_Maybe.functorMaybe)(Data_Either.Right.create)(toEnum(dictEnum1)(n - runCardinality(carda)));
                           };
-                          if (!$47) {
+                          if (!$50) {
                               return Data_Maybe.Nothing.value;
                           };
-                          throw new Error("Failed pattern match: " + [ $47.constructor.name ]);
+                          throw new Error("Failed pattern match: " + [ $50.constructor.name ]);
                       };
-                      throw new Error("Failed pattern match at Data.Enum line 189, column 1 - line 190, column 1: " + [ $46.constructor.name ]);
+                      throw new Error("Failed pattern match at Data.Enum line 189, column 1 - line 190, column 1: " + [ $49.constructor.name ]);
                   };
               };
           };
@@ -10678,9 +10678,9 @@ var PS = { };
           })(pred$prime(e));
       };
   };
-  var charToEnum = function (n) {
-      if (n >= 0 && n <= 65535) {
-          return Data_Maybe.Just.create(Data_Char.fromCharCode(n));
+  var charToEnum = function (v) {
+      if (v >= 0 && v <= 65535) {
+          return Data_Maybe.Just.create(Data_Char.fromCharCode(v));
       };
       return Data_Maybe.Nothing.value;
   };
@@ -10697,25 +10697,25 @@ var PS = { };
               return Data_Either.boundedEither(dictEnum["__superclass_Prelude.Bounded_0"]())(dictEnum1["__superclass_Prelude.Bounded_0"]());
           }, eitherCardinality(dictEnum)(dictEnum1)(cardinality(dictEnum))(cardinality(dictEnum1)), eitherFromEnum(dictEnum)(dictEnum1)(cardinality(dictEnum)), function (v) {
               if (v instanceof Data_Either.Left) {
-                  return Data_Maybe.maybe(Data_Maybe.Nothing.value)(function ($72) {
-                      return Data_Maybe.Just.create(Data_Either.Left.create($72));
+                  return Data_Maybe.maybe(Data_Maybe.Nothing.value)(function ($75) {
+                      return Data_Maybe.Just.create(Data_Either.Left.create($75));
                   })(pred(dictEnum)(v.value0));
               };
               if (v instanceof Data_Either.Right) {
-                  return Data_Maybe.maybe(Data_Maybe.Just.create(new Data_Either.Left(Prelude.top(dictEnum["__superclass_Prelude.Bounded_0"]()))))(function ($73) {
-                      return Data_Maybe.Just.create(Data_Either.Right.create($73));
+                  return Data_Maybe.maybe(Data_Maybe.Just.create(new Data_Either.Left(Prelude.top(dictEnum["__superclass_Prelude.Bounded_0"]()))))(function ($76) {
+                      return Data_Maybe.Just.create(Data_Either.Right.create($76));
                   })(pred(dictEnum1)(v.value0));
               };
               throw new Error("Failed pattern match at Data.Enum line 180, column 1 - line 189, column 1: " + [ v.constructor.name ]);
           }, function (v) {
               if (v instanceof Data_Either.Left) {
-                  return Data_Maybe.maybe(Data_Maybe.Just.create(new Data_Either.Right(Prelude.bottom(dictEnum1["__superclass_Prelude.Bounded_0"]()))))(function ($74) {
-                      return Data_Maybe.Just.create(Data_Either.Left.create($74));
+                  return Data_Maybe.maybe(Data_Maybe.Just.create(new Data_Either.Right(Prelude.bottom(dictEnum1["__superclass_Prelude.Bounded_0"]()))))(function ($77) {
+                      return Data_Maybe.Just.create(Data_Either.Left.create($77));
                   })(succ(dictEnum)(v.value0));
               };
               if (v instanceof Data_Either.Right) {
-                  return Data_Maybe.maybe(Data_Maybe.Nothing.value)(function ($75) {
-                      return Data_Maybe.Just.create(Data_Either.Right.create($75));
+                  return Data_Maybe.maybe(Data_Maybe.Nothing.value)(function ($78) {
+                      return Data_Maybe.Just.create(Data_Either.Right.create($78));
                   })(succ(dictEnum1)(v.value0));
               };
               throw new Error("Failed pattern match at Data.Enum line 180, column 1 - line 189, column 1: " + [ v.constructor.name ]);
@@ -10756,12 +10756,12 @@ var PS = { };
           return new Enum(function () {
               return Data_Tuple.boundedTuple(dictEnum["__superclass_Prelude.Bounded_0"]())(dictEnum1["__superclass_Prelude.Bounded_0"]());
           }, tupleCardinality(dictEnum)(dictEnum1)(cardinality(dictEnum))(cardinality(dictEnum1)), tupleFromEnum(dictEnum)(dictEnum1)(cardinality(dictEnum1)), function (v) {
-              return Data_Maybe.maybe(Prelude["<$>"](Data_Maybe.functorMaybe)(Prelude.flip(Data_Tuple.Tuple.create)(Prelude.bottom(dictEnum1["__superclass_Prelude.Bounded_0"]())))(pred(dictEnum)(v.value0)))(function ($76) {
-                  return Data_Maybe.Just.create(Data_Tuple.Tuple.create(v.value0)($76));
+              return Data_Maybe.maybe(Prelude["<$>"](Data_Maybe.functorMaybe)(Prelude.flip(Data_Tuple.Tuple.create)(Prelude.bottom(dictEnum1["__superclass_Prelude.Bounded_0"]())))(pred(dictEnum)(v.value0)))(function ($79) {
+                  return Data_Maybe.Just.create(Data_Tuple.Tuple.create(v.value0)($79));
               })(pred(dictEnum1)(v.value1));
           }, function (v) {
-              return Data_Maybe.maybe(Prelude["<$>"](Data_Maybe.functorMaybe)(Prelude.flip(Data_Tuple.Tuple.create)(Prelude.bottom(dictEnum1["__superclass_Prelude.Bounded_0"]())))(succ(dictEnum)(v.value0)))(function ($77) {
-                  return Data_Maybe.Just.create(Data_Tuple.Tuple.create(v.value0)($77));
+              return Data_Maybe.maybe(Prelude["<$>"](Data_Maybe.functorMaybe)(Prelude.flip(Data_Tuple.Tuple.create)(Prelude.bottom(dictEnum1["__superclass_Prelude.Bounded_0"]())))(succ(dictEnum)(v.value0)))(function ($80) {
+                  return Data_Maybe.Just.create(Data_Tuple.Tuple.create(v.value0)($80));
               })(succ(dictEnum1)(v.value1));
           }, tupleToEnum(dictEnum)(dictEnum1)(cardinality(dictEnum1)));
       };
@@ -11928,8 +11928,8 @@ var PS = { };
       return new Data_Tuple.Tuple([  ], [  ]);
   })(function (v) {
       return function (ts) {
-          var $34 = unzip(ts);
-          return new Data_Tuple.Tuple($colon(v.value0)($34.value0), $colon(v.value1)($34.value1));
+          var $36 = unzip(ts);
+          return new Data_Tuple.Tuple($colon(v.value0)($36.value0), $colon(v.value1)($36.value1));
       };
   });
   var uncons = $foreign["uncons'"](Prelude["const"](Data_Maybe.Nothing.value))(function (x) {
@@ -11952,11 +11952,11 @@ var PS = { };
               var acc = __copy_acc;
               var xs = __copy_xs;
               tco: while (true) {
-                  var $40 = uncons(xs);
-                  if ($40 instanceof Data_Maybe.Just && p($40.value0.head)) {
-                      var __tco_acc = $colon($40.value0.head)(acc);
+                  var $42 = uncons(xs);
+                  if ($42 instanceof Data_Maybe.Just && p($42.value0.head)) {
+                      var __tco_acc = $colon($42.value0.head)(acc);
                       acc = __tco_acc;
-                      xs = $40.value0.tail;
+                      xs = $42.value0.tail;
                       continue tco;
                   };
                   return {
@@ -11977,17 +11977,17 @@ var PS = { };
       return function (xs) {
           var comp$prime = function (x) {
               return function (y) {
-                  var $44 = comp(x)(y);
-                  if ($44 instanceof Prelude.GT) {
+                  var $46 = comp(x)(y);
+                  if ($46 instanceof Prelude.GT) {
                       return 1;
                   };
-                  if ($44 instanceof Prelude.EQ) {
+                  if ($46 instanceof Prelude.EQ) {
                       return 0;
                   };
-                  if ($44 instanceof Prelude.LT) {
+                  if ($46 instanceof Prelude.LT) {
                       return -1;
                   };
-                  throw new Error("Failed pattern match at Data.Array line 409, column 3 - line 414, column 1: " + [ $44.constructor.name ]);
+                  throw new Error("Failed pattern match at Data.Array line 409, column 3 - line 414, column 1: " + [ $46.constructor.name ]);
               };
           };
           return $foreign.sortImpl(comp$prime)(xs);
@@ -12019,16 +12019,16 @@ var PS = { };
   };
   var nubBy = function (eq) {
       return function (xs) {
-          var $47 = uncons(xs);
-          if ($47 instanceof Data_Maybe.Just) {
-              return $colon($47.value0.head)(nubBy(eq)($foreign.filter(function (y) {
-                  return !eq($47.value0.head)(y);
-              })($47.value0.tail)));
+          var $49 = uncons(xs);
+          if ($49 instanceof Data_Maybe.Just) {
+              return $colon($49.value0.head)(nubBy(eq)($foreign.filter(function (y) {
+                  return !eq($49.value0.head)(y);
+              })($49.value0.tail)));
           };
-          if ($47 instanceof Data_Maybe.Nothing) {
+          if ($49 instanceof Data_Maybe.Nothing) {
               return [  ];
           };
-          throw new Error("Failed pattern match: " + [ $47.constructor.name ]);
+          throw new Error("Failed pattern match: " + [ $49.constructor.name ]);
       };
   };
   var nub = function (dictEq) {
@@ -12086,18 +12086,18 @@ var PS = { };
               var acc = __copy_acc;
               var xs = __copy_xs;
               tco: while (true) {
-                  var $52 = uncons(xs);
-                  if ($52 instanceof Data_Maybe.Just) {
-                      var sp = span(op($52.value0.head))($52.value0.tail);
-                      var __tco_acc = $colon($colon($52.value0.head)(sp.init))(acc);
+                  var $54 = uncons(xs);
+                  if ($54 instanceof Data_Maybe.Just) {
+                      var sp = span(op($54.value0.head))($54.value0.tail);
+                      var __tco_acc = $colon($colon($54.value0.head)(sp.init))(acc);
                       acc = __tco_acc;
                       xs = sp.rest;
                       continue tco;
                   };
-                  if ($52 instanceof Data_Maybe.Nothing) {
+                  if ($54 instanceof Data_Maybe.Nothing) {
                       return $foreign.reverse(acc);
                   };
-                  throw new Error("Failed pattern match at Data.Array line 476, column 1 - line 477, column 1: " + [ $52.constructor.name ]);
+                  throw new Error("Failed pattern match at Data.Array line 476, column 1 - line 477, column 1: " + [ $54.constructor.name ]);
               };
           };
       };
@@ -12109,8 +12109,8 @@ var PS = { };
       };
   };
   var group$prime = function (dictOrd) {
-      return function ($66) {
-          return group(dictOrd["__superclass_Prelude.Eq_0"]())(sort(dictOrd)($66));
+      return function ($68) {
+          return group(dictOrd["__superclass_Prelude.Eq_0"]())(sort(dictOrd)($68));
       };
   };
   var foldM = function (dictMonad) {
@@ -12200,15 +12200,15 @@ var PS = { };
       };
   };
   var deleteAt = $foreign._deleteAt(Data_Maybe.Just.create)(Data_Maybe.Nothing.value);
-  var deleteBy = function (eq) {
-      return function (x) {
-          return function (v) {
-              if (v.length === 0) {
+  var deleteBy = function (v) {
+      return function (v1) {
+          return function (v2) {
+              if (v2.length === 0) {
                   return [  ];
               };
-              return Data_Maybe.maybe(v)(function (i) {
-                  return Data_Maybe_Unsafe.fromJust(deleteAt(i)(v));
-              })(findIndex(eq(x))(v));
+              return Data_Maybe.maybe(v2)(function (i) {
+                  return Data_Maybe_Unsafe.fromJust(deleteAt(i)(v2));
+              })(findIndex(v(v1))(v2));
           };
       };
   };
@@ -12244,8 +12244,8 @@ var PS = { };
   };
   var concatMap = Prelude.flip(Prelude.bind(Prelude.bindArray));
   var mapMaybe = function (f) {
-      return concatMap(function ($67) {
-          return Data_Maybe.maybe([  ])(singleton)(f($67));
+      return concatMap(function ($69) {
+          return Data_Maybe.maybe([  ])(singleton)(f($69));
       });
   };
   var catMaybes = mapMaybe(Prelude.id(Prelude.categoryFn));
@@ -12253,14 +12253,14 @@ var PS = { };
       return function (f) {
           return function (xs) {
               var go = function (x) {
-                  var $64 = f(x);
-                  if ($64 instanceof Data_Maybe.Nothing) {
+                  var $66 = f(x);
+                  if ($66 instanceof Data_Maybe.Nothing) {
                       return deleteAt(i)(xs);
                   };
-                  if ($64 instanceof Data_Maybe.Just) {
-                      return updateAt(i)($64.value0)(xs);
+                  if ($66 instanceof Data_Maybe.Just) {
+                      return updateAt(i)($66.value0)(xs);
                   };
-                  throw new Error("Failed pattern match at Data.Array line 349, column 3 - line 358, column 1: " + [ $64.constructor.name ]);
+                  throw new Error("Failed pattern match at Data.Array line 349, column 3 - line 358, column 1: " + [ $66.constructor.name ]);
               };
               return Data_Maybe.maybe(Data_Maybe.Nothing.value)(go)($bang$bang(xs)(i));
           };
@@ -12379,7 +12379,7 @@ var PS = { };
       return ix(dictIndex);
   };
   var index = unsafeReadProp;
-  var hasPropertyImpl = function (p) {
+  var hasPropertyImpl = function (v) {
       return function (value) {
           if (Data_Foreign.isNull(value)) {
               return false;
@@ -12388,7 +12388,7 @@ var PS = { };
               return false;
           };
           if (Prelude["=="](Prelude.eqString)(Data_Foreign.typeOf(value))("object") || Prelude["=="](Prelude.eqString)(Data_Foreign.typeOf(value))("function")) {
-              return $foreign.unsafeHasProperty(p, value);
+              return $foreign.unsafeHasProperty(v, value);
           };
           return false;
       };
@@ -12396,7 +12396,7 @@ var PS = { };
   var hasProperty = function (dict) {
       return dict.hasProperty;
   };
-  var hasOwnPropertyImpl = function (p) {
+  var hasOwnPropertyImpl = function (v) {
       return function (value) {
           if (Data_Foreign.isNull(value)) {
               return false;
@@ -12405,7 +12405,7 @@ var PS = { };
               return false;
           };
           if (Prelude["=="](Prelude.eqString)(Data_Foreign.typeOf(value))("object") || Prelude["=="](Prelude.eqString)(Data_Foreign.typeOf(value))("function")) {
-              return $foreign.unsafeHasOwnProperty(p, value);
+              return $foreign.unsafeHasOwnProperty(v, value);
           };
           return false;
       };
@@ -12443,14 +12443,14 @@ var PS = { };
   var runNull = function (v) {
       return v;
   };
-  var readNull = function (f) {
+  var readNull = function (v) {
       return function (value) {
           if (Data_Foreign.isNull(value)) {
               return Prelude.pure(Data_Either.applicativeEither)(Data_Maybe.Nothing.value);
           };
-          return Prelude["<$>"](Data_Either.functorEither)(function ($4) {
-              return Null(Data_Maybe.Just.create($4));
-          })(f(value));
+          return Prelude["<$>"](Data_Either.functorEither)(function ($5) {
+              return Null(Data_Maybe.Just.create($5));
+          })(v(value));
       };
   };
   exports["Null"] = Null;
@@ -12471,14 +12471,14 @@ var PS = { };
   var runNullOrUndefined = function (v) {
       return v;
   };
-  var readNullOrUndefined = function (f) {
+  var readNullOrUndefined = function (v) {
       return function (value) {
           if (Data_Foreign.isNull(value) || Data_Foreign.isUndefined(value)) {
               return Prelude.pure(Data_Either.applicativeEither)(Data_Maybe.Nothing.value);
           };
-          return Prelude["<$>"](Data_Either.functorEither)(function ($4) {
-              return NullOrUndefined(Data_Maybe.Just.create($4));
-          })(f(value));
+          return Prelude["<$>"](Data_Either.functorEither)(function ($5) {
+              return NullOrUndefined(Data_Maybe.Just.create($5));
+          })(v(value));
       };
   };
   exports["NullOrUndefined"] = NullOrUndefined;
@@ -12499,14 +12499,14 @@ var PS = { };
   var runUndefined = function (v) {
       return v;
   };
-  var readUndefined = function (f) {
+  var readUndefined = function (v) {
       return function (value) {
           if (Data_Foreign.isUndefined(value)) {
               return Prelude.pure(Data_Either.applicativeEither)(Data_Maybe.Nothing.value);
           };
-          return Prelude["<$>"](Data_Either.functorEither)(function ($4) {
-              return Undefined(Data_Maybe.Just.create($4));
-          })(f(value));
+          return Prelude["<$>"](Data_Either.functorEither)(function ($5) {
+              return Undefined(Data_Maybe.Just.create($5));
+          })(v(value));
       };
   };
   exports["Undefined"] = Undefined;
@@ -14937,13 +14937,13 @@ var PS = { };
   })();
   var $colon = Cons.create;
   var updateAt = function (v) {
-      return function (x) {
-          return function (v1) {
-              if (v === 0 && v1 instanceof Cons) {
-                  return new Data_Maybe.Just(new Cons(x, v1.value1));
+      return function (v1) {
+          return function (v2) {
+              if (v === 0 && v2 instanceof Cons) {
+                  return new Data_Maybe.Just(new Cons(v1, v2.value1));
               };
-              if (v1 instanceof Cons) {
-                  return Prelude["<$>"](Data_Maybe.functorMaybe)(Cons.create(v1.value0))(updateAt(v - 1)(x)(v1.value1));
+              if (v2 instanceof Cons) {
+                  return Prelude["<$>"](Data_Maybe.functorMaybe)(Cons.create(v2.value0))(updateAt(v - 1)(v1)(v2.value1));
               };
               return Data_Maybe.Nothing.value;
           };
@@ -14977,18 +14977,18 @@ var PS = { };
       };
       throw new Error("Failed pattern match at Data.List line 251, column 1 - line 252, column 1: " + [ v.constructor.name ]);
   };
-  var span = function (p) {
-      return function (v) {
-          if (v instanceof Cons && p(v.value0)) {
-              var $114 = span(p)(v.value1);
+  var span = function (v) {
+      return function (v1) {
+          if (v1 instanceof Cons && v(v1.value0)) {
+              var $132 = span(v)(v1.value1);
               return {
-                  init: new Cons(v.value0, $114.init), 
-                  rest: $114.rest
+                  init: new Cons(v1.value0, $132.init), 
+                  rest: $132.rest
               };
           };
           return {
               init: Nil.value, 
-              rest: v
+              rest: v1
           };
       };
   };
@@ -15078,8 +15078,8 @@ var PS = { };
               };
           };
       };
-      return function ($345) {
-          return mergeAll(sequences($345));
+      return function ($363) {
+          return mergeAll(sequences($363));
       };
   };
   var sort = function (dictOrd) {
@@ -15196,17 +15196,17 @@ var PS = { };
                   var source = __copy_source;
                   var memo = __copy_memo;
                   tco: while (true) {
-                      var $168 = f(source);
-                      if ($168 instanceof Data_Maybe.Nothing) {
+                      var $186 = f(source);
+                      if ($186 instanceof Data_Maybe.Nothing) {
                           return reverse(memo);
                       };
-                      if ($168 instanceof Data_Maybe.Just) {
-                          var __tco_memo = new Cons($168.value0.value0, memo);
-                          source = $168.value0.value1;
+                      if ($186 instanceof Data_Maybe.Just) {
+                          var __tco_memo = new Cons($186.value0.value0, memo);
+                          source = $186.value0.value1;
                           memo = __tco_memo;
                           continue tco;
                       };
-                      throw new Error("Failed pattern match at Data.List line 748, column 1 - line 755, column 1: " + [ $168.constructor.name ]);
+                      throw new Error("Failed pattern match at Data.List line 748, column 1 - line 755, column 1: " + [ $186.constructor.name ]);
                   };
               };
           };
@@ -15325,14 +15325,14 @@ var PS = { };
                   };
               };
               return go(end)(start)((function () {
-                  var $191 = start > end;
-                  if ($191) {
+                  var $209 = start > end;
+                  if ($209) {
                       return 1;
                   };
-                  if (!$191) {
+                  if (!$209) {
                       return -1;
                   };
-                  throw new Error("Failed pattern match at Data.List line 140, column 1 - line 141, column 1: " + [ $191.constructor.name ]);
+                  throw new Error("Failed pattern match at Data.List line 140, column 1 - line 141, column 1: " + [ $209.constructor.name ]);
               })())(Nil.value);
           };
           throw new Error("Failed pattern match at Data.List line 140, column 1 - line 141, column 1: " + [ start.constructor.name, end.constructor.name ]);
@@ -15359,22 +15359,22 @@ var PS = { };
                       return reverse(acc1);
                   };
                   if (v instanceof Cons) {
-                      var $195 = f(v.value0);
-                      if ($195 instanceof Data_Maybe.Nothing) {
+                      var $213 = f(v.value0);
+                      if ($213 instanceof Data_Maybe.Nothing) {
                           var __tco_acc = acc;
                           var __tco_v = v.value1;
                           acc = __tco_acc;
                           v = __tco_v;
                           continue tco;
                       };
-                      if ($195 instanceof Data_Maybe.Just) {
-                          var __tco_acc = new Cons($195.value0, acc);
+                      if ($213 instanceof Data_Maybe.Just) {
+                          var __tco_acc = new Cons($213.value0, acc);
                           var __tco_v = v.value1;
                           acc = __tco_acc;
                           v = __tco_v;
                           continue tco;
                       };
-                      throw new Error("Failed pattern match at Data.List line 420, column 1 - line 421, column 1: " + [ $195.constructor.name ]);
+                      throw new Error("Failed pattern match at Data.List line 420, column 1 - line 421, column 1: " + [ $213.constructor.name ]);
                   };
                   throw new Error("Failed pattern match at Data.List line 420, column 1 - line 421, column 1: " + [ acc.constructor.name, v.constructor.name ]);
               };
@@ -15412,31 +15412,31 @@ var PS = { };
           return Data_Maybe.Nothing.value;
       };
   };
-  var insertBy = function (cmp) {
+  var insertBy = function (v) {
       return function (x) {
-          return function (v) {
-              if (v instanceof Nil) {
+          return function (v1) {
+              if (v1 instanceof Nil) {
                   return new Cons(x, Nil.value);
               };
-              if (v instanceof Cons) {
-                  var $208 = cmp(x)(v.value0);
-                  if ($208 instanceof Prelude.GT) {
-                      return new Cons(v.value0, insertBy(cmp)(x)(v.value1));
+              if (v1 instanceof Cons) {
+                  var $226 = v(x)(v1.value0);
+                  if ($226 instanceof Prelude.GT) {
+                      return new Cons(v1.value0, insertBy(v)(x)(v1.value1));
                   };
-                  return new Cons(x, v);
+                  return new Cons(x, v1);
               };
-              throw new Error("Failed pattern match: " + [ cmp.constructor.name, x.constructor.name, v.constructor.name ]);
+              throw new Error("Failed pattern match: " + [ v.constructor.name, x.constructor.name, v1.constructor.name ]);
           };
       };
   };
   var insertAt = function (v) {
-      return function (x) {
-          return function (v1) {
+      return function (v1) {
+          return function (v2) {
               if (v === 0) {
-                  return new Data_Maybe.Just(new Cons(x, v1));
+                  return new Data_Maybe.Just(new Cons(v1, v2));
               };
-              if (v1 instanceof Cons) {
-                  return Prelude["<$>"](Data_Maybe.functorMaybe)(Cons.create(v1.value0))(insertAt(v - 1)(x)(v1.value1));
+              if (v2 instanceof Cons) {
+                  return Prelude["<$>"](Data_Maybe.functorMaybe)(Cons.create(v2.value0))(insertAt(v - 1)(v1)(v2.value1));
               };
               return Data_Maybe.Nothing.value;
           };
@@ -15502,24 +15502,24 @@ var PS = { };
       };
       throw new Error("Failed pattern match at Data.List line 236, column 1 - line 237, column 1: " + [ v.constructor.name ]);
   };
-  var groupBy = function (eq) {
-      return function (v) {
-          if (v instanceof Nil) {
+  var groupBy = function (v) {
+      return function (v1) {
+          if (v1 instanceof Nil) {
               return Nil.value;
           };
-          if (v instanceof Cons) {
-              var $234 = span(eq(v.value0))(v.value1);
-              return new Cons(new Cons(v.value0, $234.init), groupBy(eq)($234.rest));
+          if (v1 instanceof Cons) {
+              var $252 = span(v(v1.value0))(v1.value1);
+              return new Cons(new Cons(v1.value0, $252.init), groupBy(v)($252.rest));
           };
-          throw new Error("Failed pattern match: " + [ eq.constructor.name, v.constructor.name ]);
+          throw new Error("Failed pattern match: " + [ v.constructor.name, v1.constructor.name ]);
       };
   };
   var group = function (dictEq) {
       return groupBy(Prelude["=="](dictEq));
   };
   var group$prime = function (dictOrd) {
-      return function ($346) {
-          return group(dictOrd["__superclass_Prelude.Eq_0"]())(sort(dictOrd)($346));
+      return function ($364) {
+          return group(dictOrd["__superclass_Prelude.Eq_0"]())(sort(dictOrd)($364));
       };
   };
   var functorList = new Prelude.Functor(function (f) {
@@ -15558,48 +15558,48 @@ var PS = { };
   var foldableList = new Data_Foldable.Foldable(function (dictMonoid) {
       return function (f) {
           return Data_Foldable.foldl(foldableList)(function (acc) {
-              return function ($347) {
-                  return Prelude.append(dictMonoid["__superclass_Prelude.Semigroup_0"]())(acc)(f($347));
+              return function ($365) {
+                  return Prelude.append(dictMonoid["__superclass_Prelude.Semigroup_0"]())(acc)(f($365));
               };
           })(Data_Monoid.mempty(dictMonoid));
       };
   }, (function () {
-      var go = function (__copy_o) {
+      var go = function (__copy_v) {
           return function (__copy_b) {
-              return function (__copy_v) {
-                  var o = __copy_o;
-                  var b = __copy_b;
+              return function (__copy_v1) {
                   var v = __copy_v;
+                  var b = __copy_b;
+                  var v1 = __copy_v1;
                   tco: while (true) {
                       var b1 = b;
-                      if (v instanceof Nil) {
+                      if (v1 instanceof Nil) {
                           return b1;
                       };
-                      if (v instanceof Cons) {
-                          var __tco_o = o;
-                          var __tco_b = o(b)(v.value0);
-                          var __tco_v = v.value1;
-                          o = __tco_o;
-                          b = __tco_b;
+                      if (v1 instanceof Cons) {
+                          var __tco_v = v;
+                          var __tco_b = v(b)(v1.value0);
+                          var __tco_v1 = v1.value1;
                           v = __tco_v;
+                          b = __tco_b;
+                          v1 = __tco_v1;
                           continue tco;
                       };
-                      throw new Error("Failed pattern match: " + [ o.constructor.name, b.constructor.name, v.constructor.name ]);
+                      throw new Error("Failed pattern match: " + [ v.constructor.name, b.constructor.name, v1.constructor.name ]);
                   };
               };
           };
       };
       return go;
-  })(), function (o) {
+  })(), function (v) {
       return function (b) {
-          return function (v) {
-              if (v instanceof Nil) {
+          return function (v1) {
+              if (v1 instanceof Nil) {
                   return b;
               };
-              if (v instanceof Cons) {
-                  return o(v.value0)(Data_Foldable.foldr(foldableList)(o)(b)(v.value1));
+              if (v1 instanceof Cons) {
+                  return v(v1.value0)(Data_Foldable.foldr(foldableList)(v)(b)(v1.value1));
               };
-              throw new Error("Failed pattern match: " + [ o.constructor.name, b.constructor.name, v.constructor.name ]);
+              throw new Error("Failed pattern match: " + [ v.constructor.name, b.constructor.name, v1.constructor.name ]);
           };
       };
   });
@@ -15623,15 +15623,15 @@ var PS = { };
           throw new Error("Failed pattern match: " + [ v.constructor.name ]);
       };
   }, function (dictApplicative) {
-      return function (f) {
-          return function (v) {
-              if (v instanceof Nil) {
+      return function (v) {
+          return function (v1) {
+              if (v1 instanceof Nil) {
                   return Prelude.pure(dictApplicative)(Nil.value);
               };
-              if (v instanceof Cons) {
-                  return Prelude["<*>"](dictApplicative["__superclass_Prelude.Apply_0"]())(Prelude["<$>"]((dictApplicative["__superclass_Prelude.Apply_0"]())["__superclass_Prelude.Functor_0"]())(Cons.create)(f(v.value0)))(Data_Traversable.traverse(traversableList)(dictApplicative)(f)(v.value1));
+              if (v1 instanceof Cons) {
+                  return Prelude["<*>"](dictApplicative["__superclass_Prelude.Apply_0"]())(Prelude["<$>"]((dictApplicative["__superclass_Prelude.Apply_0"]())["__superclass_Prelude.Functor_0"]())(Cons.create)(v(v1.value0)))(Data_Traversable.traverse(traversableList)(dictApplicative)(v)(v1.value1));
               };
-              throw new Error("Failed pattern match: " + [ f.constructor.name, v.constructor.name ]);
+              throw new Error("Failed pattern match: " + [ v.constructor.name, v1.constructor.name ]);
           };
       };
   });
@@ -15650,44 +15650,44 @@ var PS = { };
       };
   })(new Data_Tuple.Tuple(Nil.value, Nil.value));
   var foldM = function (dictMonad) {
-      return function (f) {
+      return function (v) {
           return function (a) {
-              return function (v) {
-                  if (v instanceof Nil) {
+              return function (v1) {
+                  if (v1 instanceof Nil) {
                       return Prelude["return"](dictMonad["__superclass_Prelude.Applicative_0"]())(a);
                   };
-                  if (v instanceof Cons) {
-                      return Prelude[">>="](dictMonad["__superclass_Prelude.Bind_1"]())(f(a)(v.value0))(function (a$prime) {
-                          return foldM(dictMonad)(f)(a$prime)(v.value1);
+                  if (v1 instanceof Cons) {
+                      return Prelude[">>="](dictMonad["__superclass_Prelude.Bind_1"]())(v(a)(v1.value0))(function (a$prime) {
+                          return foldM(dictMonad)(v)(a$prime)(v1.value1);
                       });
                   };
-                  throw new Error("Failed pattern match: " + [ f.constructor.name, a.constructor.name, v.constructor.name ]);
+                  throw new Error("Failed pattern match: " + [ v.constructor.name, a.constructor.name, v1.constructor.name ]);
               };
           };
       };
   };
   var findIndex = function (fn) {
-      var go = function (__copy_n) {
-          return function (__copy_v) {
-              var n = __copy_n;
+      var go = function (__copy_v) {
+          return function (__copy_v1) {
               var v = __copy_v;
+              var v1 = __copy_v1;
               tco: while (true) {
-                  if (v instanceof Cons) {
-                      if (fn(v.value0)) {
-                          return new Data_Maybe.Just(n);
+                  if (v1 instanceof Cons) {
+                      if (fn(v1.value0)) {
+                          return new Data_Maybe.Just(v);
                       };
                       if (Prelude.otherwise) {
-                          var __tco_n = n + 1 | 0;
-                          var __tco_v = v.value1;
-                          n = __tco_n;
+                          var __tco_v = v + 1 | 0;
+                          var __tco_v1 = v1.value1;
                           v = __tco_v;
+                          v1 = __tco_v1;
                           continue tco;
                       };
                   };
-                  if (v instanceof Nil) {
+                  if (v1 instanceof Nil) {
                       return Data_Maybe.Nothing.value;
                   };
-                  throw new Error("Failed pattern match at Data.List line 301, column 1 - line 302, column 1: " + [ n.constructor.name, v.constructor.name ]);
+                  throw new Error("Failed pattern match at Data.List line 301, column 1 - line 302, column 1: " + [ v.constructor.name, v1.constructor.name ]);
               };
           };
       };
@@ -15699,27 +15699,27 @@ var PS = { };
       };
   };
   var filterM = function (dictMonad) {
-      return function (p) {
-          return function (v) {
-              if (v instanceof Nil) {
+      return function (v) {
+          return function (v1) {
+              if (v1 instanceof Nil) {
                   return Prelude["return"](dictMonad["__superclass_Prelude.Applicative_0"]())(Nil.value);
               };
-              if (v instanceof Cons) {
-                  return Prelude.bind(dictMonad["__superclass_Prelude.Bind_1"]())(p(v.value0))(function (v1) {
-                      return Prelude.bind(dictMonad["__superclass_Prelude.Bind_1"]())(filterM(dictMonad)(p)(v.value1))(function (v2) {
+              if (v1 instanceof Cons) {
+                  return Prelude.bind(dictMonad["__superclass_Prelude.Bind_1"]())(v(v1.value0))(function (v2) {
+                      return Prelude.bind(dictMonad["__superclass_Prelude.Bind_1"]())(filterM(dictMonad)(v)(v1.value1))(function (v3) {
                           return Prelude["return"](dictMonad["__superclass_Prelude.Applicative_0"]())((function () {
-                              if (v1) {
-                                  return new Cons(v.value0, v2);
+                              if (v2) {
+                                  return new Cons(v1.value0, v3);
                               };
-                              if (!v1) {
-                                  return v2;
+                              if (!v2) {
+                                  return v3;
                               };
-                              throw new Error("Failed pattern match: " + [ v1.constructor.name ]);
+                              throw new Error("Failed pattern match: " + [ v2.constructor.name ]);
                           })());
                       });
                   });
               };
-              throw new Error("Failed pattern match: " + [ p.constructor.name, v.constructor.name ]);
+              throw new Error("Failed pattern match: " + [ v.constructor.name, v1.constructor.name ]);
           };
       };
   };
@@ -15755,35 +15755,35 @@ var PS = { };
       };
       return go(Nil.value);
   };
-  var intersectBy = function (eq) {
-      return function (v) {
-          return function (v1) {
-              if (v instanceof Nil) {
-                  return Nil.value;
-              };
+  var intersectBy = function (v) {
+      return function (v1) {
+          return function (v2) {
               if (v1 instanceof Nil) {
                   return Nil.value;
               };
+              if (v2 instanceof Nil) {
+                  return Nil.value;
+              };
               return filter(function (x) {
-                  return Data_Foldable.any(foldableList)(Prelude.booleanAlgebraBoolean)(eq(x))(v1);
-              })(v);
+                  return Data_Foldable.any(foldableList)(Prelude.booleanAlgebraBoolean)(v(x))(v2);
+              })(v1);
           };
       };
   };
   var intersect = function (dictEq) {
       return intersectBy(Prelude["=="](dictEq));
   };
-  var nubBy = function ($eq$eq) {
-      return function (v) {
-          if (v instanceof Nil) {
+  var nubBy = function (v) {
+      return function (v1) {
+          if (v1 instanceof Nil) {
               return Nil.value;
           };
-          if (v instanceof Cons) {
-              return new Cons(v.value0, nubBy($eq$eq)(filter(function (y) {
-                  return !$eq$eq(v.value0)(y);
-              })(v.value1)));
+          if (v1 instanceof Cons) {
+              return new Cons(v1.value0, nubBy(v)(filter(function (y) {
+                  return !v(v1.value0)(y);
+              })(v1.value1)));
           };
-          throw new Error("Failed pattern match: " + [ $eq$eq.constructor.name, v.constructor.name ]);
+          throw new Error("Failed pattern match: " + [ v.constructor.name, v1.constructor.name ]);
       };
   };
   var nub = function (dictEq) {
@@ -15843,15 +15843,15 @@ var PS = { };
                               return Prelude.GT.value;
                           };
                           if (v instanceof Cons && v1 instanceof Cons) {
-                              var $303 = Prelude.compare(dictOrd)(v.value0)(v1.value0);
-                              if ($303 instanceof Prelude.EQ) {
+                              var $321 = Prelude.compare(dictOrd)(v.value0)(v1.value0);
+                              if ($321 instanceof Prelude.EQ) {
                                   var __tco_v = v.value1;
                                   var __tco_v1 = v1.value1;
                                   v = __tco_v;
                                   v1 = __tco_v1;
                                   continue tco;
                               };
-                              return $303;
+                              return $321;
                           };
                           throw new Error("Failed pattern match at Data.List line 713, column 1 - line 724, column 1: " + [ v.constructor.name, v1.constructor.name ]);
                       };
@@ -15918,19 +15918,19 @@ var PS = { };
           };
       };
   };
-  var deleteBy = function ($eq$eq) {
-      return function (x) {
-          return function (v) {
-              if (v instanceof Nil) {
+  var deleteBy = function (v) {
+      return function (v1) {
+          return function (v2) {
+              if (v2 instanceof Nil) {
                   return Nil.value;
               };
-              if (v instanceof Cons && $eq$eq(x)(v.value0)) {
-                  return v.value1;
+              if (v2 instanceof Cons && v(v1)(v2.value0)) {
+                  return v2.value1;
               };
-              if (v instanceof Cons) {
-                  return new Cons(v.value0, deleteBy($eq$eq)(x)(v.value1));
+              if (v2 instanceof Cons) {
+                  return new Cons(v2.value0, deleteBy(v)(v1)(v2.value1));
               };
-              throw new Error("Failed pattern match: " + [ $eq$eq.constructor.name, x.constructor.name, v.constructor.name ]);
+              throw new Error("Failed pattern match: " + [ v.constructor.name, v1.constructor.name, v2.constructor.name ]);
           };
       };
   };
@@ -15961,29 +15961,29 @@ var PS = { };
   var $bslash$bslash = function (dictEq) {
       return Data_Foldable.foldl(foldableList)(Prelude.flip($$delete(dictEq)));
   };
-  var concatMap = function (f) {
-      return function (v) {
-          if (v instanceof Nil) {
+  var concatMap = function (v) {
+      return function (v1) {
+          if (v1 instanceof Nil) {
               return Nil.value;
           };
-          if (v instanceof Cons) {
-              return Prelude["<>"](semigroupList)(f(v.value0))(concatMap(f)(v.value1));
+          if (v1 instanceof Cons) {
+              return Prelude["<>"](semigroupList)(v(v1.value0))(concatMap(v)(v1.value1));
           };
-          throw new Error("Failed pattern match: " + [ f.constructor.name, v.constructor.name ]);
+          throw new Error("Failed pattern match: " + [ v.constructor.name, v1.constructor.name ]);
       };
   };
   var catMaybes = mapMaybe(Prelude.id(Prelude.categoryFn));
   var applyList = new Prelude.Apply(function () {
       return functorList;
   }, function (v) {
-      return function (xs) {
+      return function (v1) {
           if (v instanceof Nil) {
               return Nil.value;
           };
           if (v instanceof Cons) {
-              return Prelude["<>"](semigroupList)(Prelude["<$>"](functorList)(v.value0)(xs))(Prelude["<*>"](applyList)(v.value1)(xs));
+              return Prelude["<>"](semigroupList)(Prelude["<$>"](functorList)(v.value0)(v1))(Prelude["<*>"](applyList)(v.value1)(v1));
           };
-          throw new Error("Failed pattern match: " + [ v.constructor.name, xs.constructor.name ]);
+          throw new Error("Failed pattern match: " + [ v.constructor.name, v1.constructor.name ]);
       };
   });
   var bindList = new Prelude.Bind(function () {
@@ -16003,22 +16003,22 @@ var PS = { };
       return bindList;
   });
   var alterAt = function (v) {
-      return function (f) {
-          return function (v1) {
-              if (v === 0 && v1 instanceof Cons) {
+      return function (v1) {
+          return function (v2) {
+              if (v === 0 && v2 instanceof Cons) {
                   return Data_Maybe.Just.create((function () {
-                      var $339 = f(v1.value0);
-                      if ($339 instanceof Data_Maybe.Nothing) {
-                          return v1.value1;
+                      var $357 = v1(v2.value0);
+                      if ($357 instanceof Data_Maybe.Nothing) {
+                          return v2.value1;
                       };
-                      if ($339 instanceof Data_Maybe.Just) {
-                          return new Cons($339.value0, v1.value1);
+                      if ($357 instanceof Data_Maybe.Just) {
+                          return new Cons($357.value0, v2.value1);
                       };
-                      throw new Error("Failed pattern match: " + [ $339.constructor.name ]);
+                      throw new Error("Failed pattern match: " + [ $357.constructor.name ]);
                   })());
               };
-              if (v1 instanceof Cons) {
-                  return Prelude["<$>"](Data_Maybe.functorMaybe)(Cons.create(v1.value0))(alterAt(v - 1)(f)(v1.value1));
+              if (v2 instanceof Cons) {
+                  return Prelude["<$>"](Data_Maybe.functorMaybe)(Cons.create(v2.value0))(alterAt(v - 1)(v1)(v2.value1));
               };
               return Data_Maybe.Nothing.value;
           };
@@ -16026,8 +16026,8 @@ var PS = { };
   };
   var modifyAt = function (n) {
       return function (f) {
-          return alterAt(n)(function ($348) {
-              return Data_Maybe.Just.create(f($348));
+          return alterAt(n)(function ($366) {
+              return Data_Maybe.Just.create(f($366));
           });
       };
   };
@@ -18804,8 +18804,8 @@ var PS = { };
       };
       throw new Error("Failed pattern match: " + [ v.constructor.name ]);
   };
-  var size = function ($596) {
-      return Data_List.length(values($596));
+  var size = function ($600) {
+      return Data_List.length(values($600));
   };
   var singleton = function (k) {
       return function (v) {
@@ -18836,73 +18836,73 @@ var PS = { };
       };
   };
   var lookup = function (__copy_dictOrd) {
-      return function (__copy_k) {
-          return function (__copy_v) {
+      return function (__copy_v) {
+          return function (__copy_v1) {
               var dictOrd = __copy_dictOrd;
-              var k = __copy_k;
               var v = __copy_v;
+              var v1 = __copy_v1;
               tco: while (true) {
-                  if (v instanceof Leaf) {
+                  if (v1 instanceof Leaf) {
                       return Data_Maybe.Nothing.value;
                   };
-                  var k1 = k;
-                  if (v instanceof Two && Prelude["=="](dictOrd["__superclass_Prelude.Eq_0"]())(k1)(v.value1)) {
-                      return new Data_Maybe.Just(v.value2);
+                  var k = v;
+                  if (v1 instanceof Two && Prelude["=="](dictOrd["__superclass_Prelude.Eq_0"]())(k)(v1.value1)) {
+                      return new Data_Maybe.Just(v1.value2);
                   };
-                  var k1 = k;
-                  if (v instanceof Two && Prelude["<"](dictOrd)(k1)(v.value1)) {
+                  var k = v;
+                  if (v1 instanceof Two && Prelude["<"](dictOrd)(k)(v1.value1)) {
                       var __tco_dictOrd = dictOrd;
-                      var __tco_v = v.value0;
+                      var __tco_v1 = v1.value0;
                       dictOrd = __tco_dictOrd;
-                      k = k1;
-                      v = __tco_v;
+                      v = k;
+                      v1 = __tco_v1;
                       continue tco;
                   };
-                  var k1 = k;
-                  if (v instanceof Two) {
+                  var k = v;
+                  if (v1 instanceof Two) {
                       var __tco_dictOrd = dictOrd;
-                      var __tco_v = v.value3;
+                      var __tco_v1 = v1.value3;
                       dictOrd = __tco_dictOrd;
-                      k = k1;
-                      v = __tco_v;
+                      v = k;
+                      v1 = __tco_v1;
                       continue tco;
                   };
-                  var k1 = k;
-                  if (v instanceof Three && Prelude["=="](dictOrd["__superclass_Prelude.Eq_0"]())(k1)(v.value1)) {
-                      return new Data_Maybe.Just(v.value2);
+                  var k = v;
+                  if (v1 instanceof Three && Prelude["=="](dictOrd["__superclass_Prelude.Eq_0"]())(k)(v1.value1)) {
+                      return new Data_Maybe.Just(v1.value2);
                   };
-                  var k1 = k;
-                  if (v instanceof Three && Prelude["=="](dictOrd["__superclass_Prelude.Eq_0"]())(k1)(v.value4)) {
-                      return new Data_Maybe.Just(v.value5);
+                  var k = v;
+                  if (v1 instanceof Three && Prelude["=="](dictOrd["__superclass_Prelude.Eq_0"]())(k)(v1.value4)) {
+                      return new Data_Maybe.Just(v1.value5);
                   };
-                  var k1 = k;
-                  if (v instanceof Three && Prelude["<"](dictOrd)(k1)(v.value1)) {
+                  var k = v;
+                  if (v1 instanceof Three && Prelude["<"](dictOrd)(k)(v1.value1)) {
                       var __tco_dictOrd = dictOrd;
-                      var __tco_v = v.value0;
+                      var __tco_v1 = v1.value0;
                       dictOrd = __tco_dictOrd;
-                      k = k1;
-                      v = __tco_v;
+                      v = k;
+                      v1 = __tco_v1;
                       continue tco;
                   };
-                  var k1 = k;
-                  if (v instanceof Three && (Prelude["<"](dictOrd)(v.value1)(k1) && Prelude["<="](dictOrd)(k1)(v.value4))) {
+                  var k = v;
+                  if (v1 instanceof Three && (Prelude["<"](dictOrd)(v1.value1)(k) && Prelude["<="](dictOrd)(k)(v1.value4))) {
                       var __tco_dictOrd = dictOrd;
-                      var __tco_v = v.value3;
+                      var __tco_v1 = v1.value3;
                       dictOrd = __tco_dictOrd;
-                      k = k1;
-                      v = __tco_v;
+                      v = k;
+                      v1 = __tco_v1;
                       continue tco;
                   };
-                  if (v instanceof Three) {
+                  if (v1 instanceof Three) {
                       var __tco_dictOrd = dictOrd;
-                      var __tco_k = k;
-                      var __tco_v = v.value6;
+                      var __tco_v = v;
+                      var __tco_v1 = v1.value6;
                       dictOrd = __tco_dictOrd;
-                      k = __tco_k;
                       v = __tco_v;
+                      v1 = __tco_v1;
                       continue tco;
                   };
-                  throw new Error("Failed pattern match: " + [ k.constructor.name, v.constructor.name ]);
+                  throw new Error("Failed pattern match: " + [ v.constructor.name, v1.constructor.name ]);
               };
           };
       };
@@ -18932,18 +18932,18 @@ var PS = { };
       };
       return false;
   };
-  var functorMap = new Prelude.Functor(function (f) {
-      return function (v) {
-          if (v instanceof Leaf) {
+  var functorMap = new Prelude.Functor(function (v) {
+      return function (v1) {
+          if (v1 instanceof Leaf) {
               return Leaf.value;
           };
-          if (v instanceof Two) {
-              return new Two(Prelude.map(functorMap)(f)(v.value0), v.value1, f(v.value2), Prelude.map(functorMap)(f)(v.value3));
+          if (v1 instanceof Two) {
+              return new Two(Prelude.map(functorMap)(v)(v1.value0), v1.value1, v(v1.value2), Prelude.map(functorMap)(v)(v1.value3));
           };
-          if (v instanceof Three) {
-              return new Three(Prelude.map(functorMap)(f)(v.value0), v.value1, f(v.value2), Prelude.map(functorMap)(f)(v.value3), v.value4, f(v.value5), Prelude.map(functorMap)(f)(v.value6));
+          if (v1 instanceof Three) {
+              return new Three(Prelude.map(functorMap)(v)(v1.value0), v1.value1, v(v1.value2), Prelude.map(functorMap)(v)(v1.value3), v1.value4, v(v1.value5), Prelude.map(functorMap)(v)(v1.value6));
           };
-          throw new Error("Failed pattern match: " + [ f.constructor.name, v.constructor.name ]);
+          throw new Error("Failed pattern match: " + [ v.constructor.name, v1.constructor.name ]);
       };
   });
   var fromZipper = function (__copy_dictOrd) {
@@ -19270,38 +19270,38 @@ var PS = { };
               };
           };
       };
-      var removeMaxNode = function (__copy_ctx) {
-          return function (__copy_v) {
-              var ctx = __copy_ctx;
+      var removeMaxNode = function (__copy_v) {
+          return function (__copy_v1) {
               var v = __copy_v;
+              var v1 = __copy_v1;
               tco: while (true) {
-                  var ctx1 = ctx;
-                  if (v instanceof Two && (v.value0 instanceof Leaf && v.value3 instanceof Leaf)) {
-                      return up(ctx1)(Leaf.value);
+                  var ctx = v;
+                  if (v1 instanceof Two && (v1.value0 instanceof Leaf && v1.value3 instanceof Leaf)) {
+                      return up(ctx)(Leaf.value);
                   };
-                  var ctx1 = ctx;
-                  if (v instanceof Two) {
-                      var __tco_ctx = new Data_List.Cons(new TwoRight(v.value0, v.value1, v.value2), ctx1);
-                      var __tco_v = v.value3;
-                      ctx = __tco_ctx;
+                  var ctx = v;
+                  if (v1 instanceof Two) {
+                      var __tco_v = new Data_List.Cons(new TwoRight(v1.value0, v1.value1, v1.value2), ctx);
+                      var __tco_v1 = v1.value3;
                       v = __tco_v;
+                      v1 = __tco_v1;
                       continue tco;
                   };
-                  var ctx1 = ctx;
-                  if (v instanceof Three && (v.value0 instanceof Leaf && (v.value3 instanceof Leaf && v.value6 instanceof Leaf))) {
-                      return up(new Data_List.Cons(new TwoRight(Leaf.value, v.value1, v.value2), ctx1))(Leaf.value);
+                  var ctx = v;
+                  if (v1 instanceof Three && (v1.value0 instanceof Leaf && (v1.value3 instanceof Leaf && v1.value6 instanceof Leaf))) {
+                      return up(new Data_List.Cons(new TwoRight(Leaf.value, v1.value1, v1.value2), ctx))(Leaf.value);
                   };
-                  if (v instanceof Three) {
-                      var __tco_ctx = new Data_List.Cons(new ThreeRight(v.value0, v.value1, v.value2, v.value3, v.value4, v.value5), ctx);
-                      var __tco_v = v.value6;
-                      ctx = __tco_ctx;
+                  if (v1 instanceof Three) {
+                      var __tco_v = new Data_List.Cons(new ThreeRight(v1.value0, v1.value1, v1.value2, v1.value3, v1.value4, v1.value5), v);
+                      var __tco_v1 = v1.value6;
                       v = __tco_v;
+                      v1 = __tco_v1;
                       continue tco;
                   };
-                  if (v instanceof Leaf) {
+                  if (v1 instanceof Leaf) {
                       return Data_Maybe_Unsafe.unsafeThrow("Impossible case in 'removeMaxNode'");
                   };
-                  throw new Error("Failed pattern match at Data.Map line 173, column 1 - line 174, column 1: " + [ ctx.constructor.name, v.constructor.name ]);
+                  throw new Error("Failed pattern match at Data.Map line 173, column 1 - line 174, column 1: " + [ v.constructor.name, v1.constructor.name ]);
               };
           };
       };
@@ -19337,93 +19337,93 @@ var PS = { };
           };
       };
       var down = function (__copy_ctx) {
-          return function (__copy_k) {
-              return function (__copy_v) {
+          return function (__copy_v) {
+              return function (__copy_v1) {
                   var ctx = __copy_ctx;
-                  var k = __copy_k;
                   var v = __copy_v;
+                  var v1 = __copy_v1;
                   tco: while (true) {
                       var ctx1 = ctx;
-                      if (v instanceof Leaf) {
+                      if (v1 instanceof Leaf) {
                           return fromZipper(dictOrd)(ctx1)(Leaf.value);
                       };
                       var ctx1 = ctx;
-                      var k1 = k;
-                      if (v instanceof Two && (v.value0 instanceof Leaf && (v.value3 instanceof Leaf && Prelude["=="](dictOrd["__superclass_Prelude.Eq_0"]())(k1)(v.value1)))) {
+                      var k = v;
+                      if (v1 instanceof Two && (v1.value0 instanceof Leaf && (v1.value3 instanceof Leaf && Prelude["=="](dictOrd["__superclass_Prelude.Eq_0"]())(k)(v1.value1)))) {
                           return up(ctx1)(Leaf.value);
                       };
                       var ctx1 = ctx;
-                      var k1 = k;
-                      if (v instanceof Two) {
-                          if (Prelude["=="](dictOrd["__superclass_Prelude.Eq_0"]())(k1)(v.value1)) {
-                              var max = maxNode(v.value0);
-                              return removeMaxNode(new Data_List.Cons(new TwoLeft(max.key, max.value, v.value3), ctx1))(v.value0);
+                      var k = v;
+                      if (v1 instanceof Two) {
+                          if (Prelude["=="](dictOrd["__superclass_Prelude.Eq_0"]())(k)(v1.value1)) {
+                              var max = maxNode(v1.value0);
+                              return removeMaxNode(new Data_List.Cons(new TwoLeft(max.key, max.value, v1.value3), ctx1))(v1.value0);
                           };
-                          if (Prelude["<"](dictOrd)(k1)(v.value1)) {
-                              var __tco_ctx = new Data_List.Cons(new TwoLeft(v.value1, v.value2, v.value3), ctx1);
-                              var __tco_v = v.value0;
+                          if (Prelude["<"](dictOrd)(k)(v1.value1)) {
+                              var __tco_ctx = new Data_List.Cons(new TwoLeft(v1.value1, v1.value2, v1.value3), ctx1);
+                              var __tco_v1 = v1.value0;
                               ctx = __tco_ctx;
-                              k = k1;
-                              v = __tco_v;
+                              v = k;
+                              v1 = __tco_v1;
                               continue tco;
                           };
                           if (Prelude.otherwise) {
-                              var __tco_ctx = new Data_List.Cons(new TwoRight(v.value0, v.value1, v.value2), ctx1);
-                              var __tco_v = v.value3;
+                              var __tco_ctx = new Data_List.Cons(new TwoRight(v1.value0, v1.value1, v1.value2), ctx1);
+                              var __tco_v1 = v1.value3;
                               ctx = __tco_ctx;
-                              k = k1;
-                              v = __tco_v;
+                              v = k;
+                              v1 = __tco_v1;
                               continue tco;
                           };
                       };
                       var ctx1 = ctx;
-                      var k1 = k;
-                      if (v instanceof Three && (v.value0 instanceof Leaf && (v.value3 instanceof Leaf && v.value6 instanceof Leaf))) {
-                          if (Prelude["=="](dictOrd["__superclass_Prelude.Eq_0"]())(k1)(v.value1)) {
-                              return fromZipper(dictOrd)(ctx1)(new Two(Leaf.value, v.value4, v.value5, Leaf.value));
+                      var k = v;
+                      if (v1 instanceof Three && (v1.value0 instanceof Leaf && (v1.value3 instanceof Leaf && v1.value6 instanceof Leaf))) {
+                          if (Prelude["=="](dictOrd["__superclass_Prelude.Eq_0"]())(k)(v1.value1)) {
+                              return fromZipper(dictOrd)(ctx1)(new Two(Leaf.value, v1.value4, v1.value5, Leaf.value));
                           };
-                          if (Prelude["=="](dictOrd["__superclass_Prelude.Eq_0"]())(k1)(v.value4)) {
-                              return fromZipper(dictOrd)(ctx1)(new Two(Leaf.value, v.value1, v.value2, Leaf.value));
+                          if (Prelude["=="](dictOrd["__superclass_Prelude.Eq_0"]())(k)(v1.value4)) {
+                              return fromZipper(dictOrd)(ctx1)(new Two(Leaf.value, v1.value1, v1.value2, Leaf.value));
                           };
                       };
-                      if (v instanceof Three) {
-                          if (Prelude["=="](dictOrd["__superclass_Prelude.Eq_0"]())(k)(v.value1)) {
-                              var max = maxNode(v.value0);
-                              return removeMaxNode(new Data_List.Cons(new ThreeLeft(max.key, max.value, v.value3, v.value4, v.value5, v.value6), ctx))(v.value0);
+                      if (v1 instanceof Three) {
+                          if (Prelude["=="](dictOrd["__superclass_Prelude.Eq_0"]())(v)(v1.value1)) {
+                              var max = maxNode(v1.value0);
+                              return removeMaxNode(new Data_List.Cons(new ThreeLeft(max.key, max.value, v1.value3, v1.value4, v1.value5, v1.value6), ctx))(v1.value0);
                           };
-                          if (Prelude["=="](dictOrd["__superclass_Prelude.Eq_0"]())(k)(v.value4)) {
-                              var max = maxNode(v.value3);
-                              return removeMaxNode(new Data_List.Cons(new ThreeMiddle(v.value0, v.value1, v.value2, max.key, max.value, v.value6), ctx))(v.value3);
+                          if (Prelude["=="](dictOrd["__superclass_Prelude.Eq_0"]())(v)(v1.value4)) {
+                              var max = maxNode(v1.value3);
+                              return removeMaxNode(new Data_List.Cons(new ThreeMiddle(v1.value0, v1.value1, v1.value2, max.key, max.value, v1.value6), ctx))(v1.value3);
                           };
-                          if (Prelude["<"](dictOrd)(k)(v.value1)) {
-                              var __tco_ctx = new Data_List.Cons(new ThreeLeft(v.value1, v.value2, v.value3, v.value4, v.value5, v.value6), ctx);
-                              var __tco_k = k;
-                              var __tco_v = v.value0;
+                          if (Prelude["<"](dictOrd)(v)(v1.value1)) {
+                              var __tco_ctx = new Data_List.Cons(new ThreeLeft(v1.value1, v1.value2, v1.value3, v1.value4, v1.value5, v1.value6), ctx);
+                              var __tco_v = v;
+                              var __tco_v1 = v1.value0;
                               ctx = __tco_ctx;
-                              k = __tco_k;
                               v = __tco_v;
+                              v1 = __tco_v1;
                               continue tco;
                           };
-                          if (Prelude["<"](dictOrd)(v.value1)(k) && Prelude["<"](dictOrd)(k)(v.value4)) {
-                              var __tco_ctx = new Data_List.Cons(new ThreeMiddle(v.value0, v.value1, v.value2, v.value4, v.value5, v.value6), ctx);
-                              var __tco_k = k;
-                              var __tco_v = v.value3;
+                          if (Prelude["<"](dictOrd)(v1.value1)(v) && Prelude["<"](dictOrd)(v)(v1.value4)) {
+                              var __tco_ctx = new Data_List.Cons(new ThreeMiddle(v1.value0, v1.value1, v1.value2, v1.value4, v1.value5, v1.value6), ctx);
+                              var __tco_v = v;
+                              var __tco_v1 = v1.value3;
                               ctx = __tco_ctx;
-                              k = __tco_k;
                               v = __tco_v;
+                              v1 = __tco_v1;
                               continue tco;
                           };
                           if (Prelude.otherwise) {
-                              var __tco_ctx = new Data_List.Cons(new ThreeRight(v.value0, v.value1, v.value2, v.value3, v.value4, v.value5), ctx);
-                              var __tco_k = k;
-                              var __tco_v = v.value6;
+                              var __tco_ctx = new Data_List.Cons(new ThreeRight(v1.value0, v1.value1, v1.value2, v1.value3, v1.value4, v1.value5), ctx);
+                              var __tco_v = v;
+                              var __tco_v1 = v1.value6;
                               ctx = __tco_ctx;
-                              k = __tco_k;
                               v = __tco_v;
+                              v1 = __tco_v1;
                               continue tco;
                           };
                       };
-                      throw new Error("Failed pattern match at Data.Map line 173, column 1 - line 174, column 1: " + [ ctx.constructor.name, k.constructor.name, v.constructor.name ]);
+                      throw new Error("Failed pattern match at Data.Map line 173, column 1 - line 174, column 1: " + [ ctx.constructor.name, v.constructor.name, v1.constructor.name ]);
                   };
               };
           };
@@ -19453,14 +19453,14 @@ var PS = { };
       return function (f) {
           return function (k) {
               return function (m) {
-                  var $584 = f(lookup(dictOrd)(k)(m));
-                  if ($584 instanceof Data_Maybe.Nothing) {
+                  var $588 = f(lookup(dictOrd)(k)(m));
+                  if ($588 instanceof Data_Maybe.Nothing) {
                       return $$delete(dictOrd)(k)(m);
                   };
-                  if ($584 instanceof Data_Maybe.Just) {
-                      return insert(dictOrd)(k)($584.value0)(m);
+                  if ($588 instanceof Data_Maybe.Just) {
+                      return insert(dictOrd)(k)($588.value0)(m);
                   };
-                  throw new Error("Failed pattern match at Data.Map line 235, column 1 - line 236, column 1: " + [ $584.constructor.name ]);
+                  throw new Error("Failed pattern match at Data.Map line 235, column 1 - line 236, column 1: " + [ $588.constructor.name ]);
               };
           };
       };
@@ -19496,8 +19496,8 @@ var PS = { };
               return function (m2) {
                   var go = function (m) {
                       return function (v) {
-                          return alter(dictOrd)(function ($597) {
-                              return Data_Maybe.Just.create(Data_Maybe.maybe(v.value1)(f(v.value1))($597));
+                          return alter(dictOrd)(function ($601) {
+                              return Data_Maybe.Just.create(Data_Maybe.maybe(v.value1)(f(v.value1))($601));
                           })(v.value0)(m);
                       };
                   };
@@ -20815,15 +20815,15 @@ var PS = { };
   };
   var $less$times$times$greater = function (v) {
       return function (v1) {
-          return Flare_1.UI(function __do() {
+          return UI(function __do() {
               var v2 = v();
               var v3 = v1();
-              return Prelude["return"](Control_Monad_Eff.applicativeEff)(new Flare_1.Flare(Prelude["<>"](Prelude.semigroupArray)(v2.value0)(v3.value0), Prelude["<*>"](Signal.applySignal)(v3.value1)(v2.value1)))();
+              return Prelude["return"](Control_Monad_Eff.applicativeEff)(new Flare(Prelude["<>"](Prelude.semigroupArray)(v2.value0)(v3.value0), Prelude["<*>"](Signal.applySignal)(v3.value1)(v2.value1)))();
           });
       };
   };
   var wrap = function (sig) {
-      return Flare_1.UI(Prelude["return"](Control_Monad_Eff.applicativeEff)(new Flare_1.Flare([  ], sig)));
+      return UI(Prelude["return"](Control_Monad_Eff.applicativeEff)(new Flare([  ], sig)));
   };
   var setupFlare = function (v) {
       return function __do() {
@@ -20839,8 +20839,8 @@ var PS = { };
           return function (v) {
               return function __do() {
                   var v1 = v();
-                  Flare_1.removeChildren(controls)();
-                  Data_Foldable.traverse_(Control_Monad_Eff.applicativeEff)(Data_Foldable.foldableArray)(Flare_1.appendComponent(controls))(v1.value0)();
+                  $foreign.removeChildren(controls)();
+                  Data_Foldable.traverse_(Control_Monad_Eff.applicativeEff)(Data_Foldable.foldableArray)($foreign.appendComponent(controls))(v1.value0)();
                   return Signal.runSignal(Prelude.map(Signal.functorSignal)(handler)(v1.value1))();
               };
           };
@@ -20848,158 +20848,158 @@ var PS = { };
   };
   var runFlare = function (controls) {
       return function (target) {
-          return Flare_1.runFlareWith(controls)(Flare_1.renderString(target));
+          return runFlareWith(controls)($foreign.renderString(target));
       };
   };
   var liftSF = function (f) {
       return function (v) {
           return function __do() {
               var v1 = v();
-              return Prelude["return"](Control_Monad_Eff.applicativeEff)(new Flare_1.Flare(v1.value0, f(v1.value1)))();
+              return Prelude["return"](Control_Monad_Eff.applicativeEff)(new Flare(v1.value0, f(v1.value1)))();
           };
       };
   };
   var lift = function (msig) {
-      return Flare_1.UI(function __do() {
+      return UI(function __do() {
           var v = msig();
-          return Prelude["return"](Control_Monad_Eff.applicativeEff)(new Flare_1.Flare([  ], v))();
+          return Prelude["return"](Control_Monad_Eff.applicativeEff)(new Flare([  ], v))();
       });
   };
   var functorFlare = new Prelude.Functor(function (f) {
       return function (v) {
-          return new Flare_1.Flare(v.value0, Prelude.map(Signal.functorSignal)(f)(v.value1));
+          return new Flare(v.value0, Prelude.map(Signal.functorSignal)(f)(v.value1));
       };
   });
   var functorUI = new Prelude.Functor(function (f) {
       return function (v) {
-          return Flare_1.UI(Prelude.map(Control_Monad_Eff.functorEff)(Prelude.map(Flare_1.functorFlare)(f))(v));
+          return UI(Prelude.map(Control_Monad_Eff.functorEff)(Prelude.map(functorFlare)(f))(v));
       };
   });
   var runFlareShow = function (dictShow) {
       return function (controls) {
           return function (target) {
               return function (ui) {
-                  return Flare_1.runFlare(controls)(target)(Prelude["<$>"](Flare_1.functorUI)(Prelude.show(dictShow))(ui));
+                  return runFlare(controls)(target)(Prelude["<$>"](functorUI)(Prelude.show(dictShow))(ui));
               };
           };
       };
   };
   var foldp = function (f) {
       return function (x0) {
-          return Flare_1.liftSF(Signal.foldp(f)(x0));
+          return liftSF(Signal.foldp(f)(x0));
       };
   };
   var fieldset = function (label) {
       return function (v) {
-          return Flare_1.UI(function __do() {
+          return UI(function __do() {
               var v1 = v();
-              return Prelude["return"](Control_Monad_Eff.applicativeEff)(new Flare_1.Flare([ Flare_1.toFieldset(label)(v1.value0) ], v1.value1))();
+              return Prelude["return"](Control_Monad_Eff.applicativeEff)(new Flare([ $foreign.toFieldset(label)(v1.value0) ], v1.value1))();
           });
       };
   };
   var createUI = function (createComp) {
       return function (label) {
           return function ($$default) {
-              return Flare_1.UI(function __do() {
+              return UI(function __do() {
                   var v = Signal_Channel.channel($$default)();
                   var v1 = createComp(label)($$default)(Signal_Channel.send(v))();
                   return (function () {
                       var signal = Signal_Channel.subscribe(v);
-                      return Prelude["return"](Control_Monad_Eff.applicativeEff)(new Flare_1.Flare([ v1 ], signal));
+                      return Prelude["return"](Control_Monad_Eff.applicativeEff)(new Flare([ v1 ], signal));
                   })()();
               });
           };
       };
   };
   var $$int = function (label) {
-      return Flare_1.createUI(Flare_1.cIntRange("number")(Prelude.bottom(Prelude.boundedInt))(Prelude.top(Prelude.boundedInt)))(label);
+      return createUI($foreign.cIntRange("number")(Prelude.bottom(Prelude.boundedInt))(Prelude.top(Prelude.boundedInt)))(label);
   };
-  var int_ = Flare_1["int"]("");
+  var int_ = $$int("");
   var intRange = function (label) {
       return function (min) {
           return function (max) {
               return function ($$default) {
-                  return Flare_1.createUI(Flare_1.cIntRange("number")(min)(max))(label)($$default);
+                  return createUI($foreign.cIntRange("number")(min)(max))(label)($$default);
               };
           };
       };
   };
-  var intRange_ = Flare_1.intRange("");
+  var intRange_ = intRange("");
   var intSlider = function (label) {
       return function (min) {
           return function (max) {
               return function ($$default) {
-                  return Flare_1.createUI(Flare_1.cIntRange("range")(min)(max))(label)($$default);
+                  return createUI($foreign.cIntRange("range")(min)(max))(label)($$default);
               };
           };
       };
   };
-  var intSlider_ = Flare_1.intSlider("");
-  var number = Flare_1.createUI(Flare_1.cNumber);
-  var number_ = Flare_1.number("");
+  var intSlider_ = intSlider("");
+  var number = createUI($foreign.cNumber);
+  var number_ = number("");
   var numberRange = function (label) {
       return function (min) {
           return function (max) {
               return function (step) {
                   return function ($$default) {
-                      return Flare_1.createUI(Flare_1.cNumberRange("number")(min)(max)(step))(label)($$default);
+                      return createUI($foreign.cNumberRange("number")(min)(max)(step))(label)($$default);
                   };
               };
           };
       };
   };
-  var numberRange_ = Flare_1.numberRange("");
+  var numberRange_ = numberRange("");
   var numberSlider = function (label) {
       return function (min) {
           return function (max) {
               return function (step) {
                   return function ($$default) {
-                      return Flare_1.createUI(Flare_1.cNumberRange("range")(min)(max)(step))(label)($$default);
+                      return createUI($foreign.cNumberRange("range")(min)(max)(step))(label)($$default);
                   };
               };
           };
       };
   };
-  var numberSlider_ = Flare_1.numberSlider("");
+  var numberSlider_ = numberSlider("");
   var radioGroup = function (label) {
       return function ($$default) {
           return function (xs) {
               return function (toString) {
-                  return Flare_1.createUI(Flare_1.cRadioGroup(xs)(toString))(label)($$default);
+                  return createUI($foreign.cRadioGroup(xs)(toString))(label)($$default);
               };
           };
       };
   };
-  var radioGroup_ = Flare_1.radioGroup("");
+  var radioGroup_ = radioGroup("");
   var select = function (label) {
       return function ($$default) {
           return function (xs) {
               return function (toString) {
-                  return Flare_1.createUI(Flare_1.cSelect(xs)(toString))(label)($$default);
+                  return createUI($foreign.cSelect(xs)(toString))(label)($$default);
               };
           };
       };
   };
-  var select_ = Flare_1.select("");
-  var string = Flare_1.createUI(Flare_1.cString);
-  var string_ = Flare_1.string("");
+  var select_ = select("");
+  var string = createUI($foreign.cString);
+  var string_ = string("");
   var stringPattern = function (label) {
       return function (pattern) {
           return function ($$default) {
-              return Flare_1.createUI(Flare_1.cStringPattern(pattern))(label)($$default);
+              return createUI($foreign.cStringPattern(pattern))(label)($$default);
           };
       };
   };
-  var stringPattern_ = Flare_1.stringPattern("");
+  var stringPattern_ = stringPattern("");
   var button = function (label) {
       return function (vDefault) {
           return function (vPressed) {
-              return Flare_1.createUI(Flare_1.cButton(vPressed))(label)(vDefault);
+              return createUI($foreign.cButton(vPressed))(label)(vDefault);
           };
       };
   };
-  var $$boolean = Flare_1.createUI(Flare_1.cBoolean);
-  var boolean_ = Flare_1["boolean"]("");
+  var $$boolean = createUI($foreign.cBoolean);
+  var boolean_ = $$boolean("");
   var optional = function (label) {
       return function (enabled) {
           return function (x) {
@@ -21012,84 +21012,84 @@ var PS = { };
                   };
                   throw new Error("Failed pattern match at Flare line 249, column 9 - line 250, column 9: " + [ v.constructor.name ]);
               };
-              return Prelude["<$>"](Flare_1.functorUI)(ret)(Flare_1["boolean"](label)(enabled));
+              return Prelude["<$>"](functorUI)(ret)($$boolean(label)(enabled));
           };
       };
   };
-  var optional_ = Flare_1.optional("");
+  var optional_ = optional("");
   var applyFlare = new Prelude.Apply(function () {
-      return Flare_1.functorFlare;
+      return functorFlare;
   }, function (v) {
       return function (v1) {
-          return new Flare_1.Flare(Prelude["<>"](Prelude.semigroupArray)(v.value0)(v1.value0), Prelude["<*>"](Signal.applySignal)(v.value1)(v1.value1));
+          return new Flare(Prelude["<>"](Prelude.semigroupArray)(v.value0)(v1.value0), Prelude["<*>"](Signal.applySignal)(v.value1)(v1.value1));
       };
   });
   var applyUI = new Prelude.Apply(function () {
-      return Flare_1.functorUI;
+      return functorUI;
   }, function (v) {
       return function (v1) {
-          return Flare_1.UI(Control_Apply.lift2(Control_Monad_Eff.applyEff)(Prelude.apply(Flare_1.applyFlare))(v)(v1));
+          return UI(Control_Apply.lift2(Control_Monad_Eff.applyEff)(Prelude.apply(applyFlare))(v)(v1));
       };
   });
   var semigroupUI = function (dictSemigroup) {
-      return new Prelude.Semigroup(Control_Apply.lift2(Flare_1.applyUI)(Prelude.append(dictSemigroup)));
+      return new Prelude.Semigroup(Control_Apply.lift2(applyUI)(Prelude.append(dictSemigroup)));
   };
   var applicativeFlare = new Prelude.Applicative(function () {
-      return Flare_1.applyFlare;
+      return applyFlare;
   }, function (x) {
-      return new Flare_1.Flare([  ], Prelude.pure(Signal.applicativeSignal)(x));
+      return new Flare([  ], Prelude.pure(Signal.applicativeSignal)(x));
   });
   var applicativeUI = new Prelude.Applicative(function () {
-      return Flare_1.applyUI;
+      return applyUI;
   }, function (x) {
-      return Flare_1.UI(Prelude["return"](Control_Monad_Eff.applicativeEff)(Prelude.pure(Flare_1.applicativeFlare)(x)));
+      return UI(Prelude["return"](Control_Monad_Eff.applicativeEff)(Prelude.pure(applicativeFlare)(x)));
   });
   var boundedUI = function (dictBounded) {
-      return new Prelude.Bounded(Prelude.pure(Flare_1.applicativeUI)(Prelude.bottom(dictBounded)), Prelude.pure(Flare_1.applicativeUI)(Prelude.top(dictBounded)));
+      return new Prelude.Bounded(Prelude.pure(applicativeUI)(Prelude.bottom(dictBounded)), Prelude.pure(applicativeUI)(Prelude.top(dictBounded)));
   };
   var booleanAlgebraUI = function (dictBooleanAlgebra) {
       return new Prelude.BooleanAlgebra(function () {
-          return Flare_1.boundedUI(dictBooleanAlgebra["__superclass_Prelude.Bounded_0"]());
-      }, Control_Apply.lift2(Flare_1.applyUI)(Prelude.conj(dictBooleanAlgebra)), Control_Apply.lift2(Flare_1.applyUI)(Prelude.disj(dictBooleanAlgebra)), Prelude.map(Flare_1.functorUI)(Prelude.not(dictBooleanAlgebra)));
+          return boundedUI(dictBooleanAlgebra["__superclass_Prelude.Bounded_0"]());
+      }, Control_Apply.lift2(applyUI)(Prelude.conj(dictBooleanAlgebra)), Control_Apply.lift2(applyUI)(Prelude.disj(dictBooleanAlgebra)), Prelude.map(functorUI)(Prelude.not(dictBooleanAlgebra)));
   };
   var buttons = function (xs) {
       return function (toString) {
           var toButton = function (x) {
-              return Flare_1.button(toString(x))(Data_Maybe.Nothing.value)(new Data_Maybe.Just(x));
+              return button(toString(x))(Data_Maybe.Nothing.value)(new Data_Maybe.Just(x));
           };
-          return Prelude["<$>"](Flare_1.functorUI)(function ($78) {
+          return Prelude["<$>"](functorUI)(function ($78) {
               return Data_Array.head(Data_Array.catMaybes($78));
-          })(Data_Traversable.traverse(Data_Traversable.traversableArray)(Flare_1.applicativeUI)(toButton)(xs));
+          })(Data_Traversable.traverse(Data_Traversable.traversableArray)(applicativeUI)(toButton)(xs));
       };
   };
   var monoidUI = function (dictMonoid) {
       return new Data_Monoid.Monoid(function () {
-          return Flare_1.semigroupUI(dictMonoid["__superclass_Prelude.Semigroup_0"]());
-      }, Prelude.pure(Flare_1.applicativeUI)(Data_Monoid.mempty(dictMonoid)));
+          return semigroupUI(dictMonoid["__superclass_Prelude.Semigroup_0"]());
+      }, Prelude.pure(applicativeUI)(Data_Monoid.mempty(dictMonoid)));
   };
   var semiringUI = function (dictSemiring) {
-      return new Prelude.Semiring(Control_Apply.lift2(Flare_1.applyUI)(Prelude.add(dictSemiring)), Control_Apply.lift2(Flare_1.applyUI)(Prelude.mul(dictSemiring)), Prelude.pure(Flare_1.applicativeUI)(Prelude.one(dictSemiring)), Prelude.pure(Flare_1.applicativeUI)(Prelude.zero(dictSemiring)));
+      return new Prelude.Semiring(Control_Apply.lift2(applyUI)(Prelude.add(dictSemiring)), Control_Apply.lift2(applyUI)(Prelude.mul(dictSemiring)), Prelude.pure(applicativeUI)(Prelude.one(dictSemiring)), Prelude.pure(applicativeUI)(Prelude.zero(dictSemiring)));
   };
   var moduloSemiringUI = function (dictModuloSemiring) {
       return new Prelude.ModuloSemiring(function () {
-          return Flare_1.semiringUI(dictModuloSemiring["__superclass_Prelude.Semiring_0"]());
-      }, Control_Apply.lift2(Flare_1.applyUI)(Prelude.div(dictModuloSemiring)), Control_Apply.lift2(Flare_1.applyUI)(Prelude.mod(dictModuloSemiring)));
+          return semiringUI(dictModuloSemiring["__superclass_Prelude.Semiring_0"]());
+      }, Control_Apply.lift2(applyUI)(Prelude.div(dictModuloSemiring)), Control_Apply.lift2(applyUI)(Prelude.mod(dictModuloSemiring)));
   };
   var ringUI = function (dictRing) {
       return new Prelude.Ring(function () {
-          return Flare_1.semiringUI(dictRing["__superclass_Prelude.Semiring_0"]());
-      }, Control_Apply.lift2(Flare_1.applyUI)(Prelude.sub(dictRing)));
+          return semiringUI(dictRing["__superclass_Prelude.Semiring_0"]());
+      }, Control_Apply.lift2(applyUI)(Prelude.sub(dictRing)));
   };
   var divisionRingUI = function (dictDivisionRing) {
       return new Prelude.DivisionRing(function () {
-          return Flare_1.moduloSemiringUI(dictDivisionRing["__superclass_Prelude.ModuloSemiring_1"]());
+          return moduloSemiringUI(dictDivisionRing["__superclass_Prelude.ModuloSemiring_1"]());
       }, function () {
-          return Flare_1.ringUI(dictDivisionRing["__superclass_Prelude.Ring_0"]());
+          return ringUI(dictDivisionRing["__superclass_Prelude.Ring_0"]());
       });
   };
   var numUI = function (dictNum) {
       return new Prelude.Num(function () {
-          return Flare_1.divisionRingUI(dictNum["__superclass_Prelude.DivisionRing_0"]());
+          return divisionRingUI(dictNum["__superclass_Prelude.DivisionRing_0"]());
       });
   };
   exports["runFlareShow"] = runFlareShow;

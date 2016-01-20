@@ -93,7 +93,7 @@ $(function() {
                         head.appendChild(script);
                     }).fail(function(err) {
 
-                        console.log("Could not load JS bundle: " + err);
+                        console.log("Unable to load JS bundle");
                     });
                 }
             },
