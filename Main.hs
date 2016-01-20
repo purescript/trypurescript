@@ -26,6 +26,7 @@ import qualified Data.ByteString.Lazy.Char8 as BLC8
 import           Data.List (foldl')
 import           Data.String (fromString)
 
+import           Control.Applicative ((<$>))
 import           Control.Monad (unless)
 import           Control.Monad.Logger (runLogger')
 import           Control.Monad.Trans (lift)
