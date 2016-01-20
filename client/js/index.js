@@ -20,7 +20,7 @@ $(function() {
         'min-height': '250px'
     });
 
-    $('#compile').click(function() {
+    var compile = function() {
 
         var code = $('#textarea').val();
 
@@ -107,5 +107,12 @@ $(function() {
                     .append($('<pre>').append($('<code>').append(res.responseText)));
             }
         });
-    });
+    };
+
+    session.on('change', _.debounce(function() {
+
+        compile();
+    }, 500));
+
+    compile();
 });

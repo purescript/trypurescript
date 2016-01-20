@@ -53,6 +53,7 @@ body
 }
 
 .footer {
+  padding: 10px;
   border-top: 1px solid #ddd;
   background-color: rgb(250, 250, 250);
 }
@@ -100,8 +101,6 @@ button {
   background: none;
   color: #c4953a;
   font-size: 12px;
-  font-weight: bold;
-  text-transform: uppercase;
   border: 0;
   cursor: pointer;
   padding: 10px;
