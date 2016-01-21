@@ -39,9 +39,10 @@ $(function() {
 
     var execute = function(js, bundle) {
 
-        var $iframe = $('<iframe>');
+        var $iframe = $('<iframe>').addClass('results');
 
-        $('.results').empty().append($iframe);
+        $('.results').remove();
+        $('.body').append($iframe);
 
         var iframe = $iframe.get(0).contentWindow.document;
 
@@ -113,9 +114,8 @@ $(function() {
             contentType: 'text/plain',
             success: function(res) {
                 if (res.error) {
-                    $('.results')
-                        .empty()
-                        .append($('<pre>').append($('<code>').append(res.error)));
+                    $('.results').remove();
+                    $('.body').append($('<pre>').addClass('results').append($('<code>').append(res.error)));
                 } else if (res.js) {
                     $.get('js/bundle.js').done(function(bundle) {
 
@@ -127,9 +127,8 @@ $(function() {
                 }
             },
             error: function(res) {
-                $('.results').empty()
-                    .append($('<h2>').append('Error'))
-                    .append($('<pre>').append($('<code>').append(res.responseText)));
+                $('.results').remove();
+                $('.body').append($('<pre>').addClass('results').append($('<code>').append(res.responseText)));
             }
         });
     };
