@@ -38,6 +38,8 @@ body
 .editor, .results {
   position: relative;
   flex-basis: 50%;
+  flex-grow: 0;
+  flex-shrink: 0;
 }
 
 #code {
