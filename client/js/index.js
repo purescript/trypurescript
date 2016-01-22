@@ -13,51 +13,46 @@
 
 $(function() {
 
-    var editor, session;
+    var setupEditorWith = function(name, ta_name, lang) {
 
-    var setupEditor = function() {
-
-        editor = ace.edit('code');
+        var editor = ace.edit(name);
 
         editor.renderer.setShowGutter(true);
         editor.setFontSize(14);
         editor.setShowPrintMargin(false);
 
-        session = editor.getSession();
+        var session = editor.getSession();
 
-        session.setMode('ace/mode/haskell');
-        session.setValue($('#textarea').val());
+        session.setMode(lang);
+        session.setValue($('#' + ta_name).val());
         session.setUseWrapMode(true);
 
         session.on('change', _.debounce(function() {
 
+            $('#' + ta_name).val(session.getValue());
             compile();
         }, 500));
 
         compile();
     };
 
+    var setupEditor = function() {
+
+        setupEditorWith('code', 'code_textarea', 'ace/mode/haskell');
+        setupEditorWith('html', 'html_textarea', 'ace/mode/html');
+    };
+
     var execute = function(js, bundle) {
 
         var $iframe = $('<iframe>');
 
-        $('.results').empty().append($iframe);
+        $('#results').empty().append($iframe);
 
         var iframe = $iframe.get(0).contentWindow.document;
 
         // TODO: make the HTML editable
         iframe.open();
-        iframe.write(
-            [ '<html>'
-            , '  <head>'
-            , '    <title>Try PureScript!</title>'
-            , '  </head>'
-            , '  <body>'
-            , '    <div id="console"></div>'
-            , '    <canvas id="canvas" width="800" height="800"></canvas>'
-            , '  </body>'
-            , '</html>'
-            ].join('\n'));
+        iframe.write($('#html_textarea').val());
 
         var consoleScript =
             [ 'var console = {'
@@ -98,12 +93,17 @@ $(function() {
         var script = iframe.createElement('script');
         script.appendChild(iframe.createTextNode(scripts));
         var head = iframe.getElementsByTagName('head')[0];
-        head.appendChild(script);
+
+        if (head) {
+            head.appendChild(script);
+        } else {
+            console.log("<head> element is missing!");
+        }
     };
 
     var compile = function() {
 
-        var code = session.getValue();
+        var code = $('#code_textarea').val();
 
         $.ajax({
             url: 'http://compile.purescript.org/compile',
@@ -112,8 +112,9 @@ $(function() {
             method: 'POST',
             contentType: 'text/plain',
             success: function(res) {
+
                 if (res.error) {
-                    $('.results')
+                    $('#results')
                         .empty()
                         .append($('<pre>').append($('<code>').append(res.error)));
                 } else if (res.js) {
@@ -127,11 +128,31 @@ $(function() {
                 }
             },
             error: function(res) {
-                $('.results')
+                $('#results')
                     .empty()
                     .append($('<pre>').append($('<code>').append(res.responseText)));
             }
         });
+    };
+
+    var tryLoadFileFromGist = function(gistInfo, filename) {
+
+        if (gistInfo.files && gistInfo.files.hasOwnProperty(filename)) {
+
+            var url = gistInfo.files[filename].raw_url;
+
+            return $.ajax({
+                url: url,
+                dataType: 'text'
+            });
+        } else {
+
+            console.log("File named " + filename + " does not exist in gist");
+
+            var promise = $.Deferred();
+            promise.resolve(null);
+            return promise;
+        }
     };
 
     var loadFromGist = function(id) {
@@ -141,25 +162,17 @@ $(function() {
             dataType: 'json'
         }).done(function(gistInfo) {
 
-            if (gistInfo.files && gistInfo.files.hasOwnProperty("Main.purs")) {
+            $.when(tryLoadFileFromGist(gistInfo, "Main.purs"), tryLoadFileFromGist(gistInfo, "index.html"))
+                .done(function(code, html) {
 
-                var url = gistInfo.files["Main.purs"].raw_url;
-
-                $.ajax({
-                    url: url,
-                    dataType: 'text'
-                }).done(function(gistText) {
-
-                    $('#textarea').val(gistText);
+                    code && $('#code_textarea').val(code[0]);
+                    html && $('#html_textarea').val(html[0]);
                     setupEditor();
                 }).fail(function() {
 
-                    console.log("Unable to load gist text");
+                    console.log("Unable to load gist contents");
                     setupEditor();
                 });
-            } else {
-                console.log("File named Main.purs does not exist in gist");
-            }
         }).fail(function() {
 
             console.log("Unable to load gist metadata");

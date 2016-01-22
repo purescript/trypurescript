@@ -13,17 +13,17 @@
   <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/ace/1.1.01/theme-dawn.js"></script>
 </head>
 <body>
-  <div class="wrapper">
-    <div class="header">
+  <div id="wrapper">
+    <div id="header">
       <img src="img/logo.png" width="48" height="30">
     </div>
 
-    <div class="body">
-      <div class="editor">
+    <div id="body">
+      <div id="column1">
         <div id="code">
         </div>
 
-        <textarea name="code" id="textarea" style="display: none;">module Main where
+        <textarea name="code" id="code_textarea" style="display: none;">module Main where
 
 import Prelude
 
@@ -65,13 +65,32 @@ main = do
       <div class="separator">
       </div>
 
-      <div class="results">
+      <div id="column2">
+        <div id="html">
+        </div>
+
+        <textarea name="html" id="html_textarea" style="display: none;"><!DOCTYPE html>
+<html>
+  <head>
+    <title>Try PureScript!</title>
+  </head>
+  <body>
+    <div id="console"></div>
+    <canvas id="canvas" width="800" height="800"></canvas>
+  </body>
+</html></textarea>
       </div>
 
       <script type="text/javascript" src="js/index.js"></script>
     </div>
 
-    <div class="footer">
+    <div class="separator">
+    </div>
+
+    <div id="results">
+    </div>
+
+    <div id="footer">
       <small>&copy; <a href="http://purescript.org/">PureScript</a> 2016</small>
     </div>
   </div>
