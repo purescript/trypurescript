@@ -24,7 +24,9 @@ executable trypurescript
                    http-types >= 0.8.5,
                    transformers ==0.4.*,
                    mtl ==2.2.1,
+                   text -any,
                    time -any
+    hs-source-dirs: server
     main-is: Main.hs
     buildable: True
     other-modules: Main

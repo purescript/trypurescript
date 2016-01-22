@@ -53,6 +53,7 @@ body
 .separator {
   flex-basis: 10px;
   flex-grow: 0;
+  flex-shrink: 0;
   background-color: rgb(250, 250, 250);
 }
 

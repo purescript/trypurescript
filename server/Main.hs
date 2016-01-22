@@ -22,9 +22,11 @@ module Main (
 
 import qualified Data.Aeson as A
 import           Data.Aeson ((.=))
-import qualified Data.ByteString.Lazy.Char8 as BLC8
+import qualified Data.ByteString.Lazy as BL
 import           Data.List (foldl')
 import           Data.String (fromString)
+import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
 
 import           Control.Applicative ((<$>))
 import           Control.Monad (unless)
@@ -91,7 +93,7 @@ server externsPath port = do
     get "/" $
       Scotty.text "POST api.purescript.org/compile"
     post "/compile" $ do
-      code <- BLC8.unpack <$> body
+      code <- T.unpack . T.decodeUtf8 . BL.toStrict <$> body
       response <- lift $ compile code
       case response of
         Left err ->
