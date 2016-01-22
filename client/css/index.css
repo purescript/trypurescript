@@ -42,6 +42,11 @@ body
   flex-shrink: 0;
 }
 
+.results {
+  -webkit-overflow-scrolling: touch;
+  overflow: scroll;
+}
+
 #code {
   position: absolute;
   top: 0;
