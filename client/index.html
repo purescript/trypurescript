@@ -26,39 +26,9 @@
 
 import Prelude
 
-import Data.Int
-import Data.Maybe
-import Data.Array ((..))
-import Data.Monoid (mempty)
-import Data.Foldable (fold)
+import Control.Monad.Eff.Console (log)
 
-import Control.Monad.Eff
-
-import Graphics.Drawing
-import Graphics.Canvas (getCanvasElementById, getContext2D)
-
-main = do
-  Just canvas <- getCanvasElementById "canvas"
-  ctx <- getContext2D canvas
-
-  render ctx $
-    translate 400.0 400.0 $
-      scale 200.0 200.0 $
-        go 4
-  where
-  s = 0.375
-
-  go 0 = mempty
-  go n =
-    let dr = scale s s (go (n - 1))
-    in filled (fillColor (lighten (1.0 - toNumber n / 6.0) black)) (closed pentagon)
-       <> fold do i <- 0..4
-                  return (rotate (Math.pi / 2.5 * (toNumber i + 0.5)) (translate 0.0 (Math.cos (Math.pi / 5.0) * (1.0 + s)) dr))
-
-  pentagon = do
-    i <- 0..5
-    let theta = Math.pi / 2.5 * toNumber i
-    return { x: Math.sin theta, y: Math.cos theta }</textarea>
+main = log "Hello, World!"</textarea>
       </div>
 
       <div class="separator">
@@ -72,10 +42,44 @@ main = do
 <html>
   <head>
     <title>Try PureScript!</title>
+    <link rel="stylesheet" href="css/style.css">
   </head>
   <body>
+    <h1>Try PureScript!</h1>
+
+    <p>Try out the examples below, or create your own!</p>
+
+    <h2>Examples</h2>
+
+    <h3>Basics</h3>
+
+    <ul>
+      <li>
+        <a href="?gist=cfdabdcd085d4ac3dc46" target="_top">Loops</a></li>
+      </li>
+    </ul>
+
+    <h3>Canvas</h3>
+
+    <ul>
+        <li><a href="?gist=4cf345c971b30d88717b" target="_top">PureScript Logo</a></li>
+    </ul>
+
+    <h2>Console</h2>
+
+    <p>The DOM element with ID <code>console</code> acts as a console and can be used to log messages. Try modifying the code on the left to use the console below:</p></p>
+
     <div id="console"></div>
-    <canvas id="canvas" width="800" height="800"></canvas>
+
+    <h2>Gist Integration</h2>
+
+    <p>Code can be loaded from a GitHub Gist. Simply include the Gist ID in the URL as follows:</p>
+
+    <pre>
+      <code>try.purescript.org?gist=gist-id</code>
+    </pre>
+
+    The Gist should contain a file named <code>Main.purs</code> (containing PureScript code) and a file named <code>index.html</code> containing the page HTML.
   </body>
 </html></textarea>
       </div>
