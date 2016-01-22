@@ -46,7 +46,7 @@ $(function() {
         var $iframe = $('<iframe>');
 
         $('#results')
-            .css('flex', '1')
+
             .empty()
             .append($iframe);
 
@@ -103,7 +103,7 @@ $(function() {
     var compile = function() {
 
         $('#results')
-            .css('flex', '0')
+
             .empty()
             .append($("<div>").addClass("loading").append("Loading..."));
 
@@ -119,7 +119,7 @@ $(function() {
 
                 if (res.error) {
                     $('#results')
-                        .css('flex', '0')
+
                         .empty()
                         .append($('<pre>').append($('<code>').append(res.error)));
                 } else if (res.js) {
@@ -134,7 +134,7 @@ $(function() {
             },
             error: function(res) {
                 $('#results')
-                    .css('flex', '0')
+
                     .empty()
                     .append($('<pre>').append($('<code>').append(res.responseText)));
             }

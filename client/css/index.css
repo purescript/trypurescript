@@ -44,10 +44,10 @@ body
 
 #results {
   position: relative;
-  flex: 0;
   -webkit-overflow-scrolling: touch;
   overflow: scroll;
   max-height: 50vh;
+  flex: 1;
 }
 
 #code, #html {
