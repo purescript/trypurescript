@@ -25,7 +25,6 @@ $(function() {
 
         session.setMode(lang);
         session.setValue($('#' + ta_name).val());
-        session.setUseWrapMode(true);
 
         session.on('change', _.debounce(function() {
 
