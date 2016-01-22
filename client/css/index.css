@@ -44,9 +44,10 @@ body
 
 #results {
   position: relative;
-  flex: 1;
+  flex: 0;
   -webkit-overflow-scrolling: touch;
   overflow: scroll;
+  max-height: 50vh;
 }
 
 #code, #html {
@@ -55,11 +56,6 @@ body
   left: 0;
   right: 0;
   bottom: 0;
-}
-
-.ace_content {
-  width: 100%;
-  height: 100%;
 }
 
 .separator {
@@ -108,10 +104,16 @@ blockquote {
   margin: 0;
 }
 
+pre {
+  padding: 10px;
+  margin: 0;
+}
+
 pre code {
   background: none;
   border: 0;
   padding: 0;
+  margin: 0;
 }
 
 iframe {
@@ -121,4 +123,10 @@ iframe {
   width: 100%;
   height: 100%;
   border: 0;
+}
+
+.loading {
+  font-family: monospace;
+  color: darkgray;
+  padding: 10px;
 }
