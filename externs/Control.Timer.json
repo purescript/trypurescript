@@ -1,1 +1,0 @@
-{"efExports":[{"TypeRef":["Timer",[]]}],"efImports":[{"eiImportedAs":null,"eiModule":["Prim"],"eiImportType":{"Implicit":[]}}],"efVersion":"0.8.0.0","efDeclarations":[{"EDType":{"edTypeName":"Timer","edTypeKind":{"tag":"Bang","contents":[]},"edTypeDeclarationKind":{"ExternData":[]}}}],"efFixities":[],"efModuleName":["Control","Timer"]}
