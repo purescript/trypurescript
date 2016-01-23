@@ -13,10 +13,19 @@ body
   margin: 10px;
 }
 
+a, a:visited, a:active, a:hover {
+  color: #c4953a;
+}
+
 #console {
   font-family: monospace;
   color: black;
   padding: 10px;
   background-color: #d0d0d0;
   white-space: pre;
+  word-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: rgb(29, 34, 45);
 }
