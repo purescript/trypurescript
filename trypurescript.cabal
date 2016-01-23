@@ -1,5 +1,5 @@
 name: trypurescript
-version: 0.7.2.0
+version: 0.8.0.0
 cabal-version: >=1.8
 build-type: Simple
 license: MIT
@@ -11,14 +11,23 @@ description: A simple web app for trying out the PureScript compiler
 category: Web
 author: Phil Freeman
 data-dir: ""
- 
+
 executable trypurescript
-    build-depends: blaze-markup >=0.5.1.5 && <0.6, aeson -any,
-                   bytestring >=0.10.0.2 && <0.11, base ==4.*, scotty -any,
-                   purescript ==0.7.2.0, containers -any, mtl -any, blaze-html -any,
-                   optparse-applicative -any, http-types >= 0.8.5, file-embed >=0.0.6,
-                   transformers ==0.4.*, mtl ==2.2.1, time -any
+    build-depends: base ==4.*,
+                   aeson -any,
+                   bytestring >=0.10.0.2 && <0.11,
+                   directory -any,
+                   filepath -any,
+                   scotty -any,
+                   purescript ==0.8.0.0,
+                   containers -any,
+                   http-types >= 0.8.5,
+                   transformers ==0.4.*,
+                   mtl ==2.2.1,
+                   text -any,
+                   time -any
+    hs-source-dirs: server
     main-is: Main.hs
     buildable: True
     other-modules: Main
- 
+    ghc-options: -Wall -O2

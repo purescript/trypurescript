@@ -1,13 +1,12 @@
-trypurescript
-=============
+# PureScript API
 
-Very basic browser-based interface to the PureScript compiler.
+Very basic web service which wraps the PureScript compiler.
 
 ## API
 
 ### Compile PureScript code
 
-**POST /compile/text**
+**POST /compile**
 
 - Request body: PureScript code
 - Response body: Either `{ js: "..." }` or `{ error: "..." }`
