@@ -164,7 +164,7 @@ $(function() {
     var loadFromGist = function(id) {
 
         $.ajax({
-            url: '//api.github.com/gists/' + id,
+            url: 'https://api.github.com/gists/' + id,
             dataType: 'json'
         }).done(function(gistInfo) {
 
