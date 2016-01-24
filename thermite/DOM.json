@@ -1,0 +1,1 @@
+{"efExports":[{"TypeRef":["DOM",[]]}],"efImports":[{"eiImportedAs":null,"eiModule":["Prim"],"eiImportType":{"Implicit":[]}}],"efVersion":"0.8.0.0","efDeclarations":[{"EDType":{"edTypeName":"DOM","edTypeKind":{"tag":"Bang","contents":[]},"edTypeDeclarationKind":{"ExternData":[]}}}],"efFixities":[],"efModuleName":["DOM"]}
