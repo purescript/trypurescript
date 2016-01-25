@@ -25,6 +25,7 @@ $(function() {
 
         session.setMode(lang);
         session.setValue($('#' + ta_name).val());
+        session.setOptions({ tabSize: 2, useSoftTabs: true });
 
         session.on('change', _.debounce(function() {
 
