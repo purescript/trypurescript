@@ -110,7 +110,7 @@ $(function() {
         var code = $('#code_textarea').val();
 
         $.ajax({
-            url: 'http://compile.purescript.org/compile',
+            url: 'https://compile.purescript.org/compile',
             dataType: 'json',
             data: code,
             method: 'POST',
