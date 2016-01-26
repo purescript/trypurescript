@@ -13,12 +13,6 @@
 </head>
 <body>
   <div id="wrapper">
-    <div id="header">
-      <a href="/">
-        <img src="img/logo.png" width="48" height="30">
-      </a>
-    </div>
-
     <div id="body">
       <div id="column1">
         <div id="code">
@@ -28,94 +22,83 @@
 
 import Prelude
 
+import Data.Array (replicate)
+import Data.String (length, fromCharArray)
+import Data.Foldable (for_)
+
+import Control.Monad.Eff
 import Control.Monad.Eff.Console (log)
 
-main = log "Hello, World!"</textarea>
+main = do
+  header '=' "Try PureScript!"
+  newline
+  log "Try out the examples below, or create your own!"
+  newline
+  header '-' "Examples"
+  newline
+  for_ examples logExample
+  newline
+  header '-' "Share Your Code"
+  newline
+  log "Code can be loaded from a GitHub Gist."
+  newline
+  log "To share code, simply include the Gist ID in the URL as follows:"
+  newline
+  log "  try.purescript.org?gist=gist-id"
+  newline
+  log "The Gist should contain a file named Main.purs containing your PureScript code."
+  newline
+  log "Any strings of the form ?gist=gist-id which are logged to the console"
+  log "will be replaced with links."
+
+  where
+  newline = log " "
+
+  header headerChar s = do
+    log s
+    log $ fromCharArray (replicate (length s) headerChar)
+
+  logExample ex = do
+    log $ "- " <> ex.title <> " (?gist=" <> ex.gist <> ")"
+
+  examples =
+    [ { title: "Algebraic Data Types"
+      , gist: "37c3c97f47a43f20c548"
+      }
+    , { title: "Loops"
+      , gist: "cfdabdcd085d4ac3dc46"
+      }
+    , { title: "Operators"
+      , gist: "3044550f29a7c5d3d0d0"
+      }
+    , { title: "Records"
+      , gist: "b80be527ada3eab47dc5"
+      }
+    , { title: "Recursion"
+      , gist: "ff49cc7dc85923a75613"
+      }
+    , { title: "Do Notation"
+      , gist: "47c2d9913c5dbda1e963"
+      }
+    , { title: "Type Classes"
+      , gist: "1a3b845e8c6defde659a"
+      }
+    , { title: "Generic Programming"
+      , gist: "3f735aa2a652af592101"
+      }
+    , { title: "QuickCheck"
+      , gist: "69f7f94fe4ff3bd47f4b"
+      }
+    ]</textarea>
       </div>
 
       <div class="separator">
       </div>
 
       <div id="column2">
-        <div id="html">
-        </div>
-
-        <textarea name="html" id="html_textarea" style="display: none;"><!DOCTYPE html>
-<html>
-  <head>
-    <title>Try PureScript!</title>
-    <link rel="stylesheet" href="css/style.css">
-  </head>
-  <body>
-    <h1>Try PureScript!</h1>
-
-    <p>Try out the examples below, or create your own!</p>
-
-    <h2>Examples</h2>
-
-    <ul>
-      <li>
-        <a href="?gist=37c3c97f47a43f20c548" target="_top">Algebraic Data Types</a>
-      </li>
-      <li>
-        <a href="?gist=cfdabdcd085d4ac3dc46" target="_top">Loops</a>
-      </li>
-      <li>
-        <a href="?gist=3044550f29a7c5d3d0d0" target="_top">Operators</a>
-      </li>
-      <li>
-        <a href="?gist=b80be527ada3eab47dc5" target="_top">Records</a>
-      </li>
-      <li>
-        <a href="?gist=ff49cc7dc85923a75613" target="_top">Recursion</a>
-      </li>
-      <li>
-        <a href="?gist=47c2d9913c5dbda1e963" target="_top">Do Notation</a>
-      </li>
-      <li>
-        <a href="?gist=1a3b845e8c6defde659a" target="_top">Type Classes</a>
-      </li>
-      <li>
-        <a href="?gist=3f735aa2a652af592101" target="_top">Generic Programming</a>
-      </li>
-      <li>
-        <a href="?gist=69f7f94fe4ff3bd47f4b" target="_top">QuickCheck</a>
-      </li>
-    </ul>
-
-    <h2>Using the Console</h2>
-
-    <p>The DOM element with ID <code>console</code> acts as a console and can be used to log messages.
-       Try modifying the code on the left to use the console below:</p></p>
-
-    <div id="console"></div>
-
-    <h2>Share Your Code</h2>
-
-    <p>Code can be loaded from a GitHub Gist.
-       To share code, simply include the Gist ID in the URL as follows:</p>
-
-    <pre>
-      <code>try.purescript.org?gist=gist-id</code>
-    </pre>
-
-    <p>The Gist should contain a file named <code>Main.purs</code> (containing PureScript code)
-       and a file named <code>index.html</code> containing the page HTML.</p>
-  </body>
-</html></textarea>
       </div>
 
       <script type="text/javascript" src="js/index.js"></script>
-    </div>
-
-    <div class="separator">
-    </div>
-
-    <div id="results">
-    </div>
-
-    <div id="footer">
-      <small>&copy; <a href="http://purescript.org/">PureScript</a> 2016</small>
     </div>
   </div>
 </body>

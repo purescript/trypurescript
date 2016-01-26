@@ -39,33 +39,40 @@ $(function() {
     var setupEditor = function() {
 
         setupEditorWith('code', 'code_textarea', 'ace/mode/haskell');
-        setupEditorWith('html', 'html_textarea', 'ace/mode/html');
     };
 
     var execute = function(js, bundle) {
 
         var $iframe = $('<iframe>');
 
-        $('#results')
-
+        $('#column2')
             .empty()
             .append($iframe);
 
         var iframe = $iframe.get(0).contentWindow.document;
 
-        // TODO: make the HTML editable
         iframe.open();
-        iframe.write($('#html_textarea').val());
+        iframe.write(
+            [ '<!DOCTYPE html>'
+            , '<html>'
+            , '  <head>'
+            , '    <title>Try PureScript!</title>'
+            , '    <link rel="stylesheet" href="css/style.css">'
+            , '  </head>'
+            , '  <body>'
+            , '    <div id="console"></div>'
+            , '  </body>'
+            , '</html>'
+            ].join('\n')
+        );
 
         var consoleScript =
-            [ 'var console = {'
-            , '  log: function(s) {'
-            , '    var text = document.createTextNode(s);'
-            , '    var div = document.createElement("div");'
-            , '    div.appendChild(text);'
-            , '    var cons = document.getElementById("console");'
-            , '    cons && cons.appendChild(div);'
-            , '  }'
+            [ 'console.log = function(s) {'
+            , '  var div = document.createElement("div");'
+            , '  div.innerText = s;'
+            , '  div.innerHTML = div.innerHTML.replace(/\\?gist=([A-Fa-f0-9]+)/g, "<a href=\'?gist=$1\' target=\'_top\'>$1</a>");'
+            , '  var cons = document.getElementById("console");'
+            , '  cons && cons.appendChild(div);'
             , '};'
             , 'window.onerror = function(e) {'
             , '  console.log(e);'
@@ -103,8 +110,7 @@ $(function() {
 
     var compile = function() {
 
-        $('#results')
-
+        $('#column2')
             .empty()
             .append($("<div>").addClass("loading").append("Loading..."));
 
@@ -119,8 +125,7 @@ $(function() {
             success: function(res) {
 
                 if (res.error) {
-                    $('#results')
-
+                    $('#column2')
                         .empty()
                         .append($('<pre>').append($('<code>').append(res.error)));
                 } else if (res.js) {
@@ -134,8 +139,8 @@ $(function() {
                 }
             },
             error: function(res) {
-                $('#results')
 
+                $('#column2')
                     .empty()
                     .append($('<pre>').append($('<code>').append(res.responseText)));
             }
@@ -169,11 +174,10 @@ $(function() {
             dataType: 'json'
         }).done(function(gistInfo) {
 
-            $.when(tryLoadFileFromGist(gistInfo, "Main.purs"), tryLoadFileFromGist(gistInfo, "index.html"))
-                .done(function(code, html) {
+            tryLoadFileFromGist(gistInfo, "Main.purs")
+                .done(function(code) {
 
-                    code && $('#code_textarea').val(code[0]);
-                    html && $('#html_textarea').val(html[0]);
+                    code && $('#code_textarea').val(code);
                     setupEditor();
                 }).fail(function() {
 

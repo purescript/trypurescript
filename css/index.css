@@ -19,16 +19,6 @@ body
   min-height: 100vh;
 }
 
-#header {
-  border-bottom: 1px solid #ddd;
-  background-color: rgb(29, 34, 45);
-  color: white;
-}
-
-  #header img {
-    padding: 10px;
-  }
-
 #body {
   display: flex;
   flex-direction: row;
@@ -42,15 +32,15 @@ body
   flex-shrink: 0;
 }
 
-#results {
+#column2 {
   position: relative;
   -webkit-overflow-scrolling: touch;
   overflow: scroll;
-  max-height: 50vh;
-  flex: 1;
+  background-color: #1D222D;
+  color: white;
 }
 
-#code, #html {
+#code {
   position: absolute;
   top: 0;
   left: 0;
@@ -62,12 +52,6 @@ body
   flex-basis: 5px;
   flex-grow: 0;
   flex-shrink: 0;
-  background-color: rgb(250, 250, 250);
-}
-
-#footer {
-  padding: 10px;
-  border-top: 1px solid #ddd;
   background-color: rgb(250, 250, 250);
 }
 
@@ -138,5 +122,6 @@ iframe {
   border: 0;
   font-family: monospace;
   color: darkgray;
-  margin: 10px;
+  margin: 15px;
+  font-size: 15px;
 }
