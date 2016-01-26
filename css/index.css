@@ -36,8 +36,6 @@ body
   position: relative;
   -webkit-overflow-scrolling: touch;
   overflow: scroll;
-  background-color: #1D222D;
-  color: white;
 }
 
 #code {

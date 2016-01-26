@@ -24,11 +24,6 @@ a, a:visited, a:active, a:hover {
   white-space: -moz-pre-wrap;
   word-wrap: break-word;
   font-size: 15px;
-  background-color: #1D222D;
-  color: white;
-  position: absolute;
-  width: 100%;
-  height: 100%;
 }
 
 #console div:empty::after {
