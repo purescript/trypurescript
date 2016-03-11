@@ -1,5 +1,7 @@
 # PureScript API
 
+[![Build Status](https://api.travis-ci.org/purescript/trypurescript.svg?branch=master)](http://travis-ci.org/purescript/trypurescript)
+
 Very basic web service which wraps the PureScript compiler.
 
 [Client code](https://github.com/purescript/trypurescript/tree/gh-pages)
