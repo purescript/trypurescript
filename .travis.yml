@@ -25,7 +25,7 @@ install:
   - stack --no-terminal -j1 --install-ghc build --only-dependencies
 
 script:
-  - stack --no-terminal -j1 build --flag trypurescript:-dev
+  - stack --no-terminal -j1 build
 
 notifications:
   email: true
