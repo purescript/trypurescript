@@ -69,7 +69,7 @@ $(function() {
         var consoleScript =
             [ 'console.log = function(s) {'
             , '  var div = document.createElement("div");'
-            , '  div.innerText = s;'
+            , '  div.appendChild(document.createTextNode(s));'
             , '  div.innerHTML = div.innerHTML.replace(/\\?gist=([A-Fa-f0-9]+)/g, "<a href=\'?gist=$1\' target=\'_top\'>$1</a>");'
             , '  var cons = document.getElementById("console");'
             , '  cons && cons.appendChild(div);'
