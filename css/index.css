@@ -4,16 +4,13 @@ html, body {
   height: 100%;
 }
 
-body
-{
+body {
   font-family: 'Roboto', sans-serif;
-  color: #404040;
   margin: 0;
   color: rgb(29, 34, 45);
 }
 
 #wrapper {
-  margin: 0 auto;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -27,15 +24,13 @@ body
 
 #column1, #column2 {
   position: relative;
-  flex-basis: 50%;
-  flex-grow: 0;
-  flex-shrink: 0;
+  flex: 1;
 }
 
 #column2 {
   position: relative;
   -webkit-overflow-scrolling: touch;
-  overflow: scroll;
+  overflow: auto;
 }
 
 #code {
