@@ -67,10 +67,10 @@ server externs port = do
       compile input
         | length input > 20000 = return $ Left "Please limit your input to 20000 characters"
         | otherwise =
-          case map snd <$> P.parseModulesFromFiles (const "<file>") [(undefined, input)] of
+          case P.parseModuleFromFile (const "<file>") (undefined, input) of
             Left parseError ->
-              return $ Left $ P.prettyPrintMultipleErrors False parseError
-            Right [m] | P.getModuleName m == P.ModuleName [P.ProperName "Main"] -> do
+              return . Left . P.prettyPrintMultipleErrors False . P.MultipleErrors . return . P.toPositionedError $ parseError
+            Right (_, m) | P.getModuleName m == P.ModuleName [P.ProperName "Main"] -> do
               (resultMay, _) <- runLogger' . runExceptT . flip runReaderT P.defaultOptions $ do
                 ((P.Module ss coms moduleName elaborated exps, env), nextVar) <- P.runSupplyT 0 $ do
                   [desugared] <- P.desugar externs [P.addDefaultImport (P.ModuleName [P.ProperName "Prim"]) m]
@@ -84,8 +84,7 @@ server externs port = do
               case resultMay of
                 Left errs -> return . Left . P.prettyPrintMultipleErrors False $ errs
                 Right js -> return (Right js)
-            Right [_] -> return $ Left "The name of the main module should be Main."
-            Right _ -> return $ Left "Please define exactly one module called Main."
+            Right _ -> return $ Left "The name of the main module should be Main."
 
   scotty port $ do
     get "/" $
