@@ -65,7 +65,7 @@ server externs port = do
       compile input
         | length input > 20000 = return $ Left "Please limit your input to 20000 characters"
         | otherwise = do
-          let printErrors = P.prettyPrintMultipleErrors P.defaultPPEOptions
+          let printErrors = P.prettyPrintMultipleErrors (P.defaultPPEOptions { P.ppeCodeColor = Nothing })
           case P.parseModuleFromFile (const "<file>") (undefined, input) of
             Left parseError ->
               return . Left . printErrors . P.MultipleErrors . return . P.toPositionedError $ parseError
