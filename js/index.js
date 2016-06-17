@@ -83,7 +83,7 @@ $(function() {
         // Replace any require() statements with the PS['...'] form using a regex substitution.
         var replaced = js.replace(/require\("[^"]*"\)/g, function(s) {
 
-            return "PS['" + s.substring(9, s.length - 2) + "']";
+            return "PS['" + s.substring(12, s.length - 2) + "']";
         });
 
         // Wrap the compiled code so that main() runs.
