@@ -28,7 +28,6 @@ import           Data.String (fromString)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 
-import           Control.Applicative ((<$>))
 import           Control.Monad (unless)
 import           Control.Monad.Logger (runLogger')
 import           Control.Monad.Trans (lift)
@@ -37,7 +36,6 @@ import           Control.Monad.Trans.Except (runExceptT)
 import           Control.Monad.Trans.Reader (runReaderT)
 
 import qualified Language.PureScript as P
-import qualified Language.PureScript.Externs as P
 import qualified Language.PureScript.CoreFn as CF
 import qualified Language.PureScript.CodeGen.JS as J
 
@@ -66,11 +64,12 @@ server externs port = do
   let compile :: String -> IO (Either String JS)
       compile input
         | length input > 20000 = return $ Left "Please limit your input to 20000 characters"
-        | otherwise =
-          case map snd <$> P.parseModulesFromFiles (const "<file>") [(undefined, input)] of
+        | otherwise = do
+          let printErrors = P.prettyPrintMultipleErrors P.defaultPPEOptions
+          case P.parseModuleFromFile (const "<file>") (undefined, input) of
             Left parseError ->
-              return $ Left $ P.prettyPrintMultipleErrors False parseError
-            Right [m] | P.getModuleName m == P.ModuleName [P.ProperName "Main"] -> do
+              return . Left . printErrors . P.MultipleErrors . return . P.toPositionedError $ parseError
+            Right (_, m) | P.getModuleName m == P.ModuleName [P.ProperName "Main"] -> do
               (resultMay, _) <- runLogger' . runExceptT . flip runReaderT P.defaultOptions $ do
                 ((P.Module ss coms moduleName elaborated exps, env), nextVar) <- P.runSupplyT 0 $ do
                   [desugared] <- P.desugar externs [P.addDefaultImport (P.ModuleName [P.ProperName "Prim"]) m]
@@ -82,10 +81,9 @@ server externs port = do
                 unless (null . CF.moduleForeign $ renamed) . throwError . P.errorMessage $ P.MissingFFIModule moduleName
                 P.evalSupplyT nextVar $ P.prettyPrintJS <$> J.moduleToJs renamed Nothing
               case resultMay of
-                Left errs -> return . Left . P.prettyPrintMultipleErrors False $ errs
+                Left errs -> return . Left . printErrors $ errs
                 Right js -> return (Right js)
-            Right [_] -> return $ Left "The name of the main module should be Main."
-            Right _ -> return $ Left "Please define exactly one module called Main."
+            Right _ -> return $ Left "The name of the main module should be Main."
 
   scotty port $ do
     get "/" $
