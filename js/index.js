@@ -129,13 +129,19 @@ $(function() {
                         .empty()
                         .append($('<pre>').append($('<code>').append(res.error)));
                 } else if (res.js) {
-                    $.get('js/bundle.js').done(function(bundle) {
+                    if ($("#genjs").is(":checked")) {
+                      $('#column2')
+                          .empty()
+                          .append($('<pre>').append($('<code>').append(res.js)));
+                    } else {
+                      $.get('js/bundle.js').done(function(bundle) {
 
-                        execute(res.js, bundle);
-                    }).fail(function(err) {
+                          execute(res.js, bundle);
+                      }).fail(function(err) {
 
-                        console.log("Unable to load JS bundle");
-                    });
+                          console.log("Unable to load JS bundle");
+                      });
+                    }
                 }
             },
             error: function(res) {
@@ -198,4 +204,6 @@ $(function() {
     } else {
         setupEditor();
     }
+    $('#genjs_label').click(compile);
 });
+
