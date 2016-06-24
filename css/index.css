@@ -47,7 +47,7 @@ body {
 }
 #view_mode label {
   display: inline-block;
-  padding-top: 4px;
+  padding-top: 5px;
   padding-bottom: 5px;
   padding-left: 10px;
   padding-right: 10px;
@@ -63,15 +63,18 @@ body {
 }
 #view_mode input[type="radio"] {
   display:none; 
+  border-top: solid 1px #fff;
+  border-left: solid 1px #fff;
+  border-right: solid 1px #fff;
 }
 
 #view_mode input[type="radio"]:checked + label {
   background-color: #eee;
-  border: solid 1px #ddd;
-  border-bottom: 0px;
 }
 #view_mode input[type=checked]:checked + label {
   background-color: #eee;
+  border: solid 1px #ddd;
+  border-bottom: 0px;
 }
 
 #editor_view {
