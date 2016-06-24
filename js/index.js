@@ -20,7 +20,7 @@ $(function() {
 
       var showjs = $.QueryString["js"];
       if (showjs) {
-        $('input:checkbox[name=showjs]').prop('checked', showjs == "true");
+        $('input:checkbox[name=showjs]').prop('checked', showjs === "true");
       }
     };
 
