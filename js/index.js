@@ -12,6 +12,18 @@
 })(jQuery);
 
 $(function() {
+    var loadOptions = function() {
+      var view_mode = $.QueryString["view"];
+      if (view_mode && (view_mode === "sidebyside" || view_mode === "code" || view_mode === "output")) {
+        $('#view_' + view_mode).click();
+      }
+
+      var genJS = $.QueryString["js"];
+      if (genJS) {
+        $('input:checkbox[name=genjs]').prop('checked', genJS == "true");
+      }
+    };
+
 
     var setupEditorWith = function(name, ta_name, lang) {
 
@@ -38,6 +50,7 @@ $(function() {
 
     var setupEditor = function() {
 
+        loadOptions();
         setupEditorWith('code', 'code_textarea', 'ace/mode/haskell');
     };
 
@@ -153,6 +166,7 @@ $(function() {
         });
     };
 
+
     var tryLoadFileFromGist = function(gistInfo, filename) {
 
         if (gistInfo.files && gistInfo.files.hasOwnProperty(filename)) {
@@ -197,19 +211,13 @@ $(function() {
         });
     };
 
-    var gist = $.QueryString["gist"];
 
-    if (gist) {
-        loadFromGist(gist);
-    } else {
-        setupEditor();
-    }
     $('#genjs_label').click(compile);
 
     $('input[name=view_mode]').change(function () {
       var view_mode = $(this).filter(':checked').val();
 
-      if (view_mode === "sbs") {
+      if (view_mode === "sidebyside") {
         $('#column1').show();
         $('#column2').show();
       }
@@ -222,5 +230,15 @@ $(function() {
         $('#column2').show();
       }
     });
+
+    var gist = $.QueryString["gist"];
+
+    if (gist) {
+        loadFromGist(gist);
+    } else {
+        setupEditor();
+    }
+
+
 });
 
