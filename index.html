@@ -16,11 +16,24 @@
     <div id="body">
       <div id="options">
         <ul id="view_mode">
-          <li><input type="radio" name="view_mode" value="sidebyside" id="view_sidebyside" checked="true"><label for="view_sidebyside">Side by side</label></li>
-          <li><input type="radio" name="view_mode" value="code" id="view_code"><label for="view_code">Code</label></li>
-          <li><input type="radio" name="view_mode" value="output" id="view_output"><label for="view_output">Output</label></li>
+          <li>
+            <input type="radio" name="view_mode" value="sidebyside" id="view_sidebyside" checked="true">
+            <label for="view_sidebyside">Side by side</label>
+          </li>
+          <li>
+            <input type="radio" name="view_mode" value="code" id="view_code">
+            <label for="view_code">Code</label>
+          </li>
+          <li>
+            <input type="radio" name="view_mode" value="output" id="view_output">
+            <label for="view_output">Output</label>
+          </li>
         </ul>
-        <label id="showjs_label"><input id="showjs" name="showjs" value="showjs" type="checkbox">Show JS</label>
+        <input id="auto_compile" name="auto_compile" value="auto_compile" type="checkbox" checked="true">
+        <label id="compile_label">Compile</label>
+
+        <input id="showjs" name="showjs" value="showjs" type="checkbox">
+        <label id="showjs_label" for="showjs">Show JS</label>
       </div>
       <div id="editor_view">
         <div id="column1">

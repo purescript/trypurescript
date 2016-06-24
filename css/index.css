@@ -34,8 +34,11 @@ body {
 #options input {
   vertical-align: bottom;
 }
-#showjs_label {
-  margin-left: 5px;
+#showjs, #compile {
+  margin-left: 10px;
+}
+#auto_compile {
+  margin-left: 10px;
 }
 
 #view_mode {

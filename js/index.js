@@ -22,6 +22,10 @@ $(function() {
       if (showjs) {
         $('input:checkbox[name=showjs]').prop('checked', showjs === "true");
       }
+      var auto_compile = $.QueryString["compile"];
+      if (auto_compile) {
+        $('input:checkbox[name=auto_compile]').prop('checked', auto_compile === "true");
+      }
     };
 
 
@@ -42,8 +46,10 @@ $(function() {
         session.on('change', _.debounce(function() {
 
             $('#' + ta_name).val(session.getValue());
-            compile();
-        }, 500));
+            if ($("#auto_compile").is(":checked")) {
+              compile();
+            }
+        }, 750));
 
         compile();
     };
@@ -212,7 +218,8 @@ $(function() {
     };
 
 
-    $('#showjs_label').click(compile);
+    $('#showjs').change(compile);
+    $('#compile_label').click(compile);
 
     $('input[name=view_mode]').change(function () {
       var view_mode = $(this).filter(':checked').val();
@@ -221,16 +228,19 @@ $(function() {
         $('#column1').show();
         $('#column2').hide();
         $('#showjs_label').hide();
+        $('#showjs').hide();
       }
       else if (view_mode === "output") {
         $('#column1').hide();
         $('#column2').show();
         $('#showjs_label').show();
+        $('#showjs').show();
       }
       else { // (view_mode === "sidebyside")
         $('#column1').show();
         $('#column2').show();
         $('#showjs_label').show();
+        $('#showjs').show();
       }
     });
 
