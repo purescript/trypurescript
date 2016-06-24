@@ -14,13 +14,18 @@
 <body>
   <div id="wrapper">
     <div id="body">
-      <div id="column1">
-        <div id="options">
-          <label id="genjs_label"><input id="genjs" name="genjs" value="genjs" type="checkbox">Generate JS</label>
-        </div>
-        <div id="code">
-        </div>
-        <textarea name="code" id="code_textarea" style="display: none;">module Main where
+      <div id="options">
+        <label><input type="radio" name="view_mode" value="sbs" id="view_sbs" checked="true">Side by side</label>
+        <label><input type="radio" name="view_mode" value="code" id="view_code">Code</label>
+        <label><input type="radio" name="view_mode" value="output" id="view_output">Output</label>
+        <label id="genjs_label"><input id="genjs" name="genjs" value="genjs" type="checkbox">Generate JS</label>
+      </div>
+      <div id="editor">
+        <div id="column1">
+
+          <div id="code">
+          </div>
+          <textarea name="code" id="code_textarea" style="display: none;">module Main where
 
 import Prelude
 
@@ -92,15 +97,16 @@ main = do
       , gist: "69f7f94fe4ff3bd47f4b"
       }
     ]</textarea>
-      </div>
+        </div>
 
-      <div class="separator">
-      </div>
+        <div class="separator">
+        </div>
 
-      <div id="column2">
-      </div>
+        <div id="column2">
+        </div>
 
-      <script type="text/javascript" src="js/index.js"></script>
+        <script type="text/javascript" src="js/index.js"></script>
+      </div>
     </div>
   </div>
 </body>

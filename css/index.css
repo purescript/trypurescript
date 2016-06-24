@@ -18,8 +18,30 @@ body {
 
 #body {
   display: flex;
+  flex-direction: col;
+  flex: 1;
+}
+#options {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  right: 0;
+  bottom: 0;
+}
+#options input {
+  vertical-align: top;
+}
+
+#editor {
+  display: flex;
   flex-direction: row;
   flex: 1;
+  position: absolute;
+  top: 25px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
 }
 
 #column1, #column2 {
@@ -33,18 +55,9 @@ body {
   overflow: auto;
 }
 
-#options {
-  position: absolute;
-  top: 2px;
-  left: 1;
-  right: 2px;
-  bottom: 0;
- 
-}
-
 #code {
   position: absolute;
-  top: 25px;
+  top: 0;
   left: 0;
   right: 0;
   bottom: 0;

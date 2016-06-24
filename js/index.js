@@ -205,5 +205,22 @@ $(function() {
         setupEditor();
     }
     $('#genjs_label').click(compile);
+
+    $('input[name=view_mode]').change(function () {
+      var view_mode = $(this).filter(':checked').val();
+
+      if (view_mode === "sbs") {
+        $('#column1').show();
+        $('#column2').show();
+      }
+      else if (view_mode === "code") {
+        $('#column1').show();
+        $('#column2').hide();
+      }
+      else if (view_mode === "output") {
+        $('#column1').hide();
+        $('#column2').show();
+      }
+    });
 });
 
