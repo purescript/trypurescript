@@ -23,13 +23,55 @@ body {
 }
 #options {
   position: absolute;
-  top: 2px;
-  left: 2px;
+  top: 0;
+  left: 0;
   right: 0;
   bottom: 0;
+  height: 26px;
+  padding-bottom: 3px;
+  border-bottom: solid 1px #ddd;
 }
 #options input {
-  vertical-align: top;
+  vertical-align: bottom;
+}
+#showjs_label {
+  margin-left: 5px;
+}
+
+#view_mode {
+  background-color: #fff;
+  display: inline-block;
+  margin: 0px;
+  padding: 0px;
+  height: 23px;
+}
+#view_mode label {
+  display: inline-block;
+  padding-top: 4px;
+  padding-bottom: 5px;
+  padding-left: 10px;
+  padding-right: 10px;
+  text-align: center;
+}
+#view_mode li {
+  background-color: #fff;
+  display: inline-block;
+  padding: 0px;
+  padding-left: 0px;
+  margin: 0px;
+  border: 0px;
+}
+#view_mode input[type="radio"] {
+  display:none; 
+}
+
+#view_mode input[type="radio"]:checked + label {
+  background-color: #eee;
+  border: solid 1px #ddd;
+  border-bottom: 0px;
+}
+#view_mode input[type=checked]:checked + label {
+  background-color: #eee;
 }
 
 #editor_view {
@@ -37,7 +79,7 @@ body {
   flex-direction: row;
   flex: 1;
   position: absolute;
-  top: 25px;
+  top: 30px;
   left: 0;
   right: 0;
   bottom: 0;

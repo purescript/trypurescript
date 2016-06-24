@@ -15,10 +15,12 @@
   <div id="wrapper">
     <div id="body">
       <div id="options">
-        <label><input type="radio" name="view_mode" value="sidebyside" id="view_sidebyside" checked="true">Side by side</label>
-        <label><input type="radio" name="view_mode" value="code" id="view_code">Code</label>
-        <label><input type="radio" name="view_mode" value="output" id="view_output">Output</label>
-        <label id="genjs_label"><input id="genjs" name="genjs" value="genjs" type="checkbox">Generate JS</label>
+        <ul id="view_mode">
+          <li><input type="radio" name="view_mode" value="sidebyside" id="view_sidebyside" checked="true"><label for="view_sidebyside">Side by side</label></li>
+          <li><input type="radio" name="view_mode" value="code" id="view_code"><label for="view_code">Code</label></li>
+          <li><input type="radio" name="view_mode" value="output" id="view_output"><label for="view_output">Output</label></li>
+        </ul>
+        <label id="showjs_label"><input id="showjs" name="showjs" value="showjs" type="checkbox">Show JS</label>
       </div>
       <div id="editor_view">
         <div id="column1">

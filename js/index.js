@@ -18,9 +18,9 @@ $(function() {
         $('#view_' + view_mode).click();
       }
 
-      var genJS = $.QueryString["js"];
-      if (genJS) {
-        $('input:checkbox[name=genjs]').prop('checked', genJS == "true");
+      var showjs = $.QueryString["js"];
+      if (showjs) {
+        $('input:checkbox[name=showjs]').prop('checked', showjs == "true");
       }
     };
 
@@ -142,7 +142,7 @@ $(function() {
                         .empty()
                         .append($('<pre>').append($('<code>').append(res.error)));
                 } else if (res.js) {
-                    if ($("#genjs").is(":checked")) {
+                    if ($("#showjs").is(":checked")) {
                       $('#column2')
                           .empty()
                           .append($('<pre>').append($('<code>').append(res.js)));
@@ -212,22 +212,25 @@ $(function() {
     };
 
 
-    $('#genjs_label').click(compile);
+    $('#showjs_label').click(compile);
 
     $('input[name=view_mode]').change(function () {
       var view_mode = $(this).filter(':checked').val();
 
-      if (view_mode === "sidebyside") {
-        $('#column1').show();
-        $('#column2').show();
-      }
-      else if (view_mode === "code") {
+      if (view_mode === "code") {
         $('#column1').show();
         $('#column2').hide();
+        $('#showjs_label').hide();
       }
       else if (view_mode === "output") {
         $('#column1').hide();
         $('#column2').show();
+        $('#showjs_label').show();
+      }
+      else { // (view_mode === "sidebyside")
+        $('#column1').show();
+        $('#column2').show();
+        $('#showjs_label').show();
       }
     });
 
