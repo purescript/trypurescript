@@ -18,21 +18,14 @@ body {
 
 #body {
   display: flex;
-  flex-direction: col;
+  flex-direction: column;
   flex: 1;
 }
 #options {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 26px;
-  padding-bottom: 3px;
   border-bottom: solid 1px #ddd;
 }
 #options input {
-  vertical-align: bottom;
+  vertical-align: middle;
 }
 #showjs, #compile {
   margin-left: 10px;
@@ -46,7 +39,6 @@ body {
   display: inline-block;
   margin: 0px;
   padding: 0px;
-  height: 23px;
 }
 #view_mode label {
   display: inline-block;
@@ -84,11 +76,7 @@ body {
   display: flex;
   flex-direction: row;
   flex: 1;
-  position: absolute;
-  top: 30px;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  margin-top: 0px;
 
 }
 
@@ -136,6 +124,10 @@ h2, h3 {
 
 a, a:visited, a:active, a:hover {
   color: #c4953a;
+}
+
+.nowrap {
+  white-space: nowrap;
 }
 
 .info {
