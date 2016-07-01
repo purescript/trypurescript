@@ -2,6 +2,8 @@
 <html>
 <head>
   <title>Try PureScript!</title>
+  <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+  <meta content="utf-8" http-equiv="encoding">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Roboto:300,600">
   <link rel="stylesheet" type="text/css" href="css/index.css">
@@ -14,11 +16,37 @@
 <body>
   <div id="wrapper">
     <div id="body">
-      <div id="column1">
-        <div id="code">
-        </div>
+      <div id="options">
+        <ul id="view_mode">
+          <li>
+            <input type="radio" name="view_mode" value="sidebyside" id="view_sidebyside" checked="true">
+            <label for="view_sidebyside">Side by side</label>
+          </li>
+          <li>
+            <input type="radio" name="view_mode" value="code" id="view_code">
+            <label for="view_code">Code</label>
+          </li>
+          <li>
+            <input type="radio" name="view_mode" value="output" id="view_output">
+            <label for="view_output">Output</label>
+          </li>
+        </ul>
+        <span class="nowrap">
+          <input id="auto_compile" name="auto_compile" value="auto_compile" type="checkbox" checked="true">
+          <label id="compile_label">Compile</label>
+        </span>
 
-        <textarea name="code" id="code_textarea" style="display: none;">module Main where
+        <span class="nowrap">
+          <input id="showjs" name="showjs" value="showjs" type="checkbox">
+          <label id="showjs_label" for="showjs">Show JS</label>
+        </span>
+      </div>
+      <div id="editor_view">
+        <div id="column1">
+
+          <div id="code">
+          </div>
+          <textarea name="code" id="code_textarea" style="display: none;">module Main where
 
 import Prelude
 
@@ -90,15 +118,16 @@ main = do
       , gist: "69f7f94fe4ff3bd47f4b"
       }
     ]</textarea>
-      </div>
+        </div>
 
-      <div class="separator">
-      </div>
+        <div class="separator">
+        </div>
 
-      <div id="column2">
-      </div>
+        <div id="column2">
+        </div>
 
-      <script type="text/javascript" src="js/index.js"></script>
+        <script type="text/javascript" src="js/index.js"></script>
+      </div>
     </div>
   </div>
 </body>

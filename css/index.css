@@ -18,8 +18,68 @@ body {
 
 #body {
   display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+#options {
+  border-bottom: solid 1px #ddd;
+}
+#options input {
+  vertical-align: middle;
+  margin-bottom: 5px;
+}
+#showjs, #compile {
+  margin-left: 10px;
+}
+#auto_compile {
+  margin-left: 10px;
+}
+
+#view_mode {
+  background-color: #fff;
+  display: inline-block;
+  margin: 0px;
+  padding: 0px;
+}
+#view_mode label {
+  cursor: pointer;
+  display: inline-block;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  padding-left: 10px;
+  padding-right: 10px;
+  text-align: center;
+}
+#view_mode li {
+  background-color: #fff;
+  display: inline-block;
+  padding: 0px;
+  padding-left: 0px;
+  margin: 0px;
+  border: 0px;
+}
+#view_mode input[type="radio"] {
+  display:none; 
+  border-top: solid 1px #fff;
+  border-left: solid 1px #fff;
+  border-right: solid 1px #fff;
+}
+
+#view_mode input[type="radio"]:checked + label {
+  background-color: #eee;
+}
+#view_mode input[type=checked]:checked + label {
+  background-color: #eee;
+  border: solid 1px #ddd;
+  border-bottom: 0px;
+}
+
+#editor_view {
+  display: flex;
   flex-direction: row;
   flex: 1;
+  margin-top: 0px;
+
 }
 
 #column1, #column2 {
@@ -66,6 +126,10 @@ h2, h3 {
 
 a, a:visited, a:active, a:hover {
   color: #c4953a;
+}
+
+.nowrap {
+  white-space: nowrap;
 }
 
 .info {
@@ -117,4 +181,7 @@ iframe {
   color: darkgray;
   margin: 15px;
   font-size: 15px;
+}
+#code {
+  overflow: visible;
 }

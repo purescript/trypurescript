@@ -12,6 +12,22 @@
 })(jQuery);
 
 $(function() {
+    var loadOptions = function() {
+      var view_mode = $.QueryString["view"];
+      if (view_mode && (view_mode === "sidebyside" || view_mode === "code" || view_mode === "output")) {
+        $('#view_' + view_mode).click();
+      }
+
+      var showjs = $.QueryString["js"];
+      if (showjs) {
+        $('input:checkbox[name=showjs]').prop('checked', showjs === "true");
+      }
+      var auto_compile = $.QueryString["compile"];
+      if (auto_compile) {
+        $('input:checkbox[name=auto_compile]').prop('checked', auto_compile === "true");
+      }
+    };
+
 
     var setupEditorWith = function(name, ta_name, lang) {
 
@@ -30,14 +46,17 @@ $(function() {
         session.on('change', _.debounce(function() {
 
             $('#' + ta_name).val(session.getValue());
-            compile();
-        }, 500));
+            if ($("#auto_compile").is(":checked")) {
+              compile();
+            }
+        }, 750));
 
         compile();
     };
 
     var setupEditor = function() {
 
+        loadOptions();
         setupEditorWith('code', 'code_textarea', 'ace/mode/haskell');
     };
 
@@ -129,13 +148,19 @@ $(function() {
                         .empty()
                         .append($('<pre>').append($('<code>').append(res.error)));
                 } else if (res.js) {
-                    $.get('js/bundle.js').done(function(bundle) {
+                    if ($("#showjs").is(":checked")) {
+                      $('#column2')
+                          .empty()
+                          .append($('<pre>').append($('<code>').append(res.js)));
+                    } else {
+                      $.get('js/bundle.js').done(function(bundle) {
 
-                        execute(res.js, bundle);
-                    }).fail(function(err) {
+                          execute(res.js, bundle);
+                      }).fail(function(err) {
 
-                        console.log("Unable to load JS bundle");
-                    });
+                          console.log("Unable to load JS bundle");
+                      });
+                    }
                 }
             },
             error: function(res) {
@@ -146,6 +171,7 @@ $(function() {
             }
         });
     };
+
 
     var tryLoadFileFromGist = function(gistInfo, filename) {
 
@@ -191,6 +217,33 @@ $(function() {
         });
     };
 
+
+    $('#showjs').change(compile);
+    $('#compile_label').click(compile);
+
+    $('input[name=view_mode]').change(function () {
+      var view_mode = $(this).filter(':checked').val();
+
+      if (view_mode === "code") {
+        $('#column1').show();
+        $('#column2').hide();
+        $('#showjs_label').hide();
+        $('#showjs').hide();
+      }
+      else if (view_mode === "output") {
+        $('#column1').hide();
+        $('#column2').show();
+        $('#showjs_label').show();
+        $('#showjs').show();
+      }
+      else { // (view_mode === "sidebyside")
+        $('#column1').show();
+        $('#column2').show();
+        $('#showjs_label').show();
+        $('#showjs').show();
+      }
+    });
+
     var gist = $.QueryString["gist"];
 
     if (gist) {
@@ -198,4 +251,7 @@ $(function() {
     } else {
         setupEditor();
     }
+
+
 });
+
