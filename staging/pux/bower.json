@@ -1,0 +1,20 @@
+{
+  "name": "pux-staging",
+  "authors": [
+    "Phil Freeman <paf31@cantab.net>"
+  ],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "purescript-pux": "^5.0.2",
+    "purescript-pux-css": "^2.0.0"
+  },
+  "devDependencies": {
+    "purescript-psci-support": "^1.0.0"
+  }
+}
