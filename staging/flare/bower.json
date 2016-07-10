@@ -1,0 +1,20 @@
+{
+  "name": "flare-staging",
+  "authors": [
+    "Phil Freeman <paf31@cantab.net>"
+  ],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "purescript-flare": "^1.0.0",
+    "purescript-flarecheck": "^1.0.1"
+  },
+  "devDependencies": {
+    "purescript-psci-support": "^1.0.0"
+  }
+}

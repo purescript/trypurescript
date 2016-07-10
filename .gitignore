@@ -1,11 +1,14 @@
-staging
+.pulp-cache/
+.psci_modules/
 .stack-work/
-dist
+output/
+bower_components/
+dist/
 .cabal-sandbox/
+
 cabal.sandbox.config
 *.o
 *.hi
 *.chi
 *.chs.h
 *.lksh*
-
