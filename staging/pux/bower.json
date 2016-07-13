@@ -12,7 +12,8 @@
   ],
   "dependencies": {
     "purescript-pux": "^5.0.2",
-    "purescript-pux-css": "^2.0.0"
+    "purescript-pux-css": "^2.0.0",
+    "purescript-pux-devtool": "^3.0.0"
   },
   "devDependencies": {
     "purescript-psci-support": "^1.0.0"
