@@ -304,8 +304,8 @@ $(function() {
     var sessionId = setupSession();
     var hasSessionCode = tryRestoreCachedCode(sessionId);
 
-    if (!hasSessionCode) {
-        gist && loadFromGist(gist);
+    if (!hasSessionCode && gist) {
+        loadFromGist(gist);
     } else {
         setupEditor();
     }
