@@ -8,7 +8,17 @@
             b[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
         }
         return b;
-    })(window.location.search.substr(1).split('&'))
+    })(window.location.search.substr(1).split('&'));
+
+    $.setQueryParameters = function(params) {
+        var url = location.href.split('?')[0];
+        var encodedParams = Object.keys(params).map(function(key) {
+            return key + '=' + encodeURIComponent(params[key]);
+        }).join('&');
+
+        document.location = url + '?' + encodedParams;
+    };
+
 })(jQuery);
 
 $(function() {
@@ -28,6 +38,49 @@ $(function() {
       }
     };
 
+    var setupSession = function() {
+        function guid() {
+          function s4() {
+            return Math.floor((1 + Math.random()) * 0x10000)
+              .toString(16)
+              .substring(1);
+          }
+          return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+            s4() + '-' + s4() + s4() + s4();
+        }
+
+        var sessionId = $.QueryString['session'];
+        if (!sessionId) {
+            $.QueryString['session'] = sessionId = guid();
+            $.setQueryParameters($.QueryString);
+        }
+
+        return sessionId;
+    };
+
+    var cacheCurrentCode = function() {
+        if (window.localStorage) {
+            var sessionId = $.QueryString['session'];
+            var code = $('#code_textarea').val();
+
+            localStorage.setItem(sessionId, code);
+        }
+    };
+
+    var tryRestoreCachedCode = function(sessionId) {
+        var code;
+
+        if (window.localStorage) {
+            code = localStorage.getItem(sessionId);
+
+            if (code) {
+                $('#code_textarea').val(code);
+                setupEditor();
+            }
+        }
+
+        return !!code;
+    }
 
     var setupEditorWith = function(name, ta_name, lang) {
 
@@ -46,6 +99,8 @@ $(function() {
         session.on('change', _.debounce(function() {
 
             $('#' + ta_name).val(session.getValue());
+
+            cacheCurrentCode();
             if ($("#auto_compile").is(":checked")) {
               compile();
             }
@@ -172,7 +227,6 @@ $(function() {
         });
     };
 
-
     var tryLoadFileFromGist = function(gistInfo, filename) {
 
         if (gistInfo.files && gistInfo.files.hasOwnProperty(filename)) {
@@ -244,14 +298,15 @@ $(function() {
       }
     });
 
+
     var gist = $.QueryString["gist"];
 
-    if (gist) {
-        loadFromGist(gist);
+    var sessionId = setupSession();
+    var hasSessionCode = tryRestoreCachedCode(sessionId);
+
+    if (!hasSessionCode) {
+        gist && loadFromGist(gist);
     } else {
         setupEditor();
     }
-
-
 });
-
