@@ -20,29 +20,29 @@ module Main (
     main
 ) where
 
+import           Control.Monad (unless)
+import           Control.Monad.Logger (runLogger')
+import           Control.Monad.Trans (lift)
+import           Control.Monad.Error.Class (throwError)
+import           Control.Monad.Trans.Except (ExceptT(..), runExceptT)
+import           Control.Monad.Trans.Reader (runReaderT)
 import qualified Data.Aeson as A
 import           Data.Aeson ((.=))
 import qualified Data.ByteString.Lazy as BL
 import           Data.List (foldl')
 import           Data.String (fromString)
+import           Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
-
-import           Control.Monad (unless)
-import           Control.Monad.Logger (runLogger')
-import           Control.Monad.Trans (lift)
-import           Control.Monad.Error.Class (throwError)
-import           Control.Monad.Trans.Except (runExceptT)
-import           Control.Monad.Trans.Reader (runReaderT)
-
 import qualified Language.PureScript as P
+import qualified Language.PureScript.Interactive as I
 import qualified Language.PureScript.CoreFn as CF
 import qualified Language.PureScript.CodeGen.JS as J
-
 import           System.Environment (getArgs)
+import           System.Exit (exitFailure)
 import           System.FilePath ((</>))
+import           System.FilePath.Glob (glob)
 import qualified System.IO as IO
-
 import           Web.Scotty
 import qualified Web.Scotty as Scotty
 
@@ -57,13 +57,11 @@ readExterns path = do
     . fromString
     <$> IO.hGetContents h
 
-server :: [P.ExternsFile] -> Int -> IO ()
-server externs port = do
-  let initEnv = foldl' (flip P.applyExternsFileToEnvironment) P.initEnvironment externs
-
-  let compile :: String -> IO (Either String JS)
+server :: [P.ExternsFile] -> P.Environment -> Int -> IO ()
+server externs initEnv port = do
+  let compile :: Text -> IO (Either String JS)
       compile input
-        | length input > 20000 = return $ Left "Please limit your input to 20000 characters"
+        | T.length input > 20000 = return $ Left "Please limit your input to 20000 characters"
         | otherwise = do
           let printErrors = P.prettyPrintMultipleErrors (P.defaultPPEOptions { P.ppeCodeColor = Nothing })
           case P.parseModuleFromFile (const "<file>") (undefined, input) of
@@ -73,7 +71,7 @@ server externs port = do
               (resultMay, _) <- runLogger' . runExceptT . flip runReaderT P.defaultOptions $ do
                 ((P.Module ss coms moduleName elaborated exps, env), nextVar) <- P.runSupplyT 0 $ do
                   [desugared] <- P.desugar externs [P.addDefaultImport (P.ModuleName [P.ProperName "Prim"]) m]
-                  P.runCheck' initEnv $ P.typeCheckModule desugared
+                  P.runCheck' (P.emptyCheckState initEnv) $ P.typeCheckModule desugared
                 regrouped <- P.createBindingGroups moduleName . P.collapseBindingGroups $ elaborated
                 let mod' = P.Module ss coms moduleName regrouped exps
                     corefn = CF.moduleToCoreFn env mod'
@@ -89,7 +87,7 @@ server externs port = do
     get "/" $
       Scotty.text "POST api.purescript.org/compile"
     post "/compile" $ do
-      code <- T.unpack . T.decodeUtf8 . BL.toStrict <$> body
+      code <- T.decodeUtf8 . BL.toStrict <$> body
       response <- lift $ compile code
       case response of
         Left err ->
@@ -99,7 +97,11 @@ server externs port = do
 
 main :: IO ()
 main = do
-  [externsPath, confFile, port] <- getArgs
-  externsFiles <- filter (not . null) . lines <$> readFile confFile
-  externs <- mapM (readExterns . (externsPath </>) . (++ ".json")) externsFiles
-  server externs (read port)
+  (port : inputGlobs) <- getArgs
+  inputFiles <- concat <$> traverse glob inputGlobs
+  e <- runExceptT $ do
+    modules <- ExceptT (I.loadAllModules inputFiles)
+    ExceptT . I.runMake . I.make $ modules
+  case e of
+    Left err -> print err >> exitFailure
+    Right (externs, env) -> server externs env (read port)

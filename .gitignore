@@ -2,7 +2,7 @@
 .psci_modules/
 .stack-work/
 output/
-bower_components/
+.psc-package/
 dist/
 .cabal-sandbox/
 
