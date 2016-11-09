@@ -2,7 +2,6 @@ resolver: lts-6.10
 flags: {}
 packages:
 - '.'
-- '../purescript'
 extra-deps:
 - purescript-0.10.2
 - bower-json-0.8.0
