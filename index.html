@@ -49,74 +49,57 @@
           <textarea name="code" id="code_textarea" style="display: none;">module Main where
 
 import Prelude
-import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Console (CONSOLE, log)
-import Data.Foldable (for_)
-import Data.String (length, fromCharArray)
-import Data.Unfoldable (replicate)
+import Data.Foldable (fold)
+import TryPureScript
 
-main :: Eff (console :: CONSOLE) Unit
-main = do
-  header '=' "Try PureScript!"
-  newline
-  log "Try out the examples below, or create your own!"
-  newline
-  header '-' "Examples"
-  newline
-  for_ examples logExample
-  newline
-  header '-' "Share Your Code"
-  newline
-  log "Code can be loaded from a GitHub Gist."
-  newline
-  log "To share code, simply include the Gist ID in the URL as follows:"
-  newline
-  log "  try.purescript.org?gist=gist-id"
-  newline
-  log "The Gist should contain a file named Main.purs containing your PureScript code."
-  newline
-  log "Any strings of the form ?gist=gist-id which are logged to the console"
-  log "will be replaced with links."
-
+main =
+    render $ fold
+      [ h1 (text "Try PureScript!")
+      , p (text "Try out the examples below, or create your own!")
+      , h2 (text "Examples")
+      , list (map fromExample examples)
+      , h2 (text "Share Your Code")
+      , p (text "Code can be loaded from a GitHub Gist. To share code, simply include the Gist ID in the URL as follows:")
+      , indent (p (code (text "  try.purescript.org?gist=gist-id")))
+      , p (fold
+          [ text "The Gist should contain a file named "
+          , code (text "Main.purs")
+          , text " containing your PureScript code."
+          ])
+      ]
   where
-  newline = log " "
+    fromExample { title, gist } =
+      link ("?gist=" <> gist) (text title)
 
-  header headerChar s = do
-    log s
-    log $ fromCharArray (replicate (length s) headerChar)
-
-  logExample ex = do
-    log $ "- " <> ex.title <> " (?gist=" <> ex.gist <> ")"
-
-  examples =
-    [ { title: "Algebraic Data Types"
-      , gist: "37c3c97f47a43f20c548"
-      }
-    , { title: "Loops"
-      , gist: "cfdabdcd085d4ac3dc46"
-      }
-    , { title: "Operators"
-      , gist: "3044550f29a7c5d3d0d0"
-      }
-    , { title: "Records"
-      , gist: "b80be527ada3eab47dc5"
-      }
-    , { title: "Recursion"
-      , gist: "ff49cc7dc85923a75613"
-      }
-    , { title: "Do Notation"
-      , gist: "47c2d9913c5dbda1e963"
-      }
-    , { title: "Type Classes"
-      , gist: "1a3b845e8c6defde659a"
-      }
-    , { title: "Generic Programming"
-      , gist: "3f735aa2a652af592101"
-      }
-    , { title: "QuickCheck"
-      , gist: "69f7f94fe4ff3bd47f4b"
-      }
-    ]</textarea>
+    examples =
+      [ { title: "Algebraic Data Types"
+        , gist: "37c3c97f47a43f20c548"
+        }
+      , { title: "Loops"
+        , gist: "cfdabdcd085d4ac3dc46"
+        }
+      , { title: "Operators"
+        , gist: "3044550f29a7c5d3d0d0"
+        }
+      , { title: "Records"
+        , gist: "b80be527ada3eab47dc5"
+        }
+      , { title: "Recursion"
+        , gist: "ff49cc7dc85923a75613"
+        }
+      , { title: "Do Notation"
+        , gist: "47c2d9913c5dbda1e963"
+        }
+      , { title: "Type Classes"
+        , gist: "1a3b845e8c6defde659a"
+        }
+      , { title: "Generic Programming"
+        , gist: "3f735aa2a652af592101"
+        }
+      , { title: "QuickCheck"
+        , gist: "69f7f94fe4ff3bd47f4b"
+        }
+      ]</textarea>
         </div>
 
         <div class="separator">
