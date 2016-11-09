@@ -15,11 +15,13 @@ module TryPureScript
   , list
   , indent
   , render
+  , withConsole
   ) where
 
 import Prelude
 import Control.Monad.Eff (Eff)
 import Data.Foldable (class Foldable, foldMap)
+import Data.String (joinWith)
 import Data.Monoid (class Monoid)
 
 foreign import data DOM :: !
@@ -30,6 +32,18 @@ foreign import setInnerHTML
   -> Eff (dom :: DOM | eff) Unit
 
 foreign import encode :: String -> String
+
+foreign import withConsoleImpl
+  :: forall eff a
+   . Eff eff a
+  -> Eff eff (Array String)
+
+withConsole
+  :: forall eff a
+   . Eff eff a
+  -> Eff eff Doc
+withConsole f = map toDoc (withConsoleImpl f) where
+  toDoc = Doc <<< tag' "pre" <<< tag' "code" <<< joinWith "\n"
 
 tag :: String -> String -> String -> String
 tag open close html = "<" <> open <> ">" <> html <> "</" <> close <> ">"
