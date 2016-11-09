@@ -21,6 +21,7 @@ module Main (
 ) where
 
 import           Control.Monad (unless)
+import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Logger (runLogger')
 import           Control.Monad.Trans (lift)
 import           Control.Monad.Error.Class (throwError)
@@ -34,22 +35,26 @@ import           Data.String (fromString)
 import           Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
+import qualified Data.Text.Lazy as TL
+import           Data.Traversable (for)
 import qualified Language.PureScript as P
-import qualified Language.PureScript.Interactive as I
-import qualified Language.PureScript.CoreFn as CF
+import qualified Language.PureScript.Bundle as Bundle
 import qualified Language.PureScript.CodeGen.JS as J
+import qualified Language.PureScript.CoreFn as CF
+import qualified Language.PureScript.Interactive as I
 import           System.Environment (getArgs)
 import           System.Exit (exitFailure)
 import           System.FilePath ((</>))
 import           System.FilePath.Glob (glob)
 import qualified System.IO as IO
+import           System.IO.UTF8 (readUTF8File)
 import           Web.Scotty
 import qualified Web.Scotty as Scotty
 
 type JS = String
 
-server :: [P.ExternsFile] -> P.Environment -> Int -> IO ()
-server externs initEnv port = do
+server :: TL.Text -> [P.ExternsFile] -> P.Environment -> Int -> IO ()
+server bundled externs initEnv port = do
   let compile :: Text -> IO (Either String JS)
       compile input
         | T.length input > 20000 = return $ Left "Please limit your input to 20000 characters"
@@ -77,6 +82,10 @@ server externs initEnv port = do
   scotty port $ do
     get "/" $
       Scotty.text "POST api.purescript.org/compile"
+    get "/bundle" $ do
+      Scotty.setHeader "Access-Control-Allow-Origin" "*"
+      Scotty.setHeader "Content-Type" "text/javascript"
+      Scotty.text bundled
     post "/compile" $ do
       code <- T.decodeUtf8 . BL.toStrict <$> body
       response <- lift $ compile code
@@ -87,13 +96,26 @@ server externs initEnv port = do
         Right comp ->
           Scotty.json $ A.object [ "js" .= comp ]
 
+bundle :: IO (Either Bundle.ErrorMessage String)
+bundle = runExceptT $ do
+  inputFiles <- liftIO (glob (".psci_modules" </> "node_modules" </> "*" </> "*.js"))
+  input <- for inputFiles $ \filename -> do
+    js <- liftIO (readUTF8File filename)
+    mid <- Bundle.guessModuleIdentifier filename
+    length js `seq` return (mid, js)
+  Bundle.bundle input [] Nothing "PS"
+
 main :: IO ()
 main = do
-  (port : inputGlobs) <- getArgs
+  (portString : inputGlobs) <- getArgs
+  let port = read portString
   inputFiles <- concat <$> traverse glob inputGlobs
+  let onError f = either (Left . f) Right
   e <- runExceptT $ do
-    modules <- ExceptT (I.loadAllModules inputFiles)
-    ExceptT . I.runMake . I.make $ modules
+    modules <- ExceptT (fmap (onError Right) (I.loadAllModules inputFiles))
+    (exts, env) <- ExceptT . fmap (onError Right) . I.runMake . I.make $ modules
+    js <- ExceptT (fmap (onError Left) bundle)
+    return (fromString js, exts, env)
   case e of
     Left err -> print err >> exitFailure
-    Right (externs, env) -> server externs env (read port)
+    Right (js, exts, env) -> server js exts env port
