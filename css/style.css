@@ -14,3 +14,9 @@ h1, h2, h3, h4, h5, h6 {
 a, a:visited, a:active, a:hover {
   color: #c4953a;
 }
+
+pre {
+  background-color: rgb(240, 240, 240);
+  padding: 10px;
+  border-radius: 10px;
+}
