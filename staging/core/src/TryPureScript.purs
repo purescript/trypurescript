@@ -63,7 +63,7 @@ text :: String -> Inline
 text = Inline <<< encode
 
 link :: String -> Inline -> Inline
-link url (Inline html) = Inline (tag ("a href=\"" <> encode url <> "\" target=\"top\"") "a" html)
+link url (Inline html) = Inline (tag ("a href=\"" <> encode url <> "\" target=\"_top\"") "a" html)
 
 code :: Inline -> Inline
 code (Inline s) = Inline (tag' "code" s)
