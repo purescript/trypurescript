@@ -2,7 +2,7 @@
 
 exports.setInnerHTML = function(html) {
   return function() {
-    document.body.innerHTML = html;
+    document.body.innerHTML += html;
   };
 };
 
@@ -17,21 +17,29 @@ exports.encode = function(text) {
 exports.withConsoleImpl = function(f) {
   return function() {
     var oldLog = console.log;
-    var oldError = window.onerror;
+    var oldError = console.error;
+    var oldWindowError = window.onerror;
     var lines = [];
-    console.log = function(s) {
+
+    console.log = console.error = function(s) {
       lines.push(s);
     };
+
     window.onerror = function(e) {
-      console.log(e);
+      lines.push(e.message);
       return true;
     };
+
     try {
       f();
-      return lines;
+    } catch (e) {
+      lines.push(e.message);
     } finally {
       console.log = oldLog;
-      window.onerror = oldError;
+      console.error = oldError;
+      window.onerror = oldWindowError;
     }
+
+    return lines;
   };
 };
