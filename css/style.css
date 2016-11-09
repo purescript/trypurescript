@@ -10,23 +10,8 @@ body
 {
   font-family: 'Roboto', sans-serif;
   color: #404040;
-  margin: 0;
 }
 
 a, a:visited, a:active, a:hover {
   color: #c4953a;
-}
-
-#console {
-  font-family: monospace;
-  padding: 15px;
-  white-space: pre-wrap;
-  white-space: -moz-pre-wrap;
-  word-wrap: break-word;
-  font-size: 15px;
-}
-
-#console div:empty::after {
-    content: ".";
-    visibility: hidden;
 }

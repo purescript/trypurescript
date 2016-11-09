@@ -22,6 +22,8 @@
 })(jQuery);
 
 $(function() {
+    var endpoint = "http://localhost:8080";
+
     var loadOptions = function() {
       var view_mode = $.QueryString["view"];
       if (view_mode && (view_mode === "sidebyside" || view_mode === "code" || view_mode === "output")) {
@@ -140,20 +142,6 @@ $(function() {
             ].join('\n')
         );
 
-        var consoleScript =
-            [ 'console.log = function(s) {'
-            , '  var div = document.createElement("div");'
-            , '  div.appendChild(document.createTextNode(s));'
-            , '  div.innerHTML = div.innerHTML.replace(/\\?gist=([A-Fa-f0-9]+)/g, "<a href=\'?gist=$1\' target=\'_top\'>$1</a>");'
-            , '  var cons = document.getElementById("console");'
-            , '  cons && cons.appendChild(div);'
-            , '};'
-            , 'window.onerror = function(e) {'
-            , '  console.log(e);'
-            , '  return true;'
-            , '};'
-            ].join('\n');
-
         // Replace any require() statements with the PS['...'] form using a regex substitution.
         var replaced = js.replace(/require\("[^"]*"\)/g, function(s) {
 
@@ -169,7 +157,7 @@ $(function() {
             , 'module.exports.main && module.exports.main();'
             ].join('\n');
 
-        var scripts = [consoleScript, bundle, wrapped].join("\n");
+        var scripts = [bundle, wrapped].join("\n");
 
         var script = iframe.createElement('script');
         script.appendChild(iframe.createTextNode(scripts));
@@ -191,7 +179,7 @@ $(function() {
         var code = $('#code_textarea').val();
 
         $.ajax({
-            url: 'https://compile.purescript.org/compile',
+            url: endpoint + '/compile',
             dataType: 'json',
             data: code,
             method: 'POST',
@@ -208,7 +196,7 @@ $(function() {
                           .empty()
                           .append($('<pre>').append($('<code>').append(res.js)));
                     } else {
-                      $.get('js/bundle.js').done(function(bundle) {
+                      $.get(endpoint + '/bundle').done(function(bundle) {
 
                           execute(res.js, bundle);
                       }).fail(function(err) {

@@ -49,14 +49,13 @@
           <textarea name="code" id="code_textarea" style="display: none;">module Main where
 
 import Prelude
-
+import Control.Monad.Eff (Eff)
+import Control.Monad.Eff.Console (CONSOLE, log)
 import Data.Foldable (for_)
 import Data.String (length, fromCharArray)
 import Data.Unfoldable (replicate)
 
-import Control.Monad.Eff
-import Control.Monad.Eff.Console (log)
-
+main :: Eff (console :: CONSOLE) Unit
 main = do
   header '=' "Try PureScript!"
   newline
