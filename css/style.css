@@ -8,6 +8,7 @@ body
 
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Roboto Slab', sans-serif;
+  color: #1d222d;
 }
 
 a, a:visited, a:active, a:hover {
