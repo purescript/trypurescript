@@ -48,15 +48,6 @@ import qualified Web.Scotty as Scotty
 
 type JS = String
 
-readExterns :: FilePath -> IO P.ExternsFile
-readExterns path = do
-  h <- IO.openFile path IO.ReadMode
-  IO.hSetEncoding h IO.utf8
-  either (error . (("Error reading externs file " ++ path ++ ": ") ++)) id
-    . A.eitherDecode
-    . fromString
-    <$> IO.hGetContents h
-
 server :: [P.ExternsFile] -> P.Environment -> Int -> IO ()
 server externs initEnv port = do
   let compile :: Text -> IO (Either String JS)
@@ -89,6 +80,7 @@ server externs initEnv port = do
     post "/compile" $ do
       code <- T.decodeUtf8 . BL.toStrict <$> body
       response <- lift $ compile code
+      Scotty.setHeader "Access-Control-Allow-Origin" "*"
       case response of
         Left err ->
           Scotty.json $ A.object [ "error" .= err ]
