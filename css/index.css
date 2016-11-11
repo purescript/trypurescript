@@ -23,6 +23,8 @@ body {
 }
 #options {
   border-bottom: solid 1px #ddd;
+  background-color: #1d222d;
+  color: white;
 }
 #options input {
   vertical-align: middle;
@@ -36,7 +38,6 @@ body {
 }
 
 #view_mode {
-  background-color: #fff;
   display: inline-block;
   margin: 0px;
   padding: 0px;
@@ -51,7 +52,6 @@ body {
   text-align: center;
 }
 #view_mode li {
-  background-color: #fff;
   display: inline-block;
   padding: 0px;
   padding-left: 0px;
@@ -59,14 +59,14 @@ body {
   border: 0px;
 }
 #view_mode input[type="radio"] {
-  display:none; 
+  display:none;
   border-top: solid 1px #fff;
   border-left: solid 1px #fff;
   border-right: solid 1px #fff;
 }
 
 #view_mode input[type="radio"]:checked + label {
-  background-color: #eee;
+  color: #c4953a;
 }
 #view_mode input[type=checked]:checked + label {
   background-color: #eee;
