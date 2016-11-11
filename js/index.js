@@ -22,7 +22,7 @@
 })(jQuery);
 
 $(function() {
-    var endpoint = "https://compile.purescript.org";
+    var endpoint = "https://compile.purescript.org/try";
 
     var loadOptions = function() {
       var view_mode = $.QueryString["view"];
