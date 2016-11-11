@@ -22,7 +22,7 @@
 })(jQuery);
 
 $(function() {
-    var endpoint = "http://localhost:8080";
+    var endpoint = "https://compile.purescript.org";
 
     var loadOptions = function() {
       var view_mode = $.QueryString["view"];
