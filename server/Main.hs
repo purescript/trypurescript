@@ -20,50 +20,44 @@ module Main (
     main
 ) where
 
+import           Control.Monad (unless)
+import           Control.Monad.IO.Class (liftIO)
+import           Control.Monad.Logger (runLogger')
+import           Control.Monad.Trans (lift)
+import           Control.Monad.Error.Class (throwError)
+import           Control.Monad.Trans.Except (ExceptT(..), runExceptT)
+import           Control.Monad.Trans.Reader (runReaderT)
 import qualified Data.Aeson as A
 import           Data.Aeson ((.=))
 import qualified Data.ByteString.Lazy as BL
 import           Data.List (foldl')
 import           Data.String (fromString)
+import           Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
-
-import           Control.Monad (unless)
-import           Control.Monad.Logger (runLogger')
-import           Control.Monad.Trans (lift)
-import           Control.Monad.Error.Class (throwError)
-import           Control.Monad.Trans.Except (runExceptT)
-import           Control.Monad.Trans.Reader (runReaderT)
-
+import qualified Data.Text.Lazy as TL
+import           Data.Traversable (for)
 import qualified Language.PureScript as P
-import qualified Language.PureScript.CoreFn as CF
+import qualified Language.PureScript.Bundle as Bundle
 import qualified Language.PureScript.CodeGen.JS as J
-
+import qualified Language.PureScript.CoreFn as CF
+import qualified Language.PureScript.Interactive as I
 import           System.Environment (getArgs)
+import           System.Exit (exitFailure)
 import           System.FilePath ((</>))
+import           System.FilePath.Glob (glob)
 import qualified System.IO as IO
-
+import           System.IO.UTF8 (readUTF8File)
 import           Web.Scotty
 import qualified Web.Scotty as Scotty
 
 type JS = String
 
-readExterns :: FilePath -> IO P.ExternsFile
-readExterns path = do
-  h <- IO.openFile path IO.ReadMode
-  IO.hSetEncoding h IO.utf8
-  either (error . (("Error reading externs file " ++ path ++ ": ") ++)) id
-    . A.eitherDecode
-    . fromString
-    <$> IO.hGetContents h
-
-server :: [P.ExternsFile] -> Int -> IO ()
-server externs port = do
-  let initEnv = foldl' (flip P.applyExternsFileToEnvironment) P.initEnvironment externs
-
-  let compile :: String -> IO (Either String JS)
+server :: TL.Text -> [P.ExternsFile] -> P.Environment -> Int -> IO ()
+server bundled externs initEnv port = do
+  let compile :: Text -> IO (Either String JS)
       compile input
-        | length input > 20000 = return $ Left "Please limit your input to 20000 characters"
+        | T.length input > 20000 = return $ Left "Please limit your input to 20000 characters"
         | otherwise = do
           let printErrors = P.prettyPrintMultipleErrors (P.defaultPPEOptions { P.ppeCodeColor = Nothing })
           case P.parseModuleFromFile (const "<file>") (undefined, input) of
@@ -73,7 +67,7 @@ server externs port = do
               (resultMay, _) <- runLogger' . runExceptT . flip runReaderT P.defaultOptions $ do
                 ((P.Module ss coms moduleName elaborated exps, env), nextVar) <- P.runSupplyT 0 $ do
                   [desugared] <- P.desugar externs [P.addDefaultImport (P.ModuleName [P.ProperName "Prim"]) m]
-                  P.runCheck' initEnv $ P.typeCheckModule desugared
+                  P.runCheck' (P.emptyCheckState initEnv) $ P.typeCheckModule desugared
                 regrouped <- P.createBindingGroups moduleName . P.collapseBindingGroups $ elaborated
                 let mod' = P.Module ss coms moduleName regrouped exps
                     corefn = CF.moduleToCoreFn env mod'
@@ -88,18 +82,40 @@ server externs port = do
   scotty port $ do
     get "/" $
       Scotty.text "POST api.purescript.org/compile"
+    get "/bundle" $ do
+      Scotty.setHeader "Access-Control-Allow-Origin" "*"
+      Scotty.setHeader "Content-Type" "text/javascript"
+      Scotty.text bundled
     post "/compile" $ do
-      code <- T.unpack . T.decodeUtf8 . BL.toStrict <$> body
+      code <- T.decodeUtf8 . BL.toStrict <$> body
       response <- lift $ compile code
+      Scotty.setHeader "Access-Control-Allow-Origin" "*"
       case response of
         Left err ->
           Scotty.json $ A.object [ "error" .= err ]
         Right comp ->
           Scotty.json $ A.object [ "js" .= comp ]
 
+bundle :: IO (Either Bundle.ErrorMessage String)
+bundle = runExceptT $ do
+  inputFiles <- liftIO (glob (".psci_modules" </> "node_modules" </> "*" </> "*.js"))
+  input <- for inputFiles $ \filename -> do
+    js <- liftIO (readUTF8File filename)
+    mid <- Bundle.guessModuleIdentifier filename
+    length js `seq` return (mid, js)
+  Bundle.bundle input [] Nothing "PS"
+
 main :: IO ()
 main = do
-  [externsPath, confFile, port] <- getArgs
-  externsFiles <- filter (not . null) . lines <$> readFile confFile
-  externs <- mapM (readExterns . (externsPath </>) . (++ ".json")) externsFiles
-  server externs (read port)
+  (portString : inputGlobs) <- getArgs
+  let port = read portString
+  inputFiles <- concat <$> traverse glob inputGlobs
+  let onError f = either (Left . f) Right
+  e <- runExceptT $ do
+    modules <- ExceptT (fmap (onError Right) (I.loadAllModules inputFiles))
+    (exts, env) <- ExceptT . fmap (onError Right) . I.runMake . I.make $ modules
+    js <- ExceptT (fmap (onError Left) bundle)
+    return (fromString js, exts, env)
+  case e of
+    Left err -> print err >> exitFailure
+    Right (js, exts, env) -> server js exts env port
