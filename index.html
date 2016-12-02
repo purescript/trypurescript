@@ -20,26 +20,34 @@
         <ul id="view_mode">
           <li>
             <input type="radio" name="view_mode" value="sidebyside" id="view_sidebyside" checked="true">
-            <label for="view_sidebyside">Side by side</label>
+            <label for="view_sidebyside" title="Show the code and output side by side">Side by side</label>
           </li>
           <li>
             <input type="radio" name="view_mode" value="code" id="view_code">
-            <label for="view_code">Code</label>
+            <label for="view_code" title="Show only the code">Code</label>
           </li>
           <li>
             <input type="radio" name="view_mode" value="output" id="view_output">
-            <label for="view_output">Output</label>
+            <label for="view_output" title="Show only the output">Output</label>
           </li>
         </ul>
+
+        <ul id="gists">
+          <li>
+            <label id="gist_save" name="save_gist" title="Save file as a Gist">Share</label>
+          </li>
+        </ul>
+
         <span class="nowrap">
-          <input id="auto_compile" name="auto_compile" value="auto_compile" type="checkbox" checked="true">
-          <label id="compile_label">Compile</label>
+          <input id="auto_compile" name="auto_compile" title="Toggle auto-compliation of the file on code changes" value="auto_compile" type="checkbox" checked="true">
+          <label id="compile_label" title="Compile file">Compile</label>
         </span>
 
         <span class="nowrap">
-          <input id="showjs" name="showjs" value="showjs" type="checkbox">
-          <label id="showjs_label" for="showjs">Show JS</label>
+          <input id="showjs" name="showjs" title="Show resulting JavaScript code instead of output" value="showjs" type="checkbox">
+          <label id="showjs_label" for="showjs" title="Show resulting JavaScript code instead of output">Show JS</label>
         </span>
+
       </div>
       <div id="editor_view">
         <div id="column1">

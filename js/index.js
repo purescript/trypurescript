@@ -236,19 +236,15 @@ $(function() {
     };
 
     var loadFromGist = function(id) {
-
         $.ajax({
             url: 'https://api.github.com/gists/' + id,
             dataType: 'json'
         }).done(function(gistInfo) {
-
             tryLoadFileFromGist(gistInfo, "Main.purs")
                 .done(function(code) {
-
                     code && $('#code_textarea').val(code);
                     setupEditor();
                 }).fail(function() {
-
                     console.log("Unable to load gist contents");
                     setupEditor();
                 });
@@ -258,7 +254,6 @@ $(function() {
             setupEditor();
         });
     };
-
 
     $('#showjs').change(compile);
     $('#compile_label').click(compile);
@@ -285,16 +280,46 @@ $(function() {
         $('#showjs').show();
       }
     });
+    var publishNewGist = function() {
+        if (!confirm('Do you really want to publish this code as an annonymous Gist?\n\nNote: this code will be available to anyone with a link to the Gist.')) { return; }
 
+        var data = {
+            "description": "Published with try.purescript.org",
+            "public": false,
+            "files": {
+                "Main.purs": {
+                    "content": $('#code_textarea').val()
+                }
+            }
+        };
+
+        $.ajax({
+            url: 'https://api.github.com/gists',
+            type: 'POST',
+            dataType: 'json',
+            data: JSON.stringify(data)
+        })
+            .success( function(e) {
+                console.log(e);
+                delete $.QueryString.session;
+                $.QueryString.gist = e.id;
+                $.setQueryParameters($.QueryString);
+            })
+            .error( function(e) {
+                alert("Failed to create gist.");
+                console.warn("Gist creation failed: ", e);
+            });
+    };
+    $('#gist_save').click(publishNewGist);
 
     var gist = $.QueryString["gist"];
 
-    var sessionId = setupSession();
-    var hasSessionCode = tryRestoreCachedCode(sessionId);
-
-    if (!hasSessionCode && gist) {
+    if (gist) {
         loadFromGist(gist);
-    } else {
+    }
+    else {
+        var sessionId = setupSession();
+        var hasSessionCode = tryRestoreCachedCode(sessionId);
         setupEditor();
     }
 });
