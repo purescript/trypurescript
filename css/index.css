@@ -30,11 +30,18 @@ body {
   vertical-align: middle;
   margin-bottom: 5px;
 }
-#showjs, #compile {
+#showjs, #auto_compile {
   margin-left: 10px;
+  margin-right: 0px;
 }
-#auto_compile {
-  margin-left: 10px;
+#showjs_label, #compile_label {
+  margin-left: 0px;
+}
+#view_mode label, #showjs_label, #compile_label, #gist_save {
+  cursor: pointer;
+}
+#view_mode label:hover, #showjs:hover, #showjs_label:hover, #auto_compile:hover, #compile_label:hover, #gist_save:hover {
+  background-color: black;
 }
 
 #view_mode {
@@ -42,13 +49,9 @@ body {
   margin: 0px;
   padding: 0px;
 }
-#view_mode label {
-  cursor: pointer;
+#view_mode label, #showjs_label, #compile_label, #gist_save {
   display: inline-block;
-  padding-top: 5px;
-  padding-bottom: 5px;
-  padding-left: 10px;
-  padding-right: 10px;
+  padding: 5px 10px;
   text-align: center;
 }
 #view_mode li {
@@ -80,6 +83,19 @@ body {
   flex: 1;
   margin-top: 0px;
 
+}
+
+#gists {
+  display: inline-block;
+  margin: 0px;
+  padding: 0px;
+}
+#gists li {
+  display: inline-block;
+  padding: 0px;
+  padding-left: 0px;
+  margin: 0px;
+  border: 0px;
 }
 
 #column1, #column2 {
