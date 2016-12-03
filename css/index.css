@@ -37,10 +37,10 @@ body {
 #showjs_label, #compile_label {
   margin-left: 0px;
 }
-#view_mode label, #showjs_label, #compile_label, #gist_save {
+#view_mode label, #showjs_label, #compile_label, #gist_save, #help {
   cursor: pointer;
 }
-#view_mode label:hover, #showjs:hover, #showjs_label:hover, #auto_compile:hover, #compile_label:hover, #gist_save:hover {
+#view_mode label:hover, #showjs:hover, #showjs_label:hover, #auto_compile:hover, #compile_label:hover, #gist_save:hover, #help:hover {
   background-color: black;
 }
 
@@ -49,7 +49,7 @@ body {
   margin: 0px;
   padding: 0px;
 }
-#view_mode label, #showjs_label, #compile_label, #gist_save {
+#view_mode label, #showjs_label, #compile_label, #gist_save, #help {
   display: inline-block;
   padding: 5px 10px;
   text-align: center;
@@ -96,6 +96,11 @@ body {
   padding-left: 0px;
   margin: 0px;
   border: 0px;
+}
+
+#helplink {
+    float:right;
+    color:white;
 }
 
 #column1, #column2 {
