@@ -17,40 +17,46 @@
   <div id="wrapper">
     <div id="body">
       <div id="options">
-        <ul id="view_mode">
-          <li>
-            <input type="radio" name="view_mode" value="sidebyside" id="view_sidebyside" checked="true">
-            <label for="view_sidebyside" title="Show the code and output side by side">Side by side</label>
-          </li>
-          <li>
-            <input type="radio" name="view_mode" value="code" id="view_code">
-            <label for="view_code" title="Show only the code">Code</label>
-          </li>
-          <li>
-            <input type="radio" name="view_mode" value="output" id="view_output">
-            <label for="view_output" title="Show only the output">Output</label>
-          </li>
-        </ul>
+        <a id="home_link" href=""><label id="home_label">Try PureScript</label></a>
+        <label id="hamburger" title="Menu">☰</label>
+	<div id="menu">
+          <label id="view_mode_label" title="View mode">View Mode</label>
+          <ul id="view_mode">
+            <li>
+              <input type="radio" name="view_mode" value="sidebyside" id="view_sidebyside" checked="true">
+              <label for="view_sidebyside" title="Show the code and output side by side">Side by side</label>
+            </li>
+            <li>
+              <input type="radio" name="view_mode" value="code" id="view_code">
+              <label for="view_code" title="Show only the code">Code</label>
+            </li>
+            <li>
+              <input type="radio" name="view_mode" value="output" id="view_output">
+              <label for="view_output" title="Show only the output">Output</label>
+            </li>
+          </ul>
 
-        <ul id="gists">
-          <li>
-            <label id="gist_save" name="save_gist" title="Save file as a Gist">Share</label>
-          </li>
-        </ul>
+          <ul id="gists">
+            <li>
+              <label id="gist_save" name="save_gist" title="Save file as a Gist">Share</label>
+            </li>
+          </ul>
 
-        <span class="nowrap">
-          <input id="auto_compile" name="auto_compile" title="Toggle auto-compliation of the file on code changes" value="auto_compile" type="checkbox" checked="true">
-          <label id="compile_label" title="Compile file">Compile</label>
-        </span>
+          <span class="nowrap">
+            <input id="auto_compile" name="auto_compile" title="Toggle auto-compliation of the file on code changes" value="auto_compile" type="checkbox" checked="true">
+            <label id="compile_label" title="Compile file">Compile</label>
+          </span>
 
-        <span class="nowrap">
-          <input id="showjs" name="showjs" title="Show resulting JavaScript code instead of output" value="showjs" type="checkbox">
-          <label id="showjs_label" for="showjs" title="Show resulting JavaScript code instead of output">Show JS</label>
-        </span>
+          <span class="nowrap">
+            <input id="showjs" name="showjs" title="Show resulting JavaScript code instead of output" value="showjs" type="checkbox">
+            <label id="showjs_label" for="showjs" title="Show resulting JavaScript code instead of output">Show JS</label>
+          </span>
 
-        <a id="helplink" href="https://github.com/purescript/trypurescript/tree/gh-pages/README.md" target="trypurs_readme">
-	  <label id="help" title="Learn more about Try PureScript">Help</label>
-        </a>
+          <a id="helplink" href="https://github.com/purescript/trypurescript/tree/gh-pages/README.md" target="trypurs_readme">
+            <label id="help" title="Learn more about Try PureScript">Help</label>
+          </a>
+
+	</div>
 
       </div>
       <div id="editor_view">

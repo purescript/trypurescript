@@ -312,6 +312,14 @@ $(function() {
     };
     $('#gist_save').click(publishNewGist);
 
+
+    $('#hamburger').click(function() {
+        $('#menu').toggleClass("show");
+    });
+    $('#view_mode_label').click(function() {
+        $('#view_mode').toggleClass("showBlock");
+    });
+
     var gist = $.QueryString["gist"];
 
     if (gist) {
