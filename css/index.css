@@ -50,44 +50,59 @@ body {
 #showjs_label, #compile_label {
   margin-left: 0px;
 }
-#view_mode_label {
-    display: none;
-}
-#view_mode_label, #view_mode label, #showjs_label, #compile_label, #gist_save, #help, #hamburger, #view_mode {
+
+#view_mode_label, #view_mode label, #showjs_label, #compile_label, #gist_save, #help, #hamburger, #backend_label, #backend label {
   cursor: pointer;
 }
-#view_mode label:hover, #showjs:hover, #showjs_label:hover, #auto_compile:hover, #compile_label:hover, #gist_save:hover, #help:hover, #hamburger:hover {
+#view_mode_label:hover, #view_mode label:hover, #showjs:hover, #showjs_label:hover,
+#auto_compile:hover, #compile_label:hover, #gist_save:hover, #help:hover,
+#hamburger:hover, #backend_label:hover, #backend label:hover {
   background-color: black;
 }
 
-#view_mode {
-  display: inline-block;
+#view_mode, #backend {
+  display: none;
   margin: 0px;
   padding: 0px;
+  background-color: #1d222d;
+  list-style: none;
 }
-#view_mode label, #showjs_label, #compile_label, #gist_save, #help, #hamburger {
+#view_mode label, #view_mode_label, #backend_label, #showjs_label, #compile_label, #gist_save, #help, #hamburger, #backend_label, #backend label {
   display: inline-block;
   padding: 5px 10px;
   text-align: center;
 }
-#view_mode li {
-  display: inline-block;
+#view_mode, #backend {
+  position:absolute;
+  top:30px;
+  left:0px;
+  z-index: 100000;
+}
+#view_mode label, #backend label {
+    display: block;
+    text-align: left;
+}
+
+#backend {
+  left: 112px;
+}
+#backend li {
   padding: 0px;
   padding-left: 0px;
   margin: 0px;
   border: 0px;
 }
-#view_mode input[type="radio"] {
+#view_mode input[type="radio"], #backend input[type="radio"] {
   display:none;
   border-top: solid 1px #fff;
   border-left: solid 1px #fff;
   border-right: solid 1px #fff;
 }
 
-#view_mode input[type="radio"]:checked + label {
+#view_mode input[type="radio"]:checked + label, #backend input[type="radio"]:checked + label {
   color: #c4953a;
 }
-#view_mode input[type=checked]:checked + label {
+#view_mode input[type=checked]:checked + label, #backend input[type=checked]:checked + label {
   background-color: #eee;
   border: solid 1px #ddd;
   border-bottom: 0px;
@@ -227,6 +242,10 @@ iframe {
   display:none;
 }
 
+.show-sub-menu {
+    display: inline-block ! important;
+}
+
 @media all and (max-width: 720px) {
   #home_link {
     display: inline-block;
@@ -238,7 +257,7 @@ iframe {
   }
   #menu {
     position: absolute;
-    top: 32px;
+    top: 30px;
     left: 0px;
     z-index: 10000000;
     display:none;
@@ -252,33 +271,41 @@ iframe {
   #menu > span {
       margin-left: 10px;
   }
-  #view_mode_label {
+  #view_mode_label, #backend_label {
       display: block;
   }
-  #view_mode {
+  #view_mode, #backend {
       display: none;
       margin-left: 40px;
+      position: relative;
+      top: initial;
+      left: initial;
+      z-index: initial;
   }
-  #view_mode > li {
+  #view_mode > li, #backend > li {
       margin-left: 20px;
       display: block;
   }
   .show {
     display: inline-block ! important;
   }
-  .showBlock {
+  .show-sub-menu {
     display: block ! important;
   }
   #help, #helplink {
     float:none;
   }
 
-  #view_mode_label {
+  #view_mode label, #backend label {
+    display: inline-block;
+  }
+  #view_mode_label, #backend_label {
     cursor: pointer;
     padding: 5px 10px;
     width: 90px;
+    text-align: left;
   }
-  #view_mode_label:hover {
+  #view_mode_label:hover, #backend_label:hover {
     background-color: black;
   }
 }
