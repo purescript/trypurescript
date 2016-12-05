@@ -20,12 +20,16 @@ Try PureScript
 
 Most of these features can be controlled not only from the toolbar, but also using the [query parameters](https://en.wikipedia.org/wiki/Query_string):
 
-- **Load From Gist**: Load PureScript code from gist id using the `gist` parameter
-    - Example: `gist=37c3c97f47a43f20c548`
+- **Load From Gist**: Load PureScript code from Gist id using the `gist` parameter
+    - Example: `gist=37c3c97f47a43f20c548` will load the code from this Gist
 
 - **View Mode**: Control the view mode using the `view` parameter
     - Options are: `code`, `output`, `both`
-    - Example: `view=output`
+    - Example: `view=output` will only display the output
+
+- **Backend**: Control which backend will compile your code using the `backend` parameter
+    - Options are: `core`, `thermite`
+    - Example: `backend=thermite` will use the thermite backend
 
 - **Auto Compile**: Automatic compilation can be turned off using the `compile` parameter
     - Options are: `true`, `false`
@@ -42,4 +46,6 @@ Most of these features can be controlled not only from the toolbar, but also usi
 
 ### Packages
 
-The packages set and compiler version for Try PureScript can be viewed [here](https://github.com/purescript/trypurescript/tree/master/staging/core/psc-package.json).
+- The packages set and compiler version for Try-PureScript can be viewed [here](https://github.com/purescript/trypurescript/tree/master/staging/core/psc-package.json).
+
+- The packages set and compiler version for Try-Thermite can be viewed [here](https://github.com/paf31/try-thermite/blob/gh-pages/staging/psc-package.json).

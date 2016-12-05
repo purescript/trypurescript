@@ -17,40 +17,60 @@
   <div id="wrapper">
     <div id="body">
       <div id="options">
-        <ul id="view_mode">
-          <li>
-            <input type="radio" name="view_mode" value="sidebyside" id="view_sidebyside" checked="true">
-            <label for="view_sidebyside" title="Show the code and output side by side">Side by side</label>
-          </li>
-          <li>
-            <input type="radio" name="view_mode" value="code" id="view_code">
-            <label for="view_code" title="Show only the code">Code</label>
-          </li>
-          <li>
-            <input type="radio" name="view_mode" value="output" id="view_output">
-            <label for="view_output" title="Show only the output">Output</label>
-          </li>
-        </ul>
 
-        <ul id="gists">
-          <li>
-            <label id="gist_save" name="save_gist" title="Save file as a Gist">Share</label>
-          </li>
-        </ul>
+        <a id="home_link" href=""><label id="home_label">Try PureScript</label></a>
 
-        <span class="nowrap">
-          <input id="auto_compile" name="auto_compile" title="Toggle auto-compliation of the file on code changes" value="auto_compile" type="checkbox" checked="true">
-          <label id="compile_label" title="Compile file">Compile</label>
-        </span>
+        <label id="hamburger" title="Menu">☰</label>
 
-        <span class="nowrap">
-          <input id="showjs" name="showjs" title="Show resulting JavaScript code instead of output" value="showjs" type="checkbox">
-          <label id="showjs_label" for="showjs" title="Show resulting JavaScript code instead of output">Show JS</label>
-        </span>
+        <div id="menu">
+          <label id="view_mode_label" title="Select a view mode">View Mode</label>
+          <ul id="view_mode">
+            <li>
+              <input type="radio" name="view_mode" value="sidebyside" id="view_sidebyside" checked="true">
+              <label for="view_sidebyside" title="Show the code and output side by side">Side by side</label>
+            </li>
+            <li>
+              <input type="radio" name="view_mode" value="code" id="view_code">
+              <label for="view_code" title="Show only the code">Code</label>
+            </li>
+            <li>
+              <input type="radio" name="view_mode" value="output" id="view_output">
+              <label for="view_output" title="Show only the output">Output</label>
+            </li>
+          </ul>
 
-        <a id="helplink" href="https://github.com/purescript/trypurescript/tree/gh-pages/README.md" target="trypurs_readme">
-	  <label id="help" title="Learn more about Try PureScript">Help</label>
-        </a>
+          <label id="backend_label" title="Select a Backend">Backend</label>
+          <ul id="backend">
+            <li>
+              <input type="radio" name="backend_inputs" value="core" id="backend_core" checked="true">
+              <label for="backend_core" title="Use the core libraries backend">Core</label>
+            </li>
+            <li>
+              <input type="radio" name="backend_inputs" value="thermite" id="backend_thermite">
+              <label for="backend_thermite" title="Use the try-thermite backend">Thermite</label>
+            </li>
+          </ul>
+
+          <ul id="gists">
+            <li>
+              <label id="gist_save" name="save_gist" title="Save file as a Gist">Share</label>
+            </li>
+          </ul>
+
+          <span class="nowrap">
+            <input id="auto_compile" name="auto_compile" title="Toggle auto-compliation of the file on code changes" value="auto_compile" type="checkbox" checked="true">
+            <label id="compile_label" title="Compile file">Compile</label>
+          </span>
+
+          <span class="nowrap">
+            <input id="showjs" name="showjs" title="Show resulting JavaScript code instead of output" value="showjs" type="checkbox">
+            <label id="showjs_label" for="showjs" title="Show resulting JavaScript code instead of output">Show JS</label>
+          </span>
+
+          <a id="helplink" href="https://github.com/purescript/trypurescript/tree/gh-pages/README.md" target="trypurs_readme">
+            <label id="help" title="Learn more about Try PureScript">Help</label>
+          </a>
+        </div>
 
       </div>
       <div id="editor_view">
@@ -58,60 +78,7 @@
 
           <div id="code">
           </div>
-          <textarea name="code" id="code_textarea" style="display: none;">module Main where
-
-import Prelude
-import Data.Foldable (fold)
-import TryPureScript
-
-main =
-    render $ fold
-      [ h1 (text "Try PureScript!")
-      , p (text "Try out the examples below, or create your own!")
-      , h2 (text "Examples")
-      , list (map fromExample examples)
-      , h2 (text "Share Your Code")
-      , p (text "Code can be loaded from a GitHub Gist. To share code, simply include the Gist ID in the URL as follows:")
-      , indent (p (code (text "  try.purescript.org?gist=gist-id")))
-      , p (fold
-          [ text "The Gist should contain a file named "
-          , code (text "Main.purs")
-          , text " containing your PureScript code."
-          ])
-      ]
-  where
-    fromExample { title, gist } =
-      link ("?gist=" <> gist) (text title)
-
-    examples =
-      [ { title: "Algebraic Data Types"
-        , gist: "37c3c97f47a43f20c548"
-        }
-      , { title: "Loops"
-        , gist: "cfdabdcd085d4ac3dc46"
-        }
-      , { title: "Operators"
-        , gist: "3044550f29a7c5d3d0d0"
-        }
-      , { title: "Records"
-        , gist: "b80be527ada3eab47dc5"
-        }
-      , { title: "Recursion"
-        , gist: "ff49cc7dc85923a75613"
-        }
-      , { title: "Do Notation"
-        , gist: "47c2d9913c5dbda1e963"
-        }
-      , { title: "Type Classes"
-        , gist: "1a3b845e8c6defde659a"
-        }
-      , { title: "Generic Programming"
-        , gist: "3f735aa2a652af592101"
-        }
-      , { title: "QuickCheck"
-        , gist: "69f7f94fe4ff3bd47f4b"
-        }
-      ]</textarea>
+          <textarea name="code" id="code_textarea" style="display: none;"></textarea>
         </div>
 
         <div class="separator">
