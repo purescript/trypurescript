@@ -42,6 +42,8 @@ var coreStart =
     ,'      , h2 (text "Try PureScript Libraries")'
     ,'      , list [ link "?backend=thermite" (text "Try Thermite") '
     ,'               <> text ", a front-end library for PureScript which uses React"'
+    ,'             , link "?backend=slides" (text "Try Slides") '
+    ,'               <> text ", an EDSL in PureScript for creating presentations"'
     ,'             ]'
     ,'      , h2 (text "Share Your Code")'
     ,'      , p (text "Code can be loaded from a GitHub Gist. To share code, simply include the Gist ID in the URL as follows:")'
@@ -179,6 +181,75 @@ thermiteStart =
     ,'main = T.defaultMain spec unit'
     ].join('\n');
 
+var slidesStart =
+    ['module Main where'
+    ,''
+    ,'import Prelude (($), (<>))'
+    ,'import Slides'
+    ,'import Slides.Remember'
+    ,''
+    ,'main = runSlidesAndRemember'
+    ,'  [ slide "Slides" $'
+    ,'    valign'
+    ,'      [ image "http://i.imgur.com/Hm9pTxy.gif"'
+    ,'      , title "Let\'s build a presentation!"'
+    ,'      , center $'
+    ,'          text "(In "'
+    ,'          <+> link "http://purescript.org" (text "PureScript")'
+    ,'          <>  text ", Using "'
+    ,'          <+> link "https://github.com/soupi/purescript-slides" (text "purescript-slides")'
+    ,'          <>  text ")"'
+    ,'      , text ""'
+    ,'      , center $'
+    ,'          text "New to PureScript? Perhaps you want to"'
+    ,'          <+> link "?backend&core" (text "try PureScript")'
+    ,'          <+> text "using the core libraries."'
+    ,'      ]'
+    ,''
+    ,'  , slide "Primitives" $'
+    ,'    valign'
+    ,'      [ text "We have the following primitives:"'
+    ,'      , ulist'
+    ,'          [ code "text" <+> text "- write a block of text"'
+    ,'          , code "code" <+> text "- write a block of code"'
+    ,'          , code "link" <+> text "- turn an element into a clickable link"'
+    ,'          , code "image" <+> text "- display an image from a url"'
+    ,'          , code "title" <+> text "- a title"'
+    ,'          , code "center" <+> text "- center an element"'
+    ,'          , code "bold"  <> text "/" <> code "italic" <+> text "-"'
+    ,'            <+> bold (text "bold")'
+    ,'            <+> text "and"'
+    ,'            <+> italic (text "italic")'
+    ,'          , code "withClass" <> text "/" <> code "withId" <+> text "- add a class or id to element"'
+    ,'          ]'
+    ,'      ]'
+    ,''
+    ,'  , slide "Combinators" $'
+    ,'    valign'
+    ,'      [ text "To combine elements, we can use the following combinators:"'
+    ,'      , center $ ulist'
+    ,'          [ code "valign" <+> text "- vertically align elements in a list"'
+    ,'          , code "halign" <+> text "- horizontally align elements in a list"'
+    ,'          , code "group" <+> text "- group an array of elements"'
+    ,'          , code "ulist" <+> text "- create a list of bullets"'
+    ,'          ]'
+    ,'      ]'
+    ,''
+    ,'  , slide "Creating slides" $'
+    ,'    ulist'
+    ,'      [ text "to create a slide, call the" <+> code "slide" <+> text "function with a title string and an element"'
+    ,'      , text "to create slides, call the" <+> code "mkSlides" <+> text "function with a list of slides"'
+    ,'      , text "to run the slides, call the" <+> code "runSlides" <+> text "function with the slides"'
+    ,'      ]'
+    ,'  '
+    ,'    ,slide "That\'s it!" $'
+    ,'    valign'
+    ,'      [ text "This library is still tiny and may grow in the future :)"'
+    ,'      , center $ text "Interested? Check the source on" <+> link "https://github.com/soupi/purescript-slides" (text "Github") <> text "!"'
+    ,'      ]'
+    ,'  ]'
+    ].join("\n");
+
 
 $(function() {
 
@@ -189,6 +260,13 @@ $(function() {
                      mainSnippet: thermiteStart,
                      extra_styling: '    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">',
                      extra_body: '    <div id="app"></div>'
+                   };
+        } else if (backend === "slides") {
+            return { backend: "slides",
+                     endpoint: "https://compile.purescript.org/slides",
+                     mainSnippet: slidesStart,
+                     extra_styling: '<link rel="stylesheet" href="css/slides.css">',
+                     extra_body: '<div id="main"></div>'
                    };
         } else { // core
             return { backend: "core",
@@ -345,8 +423,8 @@ $(function() {
             , '<html>'
             , '  <head>'
             , '    <title>Try PureScript!</title>'
-            , backend.extra_styling
             , '    <link rel="stylesheet" href="css/style.css">'
+            , backend.extra_styling
             , '  </head>'
             , '  <body>'
             , backend.extra_body
@@ -445,6 +523,7 @@ $(function() {
                 $('#column2')
                     .empty()
                     .append($('<pre>').append($('<code>').append(res.responseText)));
+                console.warn("failed to communicate with compilation server", res);
             }
         });
     };
