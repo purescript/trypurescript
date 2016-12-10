@@ -193,7 +193,7 @@ var slidesStart =
     ,'main = runSlidesAndRemember'
     ,'  [ slide "Slides" $'
     ,'    valign'
-    ,'      [ image "http://i.imgur.com/Hm9pTxy.gif"'
+    ,'      [ image "https://i.imgur.com/Hm9pTxy.gif"'
     ,'      , title "Let\'s build a presentation!"'
     ,'      , center $'
     ,'          text "(In "'
@@ -490,6 +490,9 @@ $(function() {
             [ '<!DOCTYPE html>'
             , '<html>'
             , '  <head>'
+
+            , '    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">'
+            , '    <meta content="utf-8" http-equiv="encoding">'
             , '    <meta name="viewport" content="width=device-width, initial-scale=1.0">'
             , '    <title>Try PureScript!</title>'
             , '    <link rel="stylesheet" href="css/style.css">'
