@@ -204,7 +204,7 @@ var slidesStart =
     ,'      , text ""'
     ,'      , center $'
     ,'          text "New to PureScript? Perhaps you want to"'
-    ,'          <+> link "?backend&core" (text "try PureScript")'
+    ,'          <+> link "?backend=core" (text "try PureScript")'
     ,'          <+> text "using the core libraries."'
     ,'      ]'
     ,''
@@ -490,6 +490,7 @@ $(function() {
             [ '<!DOCTYPE html>'
             , '<html>'
             , '  <head>'
+            , '    <meta name="viewport" content="width=device-width, initial-scale=1.0">'
             , '    <title>Try PureScript!</title>'
             , '    <link rel="stylesheet" href="css/style.css">'
             , backend.extra_styling
