@@ -16,7 +16,7 @@ a, a:visited, a:active, a:hover {
 
 .flare-input > label {
     display: inline-block;
-    width: 100px;
+    width: 150px;
 }
 
 .flare-input {
@@ -25,6 +25,11 @@ a, a:visited, a:active, a:hover {
 
 .flare-input-number {
     width: 85px;
+}
+
+input[type="range"] {
+    width: 150px;
+    border: 1px solid transparent;
 }
 
 input:invalid {
@@ -44,7 +49,7 @@ fieldset.flare-input-radioGroup {
 
 .flare-input-radioGroup legend {
     padding: 0px;
-    width: 100px;
+    width: 150px;
     float: left;
     font-weight: bold;
 }
