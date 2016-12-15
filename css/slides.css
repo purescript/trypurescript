@@ -23,6 +23,10 @@ h3 {
   font-size: 1.5em
 }
 
+img {
+  max-width: 100%;
+}
+
 .flexbox {
   margin: 5px;
 
