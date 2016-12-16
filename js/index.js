@@ -338,7 +338,7 @@ $(function() {
                    };
         } else { // core
             return { backend: "core",
-                     endpoint: "http://localhost:8080",
+                     endpoint: "https://compile.purescript.org/try",
                      mainSnippet: coreStart,
                      extra_styling: '',
                      extra_body: ''
