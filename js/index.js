@@ -338,7 +338,7 @@ $(function() {
                    };
         } else { // core
             return { backend: "core",
-                     endpoint: "https://compile.purescript.org/try",
+                     endpoint: "http://localhost:8080",
                      mainSnippet: coreStart,
                      extra_styling: '',
                      extra_body: ''
@@ -436,9 +436,11 @@ $(function() {
         }
     }
 
+    var editor, errorMarkers = [];
+
     var setupEditorWith = function(name, ta_name, lang) {
 
-        var editor = ace.edit(name);
+        editor = ace.edit(name);
 
         editor.renderer.setShowGutter(true);
         editor.setFontSize(13);
@@ -462,6 +464,7 @@ $(function() {
 
         compile();
     };
+
     var hideMenus = function() {
         $('#menu').removeClass("show");
         $('#view_mode').removeClass("show-sub-menu");
@@ -553,10 +556,41 @@ $(function() {
             contentType: 'text/plain',
             success: function(res) {
 
+                for (var i = 0; i < errorMarkers.length; i++) {
+                    editor.session.removeMarker(errorMarkers[i]);
+                }
+
+                errorMarkers = [];
+
                 if (res.error) {
-                    $('#column2')
-                        .empty()
-                        .append($('<pre>').append($('<code>').append(res.error)));
+                    switch (res.error.tag) {
+                        case "CompilerErrors":
+                            var errors = res.error.contents;
+
+                            $('#column2').empty();
+
+                            for (var i = 0; i < errors.length; i++) {
+                                var error = errors[i];
+                                $('#column2')
+                                    .append($('<h1>').addClass('error-banner').append("Error " + (i + 1) + " of " + errors.length))
+                                    .append($('<pre>').append($('<code>').append(error.message)));
+
+                                // Add an error marker
+                                var range = new (ace.require("ace/range").Range)
+                                                ( error.position.startLine - 1
+                                                , error.position.startColumn - 1
+                                                , error.position.endLine - 1
+                                                , error.position.endColumn - 1);
+                                errorMarkers.push(editor.session.addMarker(range, "error", "text", true));
+                            }
+
+                            break;
+                        case "OtherError":
+                            $('#column2')
+                                .empty()
+                                .append($('<pre>').append($('<code>').append(res.error.contents)));
+                            break;
+                    }
                 } else if (res.js) {
                     if ($("#showjs").is(":checked")) {
                       $('#column2')

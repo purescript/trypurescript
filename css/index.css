@@ -160,51 +160,20 @@ body {
   background-color: rgb(250, 250, 250);
 }
 
-/* Typography */
-
-h1, h2, h3 {
-  line-height: 110%;
+.error {
+  position: absolute;
+  z-index: 20;
+  border-bottom: 2px dotted red;
 }
 
-h1 {
-  font-size: 1.5em;
-  font-weight: 300;
-  margin: 8px;
-}
-
-h2, h3 {
-  margin: 40px 0 10px 0;
-}
-
-a, a:visited, a:active, a:hover {
-  color: #c4953a;
-}
-
-.nowrap {
-  white-space: nowrap;
-}
-
-.info {
-  margin-top: -6px;
-  font-size: 12px;
-  font-variant: small-caps;
-}
-
-blockquote {
-  font-style: italic;
-  display: block;
-  padding: 10px 40px;
-  margin: 0;
+.error-banner {
+  font-family: 'Roboto Slab', serif;
+  padding: 10px 20px;
 }
 
 pre {
-  position: absolute;
-  left: 0;
-  right: 0;
-  width: 100%;
-  height: 100%;
-  border: 0;
-  margin: 10px;
+  padding: 20px;
+  font-family: 'Monaco', monospace;
 }
 
 pre code {
