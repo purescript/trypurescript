@@ -166,6 +166,10 @@ body {
   border-bottom: 2px dotted red;
 }
 
+.gutter-error {
+  color: red;
+}
+
 .error-banner {
   font-family: 'Roboto Slab', serif;
   padding: 10px 20px;

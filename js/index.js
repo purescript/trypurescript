@@ -338,7 +338,7 @@ $(function() {
                    };
         } else { // core
             return { backend: "core",
-                     endpoint: "https://compile.purescript.org/try",
+                     endpoint: "http://localhost:8080",
                      mainSnippet: coreStart,
                      extra_styling: '',
                      extra_body: ''
@@ -436,7 +436,7 @@ $(function() {
         }
     }
 
-    var editor, errorMarkers = [];
+    var editor, cleanupActions = [];
 
     var setupEditorWith = function(name, ta_name, lang) {
 
@@ -556,11 +556,11 @@ $(function() {
             contentType: 'text/plain',
             success: function(res) {
 
-                for (var i = 0; i < errorMarkers.length; i++) {
-                    editor.session.removeMarker(errorMarkers[i]);
+                for (var i = 0; i < cleanupActions.length; i++) {
+                    cleanupActions[i]();
                 }
 
-                errorMarkers = [];
+                cleanupActions = [];
 
                 if (res.error) {
                     switch (res.error.tag) {
@@ -575,13 +575,35 @@ $(function() {
                                     .append($('<h1>').addClass('error-banner').append("Error " + (i + 1) + " of " + errors.length))
                                     .append($('<pre>').append($('<code>').append(error.message)));
 
+                                var startColumn = error.position.startColumn;
+                                var endColumn = error.position.endColumn;
+
+                                if (error.position.startLine === error.position.endLine && endColumn <= error.position.startColumn) {
+                                    // Make sure the range is at least one character wide.
+                                    if (startColumn > 0) {
+                                        startColumn = endColumn - 1;
+                                    } else {
+                                        endColumn = startColumn + 1;
+                                    }
+                                }
+
                                 // Add an error marker
                                 var range = new (ace.require("ace/range").Range)
                                                 ( error.position.startLine - 1
-                                                , error.position.startColumn - 1
+                                                , startColumn - 1
                                                 , error.position.endLine - 1
-                                                , error.position.endColumn - 1);
-                                errorMarkers.push(editor.session.addMarker(range, "error", "text", true));
+                                                , endColumn - 1);
+
+                                var marker = editor.session.addMarker(range, "error", "text", true);
+
+                                editor.session.addGutterDecoration(error.position.startLine - 1, "gutter-error");
+
+                                cleanupActions.push((function(marker, line) {
+                                    return function() {
+                                        editor.session.removeMarker(marker);
+                                        editor.session.removeGutterDecoration(line, "gutter-error");
+                                    };
+                                })(marker, error.position.startLine - 1));
                             }
 
                             break;
