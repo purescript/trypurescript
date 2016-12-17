@@ -167,7 +167,7 @@ body {
 }
 
 .gutter-error {
-  color: red;
+  background-color: red;
 }
 
 .error-banner {
