@@ -436,9 +436,11 @@ $(function() {
         }
     }
 
+    var editor, cleanupActions = [];
+
     var setupEditorWith = function(name, ta_name, lang) {
 
-        var editor = ace.edit(name);
+        editor = ace.edit(name);
 
         editor.renderer.setShowGutter(true);
         editor.setFontSize(13);
@@ -462,6 +464,7 @@ $(function() {
 
         compile();
     };
+
     var hideMenus = function() {
         $('#menu').removeClass("show");
         $('#view_mode').removeClass("show-sub-menu");
@@ -553,10 +556,63 @@ $(function() {
             contentType: 'text/plain',
             success: function(res) {
 
+                for (var i = 0; i < cleanupActions.length; i++) {
+                    cleanupActions[i]();
+                }
+
+                cleanupActions = [];
+
                 if (res.error) {
-                    $('#column2')
-                        .empty()
-                        .append($('<pre>').append($('<code>').append(res.error)));
+                    switch (res.error.tag) {
+                        case "CompilerErrors":
+                            var errors = res.error.contents;
+
+                            $('#column2').empty();
+
+                            for (var i = 0; i < errors.length; i++) {
+                                var error = errors[i];
+                                $('#column2')
+                                    .append($('<h1>').addClass('error-banner').append("Error " + (i + 1) + " of " + errors.length))
+                                    .append($('<pre>').append($('<code>').append(error.message)));
+
+                                var startColumn = error.position.startColumn;
+                                var endColumn = error.position.endColumn;
+
+                                if (error.position.startLine === error.position.endLine && endColumn <= error.position.startColumn) {
+                                    // Make sure the range is at least one character wide.
+                                    if (startColumn > 0) {
+                                        startColumn = endColumn - 1;
+                                    } else {
+                                        endColumn = startColumn + 1;
+                                    }
+                                }
+
+                                // Add an error marker
+                                var range = new (ace.require("ace/range").Range)
+                                                ( error.position.startLine - 1
+                                                , startColumn - 1
+                                                , error.position.endLine - 1
+                                                , endColumn - 1);
+
+                                var marker = editor.session.addMarker(range, "error", "text", true);
+
+                                editor.session.addGutterDecoration(error.position.startLine - 1, "gutter-error");
+
+                                cleanupActions.push((function(marker, line) {
+                                    return function() {
+                                        editor.session.removeMarker(marker);
+                                        editor.session.removeGutterDecoration(line, "gutter-error");
+                                    };
+                                })(marker, error.position.startLine - 1));
+                            }
+
+                            break;
+                        case "OtherError":
+                            $('#column2')
+                                .empty()
+                                .append($('<pre>').append($('<code>').append(res.error.contents)));
+                            break;
+                    }
                 } else if (res.js) {
                     if ($("#showjs").is(":checked")) {
                       $('#column2')
