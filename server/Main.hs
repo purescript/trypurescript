@@ -1,24 +1,10 @@
------------------------------------------------------------------------------
---
--- Module      :  Main
--- Copyright   :  (c) Phil Freeman 2013-2015
--- License     :  MIT
---
--- Maintainer  :  paf31@cantab.net
--- Stability   :
--- Portability :
---
--- |
---
------------------------------------------------------------------------------
-
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
 
-module Main (
-    main
-) where
+module Main (main) where
 
 import           Control.Monad (unless)
 import           Control.Monad.IO.Class (liftIO)
@@ -37,10 +23,12 @@ import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import qualified Data.Text.Lazy as TL
 import           Data.Traversable (for)
+import           GHC.Generics (Generic)
 import qualified Language.PureScript as P
 import qualified Language.PureScript.Bundle as Bundle
 import qualified Language.PureScript.CodeGen.JS as J
 import qualified Language.PureScript.CoreFn as CF
+import qualified Language.PureScript.Errors.JSON as P
 import qualified Language.PureScript.Interactive as I
 import           System.Environment (getArgs)
 import           System.Exit (exitFailure)
@@ -51,18 +39,25 @@ import           System.IO.UTF8 (readUTF8File)
 import           Web.Scotty
 import qualified Web.Scotty as Scotty
 
-type JS = String
+type JS = Text
+
+data Error
+  = CompilerErrors [P.JSONError]
+  | OtherError Text
+  deriving Generic
+
+instance A.ToJSON Error
 
 server :: TL.Text -> [P.ExternsFile] -> P.Environment -> Int -> IO ()
 server bundled externs initEnv port = do
-  let compile :: Text -> IO (Either String JS)
+  let compile :: Text -> IO (Either Error JS)
       compile input
-        | T.length input > 20000 = return $ Left "Please limit your input to 20000 characters"
+        | T.length input > 20000 = return (Left (OtherError "Please limit your input to 20000 characters"))
         | otherwise = do
           let printErrors = P.prettyPrintMultipleErrors (P.defaultPPEOptions { P.ppeCodeColor = Nothing })
           case P.parseModuleFromFile (const "<file>") (undefined, input) of
             Left parseError ->
-              return . Left . printErrors . P.MultipleErrors . return . P.toPositionedError $ parseError
+              return . Left . CompilerErrors . pure . P.toJSONError False P.Error . P.toPositionedError $ parseError
             Right (_, m) | P.getModuleName m == P.ModuleName [P.ProperName "Main"] -> do
               (resultMay, _) <- runLogger' . runExceptT . flip runReaderT P.defaultOptions $ do
                 ((P.Module ss coms moduleName elaborated exps, env), nextVar) <- P.runSupplyT 0 $ do
@@ -75,9 +70,9 @@ server bundled externs initEnv port = do
                 unless (null . CF.moduleForeign $ renamed) . throwError . P.errorMessage $ P.MissingFFIModule moduleName
                 P.evalSupplyT nextVar $ P.prettyPrintJS <$> J.moduleToJs renamed Nothing
               case resultMay of
-                Left errs -> return . Left . printErrors $ errs
-                Right js -> return (Right js)
-            Right _ -> return $ Left "The name of the main module should be Main."
+                Left errs -> (return . Left . CompilerErrors . P.toJSONErrors False P.Error) errs
+                Right js -> (return . Right) js
+            Right _ -> (return . Left. OtherError) "The name of the main module should be Main."
 
   scotty port $ do
     get "/" $

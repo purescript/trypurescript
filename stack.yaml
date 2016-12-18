@@ -1,9 +1,9 @@
-resolver: lts-6.10
+resolver: lts-6.25
 flags: {}
 packages:
 - '.'
 extra-deps:
-- purescript-0.10.2
+- purescript-0.10.3
 - bower-json-0.8.0
-- language-javascript-0.6.0.4
+- language-javascript-0.6.0.9
 - parsec-3.1.11

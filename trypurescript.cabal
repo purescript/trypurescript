@@ -1,8 +1,8 @@
 name: trypurescript
-version: 0.9.1
+version: 0.10.3
 cabal-version: >=1.8
 build-type: Simple
-license: MIT
+license: BSD3
 license-file: LICENSE
 copyright: (c) Phil Freeman 2013
 maintainer: paf31@cantab.net
@@ -20,7 +20,7 @@ executable trypurescript
                    filepath -any,
                    Glob -any,
                    scotty -any,
-                   purescript ==0.10.2,
+                   purescript ==0.10.3,
                    containers -any,
                    http-types >= 0.8.5,
                    transformers ==0.4.*,
