@@ -22,20 +22,11 @@ The output code will contain references to preloaded modules using `require` cal
 
 ## Configuration
 
-The application takes three arguments on the command line:
+The application takes the following arguments on the command line:
 
-- externs path
-- externs config file
 - port number
-
-### Externs Path
-
-This directory should contain externs files for all modules which should be precompiled on startup. The name of each file in the directory should be `Module.Name.json`.
-
-### Externs Config File
-
-An example file is provided in `conf/core.conf`. A config file consists of a list of module names, one per line, topologically sorted by module dependencies and including all trasitive dependencies. The easist way to create this file is to copy the output of `psc` after a fresh compile.
+- a list of input source files
 
 ### Example
 
-    dist/build/trypurescript/trypurescript externs/ conf/core.conf 8081
+    dist/build/trypurescript/trypurescript 8081 'bower_components/purescript-*/src/**/*.purs'
