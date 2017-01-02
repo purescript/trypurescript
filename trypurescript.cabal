@@ -1,5 +1,5 @@
 name: trypurescript
-version: 0.10.3
+version: 0.10.4
 cabal-version: >=1.8
 build-type: Simple
 license: BSD3
@@ -20,7 +20,7 @@ executable trypurescript
                    filepath -any,
                    Glob -any,
                    scotty -any,
-                   purescript ==0.10.3,
+                   purescript ==0.10.4,
                    containers -any,
                    http-types >= 0.8.5,
                    transformers ==0.4.*,
