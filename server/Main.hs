@@ -1,22 +1,26 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
 
 module Main (main) where
 
-import           Control.Monad (unless)
+import           Control.Monad (unless, (>=>))
+import           Control.Monad.Error.Class (throwError)
 import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Logger (runLogger')
+import           Control.Monad.State (State)
+import qualified Control.Monad.State as State
 import           Control.Monad.Trans (lift)
-import           Control.Monad.Error.Class (throwError)
 import           Control.Monad.Trans.Except (ExceptT(..), runExceptT)
 import           Control.Monad.Trans.Reader (runReaderT)
 import qualified Data.Aeson as A
 import           Data.Aeson ((.=))
 import qualified Data.ByteString.Lazy as BL
 import           Data.List (foldl')
+import qualified Data.Map as M
 import           Data.String (fromString)
 import           Data.Text (Text)
 import qualified Data.Text as T
@@ -30,12 +34,14 @@ import qualified Language.PureScript.CodeGen.JS as J
 import qualified Language.PureScript.CoreFn as CF
 import qualified Language.PureScript.Errors.JSON as P
 import qualified Language.PureScript.Interactive as I
+import qualified Language.PureScript.TypeChecker.TypeSearch as TS
 import           System.Environment (getArgs)
 import           System.Exit (exitFailure)
 import           System.FilePath ((</>))
 import           System.FilePath.Glob (glob)
 import qualified System.IO as IO
 import           System.IO.UTF8 (readUTF8File)
+import qualified Text.Parsec.Combinator as Parsec
 import           Web.Scotty
 import qualified Web.Scotty as Scotty
 
@@ -90,6 +96,47 @@ server bundled externs initEnv port = do
           Scotty.json $ A.object [ "error" .= err ]
         Right comp ->
           Scotty.json $ A.object [ "js" .= comp ]
+    get "/search" $ do
+      query <- param "q"
+      case tryParseType query of
+        Nothing -> Scotty.json $ A.object [ "error" .= ("Cannot parse type" :: Text) ]
+        Just ty -> do
+          let ty' = replaceTypeVariablesAndDesugar ty
+          let results = TS.typeSearch (Just []) initEnv (P.emptyCheckState initEnv) ty'
+          Scotty.json $ A.object [ "results" .= A.object [ P.showQualified P.runIdent k .= P.prettyPrintType v
+                                                         | (k, v) <- take 20 (M.toList results)
+                                                         ]
+                                 ]
+
+-- | (Consistently) replace unqualified type constructors and type variables with unknowns.
+--
+-- Also remove the @ParensInType@ Constructor (we need to deal with type operators later at some point).
+replaceTypeVariablesAndDesugar :: P.Type -> P.Type
+replaceTypeVariablesAndDesugar ty = State.evalState (P.everywhereOnTypesM go ty) (0, M.empty) where
+  go = \case
+    P.ParensInType ty -> pure ty
+    P.TypeConstructor (P.Qualified Nothing tyCon) -> do
+      (next, m) <- State.get
+      case M.lookup (Left tyCon) m of
+        Nothing -> do
+          let ty = P.TUnknown next
+          State.put (next + 1, M.insert (Left tyCon) ty m)
+          pure ty
+        Just ty -> pure ty
+    P.TypeVar s -> do
+      (next, m) <- State.get
+      case M.lookup (Right s) m of
+        Nothing -> do
+          let ty = P.TUnknown next
+          State.put (next + 1, M.insert (Right s) ty m)
+          pure ty
+        Just ty -> pure ty
+    other -> pure other
+
+tryParseType :: Text -> Maybe P.Type
+tryParseType = hush (P.lex "") >=> hush (P.runTokenParser "" (P.parsePolyType <* Parsec.eof))
+  where
+    hush f = either (const Nothing) Just . f
 
 bundle :: IO (Either Bundle.ErrorMessage String)
 bundle = runExceptT $ do
