@@ -19,7 +19,8 @@ import           Control.Monad.Trans.Reader (runReaderT)
 import qualified Data.Aeson as A
 import           Data.Aeson ((.=))
 import qualified Data.ByteString.Lazy as BL
-import           Data.List (foldl')
+import           Data.Function (on)
+import           Data.List (foldl', nubBy)
 import qualified Data.Map as M
 import           Data.String (fromString)
 import           Data.Text (Text)
@@ -98,37 +99,48 @@ server bundled externs initEnv port = do
           Scotty.json $ A.object [ "js" .= comp ]
     get "/search" $ do
       query <- param "q"
+      Scotty.setHeader "Access-Control-Allow-Origin" "*"
+      Scotty.setHeader "Content-Type" "application/json"
       case tryParseType query of
         Nothing -> Scotty.json $ A.object [ "error" .= ("Cannot parse type" :: Text) ]
         Just ty -> do
-          let ty' = replaceTypeVariablesAndDesugar ty
-          let results = TS.typeSearch (Just []) initEnv (P.emptyCheckState initEnv) ty'
-          Scotty.json $ A.object [ "results" .= A.object [ P.showQualified P.runIdent k .= P.prettyPrintType v
-                                                         | (k, v) <- take 20 (M.toList results)
-                                                         ]
+          let elabs = lookupAllConstructors initEnv ty
+              search = M.toList . TS.typeSearch (Just []) initEnv (P.emptyCheckState initEnv)
+              results = nubBy ((==) `on` fst) $ do
+                elab <- elabs
+                let strictMatches = search (replaceTypeVariablesAndDesugar (\nm s -> P.Skolem nm s (P.SkolemScope 0) Nothing) elab)
+                    flexMatches = search (replaceTypeVariablesAndDesugar (const P.TUnknown) elab)
+                take 50 (strictMatches ++ flexMatches)
+          Scotty.json $ A.object [ "results" .= [ P.showQualified P.runIdent k
+                                                | (k, _) <- take 50 results
+                                                ]
                                  ]
+
+lookupAllConstructors :: P.Environment -> P.Type -> [P.Type]
+lookupAllConstructors env = P.everywhereOnTypesM $ \case
+    P.TypeConstructor (P.Qualified Nothing tyCon) -> P.TypeConstructor <$> lookupConstructor env tyCon
+    other -> pure other
+  where
+    lookupConstructor :: P.Environment -> P.ProperName 'P.TypeName -> [P.Qualified (P.ProperName 'P.TypeName)]
+    lookupConstructor env nm =
+      [ q
+      | (q@(P.Qualified (Just mn) thisNm), _) <- M.toList (P.types env)
+      , thisNm == nm
+      ]
 
 -- | (Consistently) replace unqualified type constructors and type variables with unknowns.
 --
 -- Also remove the @ParensInType@ Constructor (we need to deal with type operators later at some point).
-replaceTypeVariablesAndDesugar :: P.Type -> P.Type
-replaceTypeVariablesAndDesugar ty = State.evalState (P.everywhereOnTypesM go ty) (0, M.empty) where
+replaceTypeVariablesAndDesugar :: (Text -> Int -> P.Type) -> P.Type -> P.Type
+replaceTypeVariablesAndDesugar f ty = State.evalState (P.everywhereOnTypesM go ty) (0, M.empty) where
   go = \case
     P.ParensInType ty -> pure ty
-    P.TypeConstructor (P.Qualified Nothing tyCon) -> do
-      (next, m) <- State.get
-      case M.lookup (Left tyCon) m of
-        Nothing -> do
-          let ty = P.TUnknown next
-          State.put (next + 1, M.insert (Left tyCon) ty m)
-          pure ty
-        Just ty -> pure ty
     P.TypeVar s -> do
       (next, m) <- State.get
-      case M.lookup (Right s) m of
+      case M.lookup s m of
         Nothing -> do
-          let ty = P.TUnknown next
-          State.put (next + 1, M.insert (Right s) ty m)
+          let ty = f s next
+          State.put (next + 1, M.insert s ty m)
           pure ty
         Just ty -> pure ty
     other -> pure other
