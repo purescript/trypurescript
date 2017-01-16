@@ -3,7 +3,7 @@ flags: {}
 packages:
 - '.'
 extra-deps:
-- purescript-0.10.4
-- bower-json-0.8.0
+- purescript-0.10.5
+- bower-json-1.0.0.1
 - language-javascript-0.6.0.9
 - parsec-3.1.11

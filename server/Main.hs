@@ -1,22 +1,27 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
 
 module Main (main) where
 
-import           Control.Monad (unless)
+import           Control.Monad (unless, (>=>))
+import           Control.Monad.Error.Class (throwError)
 import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Logger (runLogger')
+import           Control.Monad.State (State)
+import qualified Control.Monad.State as State
 import           Control.Monad.Trans (lift)
-import           Control.Monad.Error.Class (throwError)
 import           Control.Monad.Trans.Except (ExceptT(..), runExceptT)
 import           Control.Monad.Trans.Reader (runReaderT)
 import qualified Data.Aeson as A
 import           Data.Aeson ((.=))
 import qualified Data.ByteString.Lazy as BL
-import           Data.List (foldl')
+import           Data.Function (on)
+import           Data.List (foldl', nubBy)
+import qualified Data.Map as M
 import           Data.String (fromString)
 import           Data.Text (Text)
 import qualified Data.Text as T
@@ -30,12 +35,14 @@ import qualified Language.PureScript.CodeGen.JS as J
 import qualified Language.PureScript.CoreFn as CF
 import qualified Language.PureScript.Errors.JSON as P
 import qualified Language.PureScript.Interactive as I
+import qualified Language.PureScript.TypeChecker.TypeSearch as TS
 import           System.Environment (getArgs)
 import           System.Exit (exitFailure)
 import           System.FilePath ((</>))
 import           System.FilePath.Glob (glob)
 import qualified System.IO as IO
 import           System.IO.UTF8 (readUTF8File)
+import qualified Text.Parsec.Combinator as Parsec
 import           Web.Scotty
 import qualified Web.Scotty as Scotty
 
@@ -90,6 +97,58 @@ server bundled externs initEnv port = do
           Scotty.json $ A.object [ "error" .= err ]
         Right comp ->
           Scotty.json $ A.object [ "js" .= comp ]
+    get "/search" $ do
+      query <- param "q"
+      Scotty.setHeader "Access-Control-Allow-Origin" "*"
+      Scotty.setHeader "Content-Type" "application/json"
+      case tryParseType query of
+        Nothing -> Scotty.json $ A.object [ "error" .= ("Cannot parse type" :: Text) ]
+        Just ty -> do
+          let elabs = lookupAllConstructors initEnv ty
+              search = M.toList . TS.typeSearch (Just []) initEnv (P.emptyCheckState initEnv)
+              results = nubBy ((==) `on` fst) $ do
+                elab <- elabs
+                let strictMatches = search (replaceTypeVariablesAndDesugar (\nm s -> P.Skolem nm s (P.SkolemScope 0) Nothing) elab)
+                    flexMatches = search (replaceTypeVariablesAndDesugar (const P.TUnknown) elab)
+                take 50 (strictMatches ++ flexMatches)
+          Scotty.json $ A.object [ "results" .= [ P.showQualified P.runIdent k
+                                                | (k, _) <- take 50 results
+                                                ]
+                                 ]
+
+lookupAllConstructors :: P.Environment -> P.Type -> [P.Type]
+lookupAllConstructors env = P.everywhereOnTypesM $ \case
+    P.TypeConstructor (P.Qualified Nothing tyCon) -> P.TypeConstructor <$> lookupConstructor env tyCon
+    other -> pure other
+  where
+    lookupConstructor :: P.Environment -> P.ProperName 'P.TypeName -> [P.Qualified (P.ProperName 'P.TypeName)]
+    lookupConstructor env nm =
+      [ q
+      | (q@(P.Qualified (Just mn) thisNm), _) <- M.toList (P.types env)
+      , thisNm == nm
+      ]
+
+-- | (Consistently) replace unqualified type constructors and type variables with unknowns.
+--
+-- Also remove the @ParensInType@ Constructor (we need to deal with type operators later at some point).
+replaceTypeVariablesAndDesugar :: (Text -> Int -> P.Type) -> P.Type -> P.Type
+replaceTypeVariablesAndDesugar f ty = State.evalState (P.everywhereOnTypesM go ty) (0, M.empty) where
+  go = \case
+    P.ParensInType ty -> pure ty
+    P.TypeVar s -> do
+      (next, m) <- State.get
+      case M.lookup s m of
+        Nothing -> do
+          let ty = f s next
+          State.put (next + 1, M.insert s ty m)
+          pure ty
+        Just ty -> pure ty
+    other -> pure other
+
+tryParseType :: Text -> Maybe P.Type
+tryParseType = hush (P.lex "") >=> hush (P.runTokenParser "" (P.parsePolyType <* Parsec.eof))
+  where
+    hush f = either (const Nothing) Just . f
 
 bundle :: IO (Either Bundle.ErrorMessage String)
 bundle = runExceptT $ do
