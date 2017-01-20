@@ -12,7 +12,7 @@ Try PureScript
 - Multiple view modes: code, output or both
 - Persistent session
 - Load PureScript code from Github Gists
-- Save PureScript code as annonymous Github Gists
+- Save PureScript code as anonymous Github Gists
     - (_Note: These Gists are not associated with your GitHub account and are visible to anyone with a link to them_)
 
 
@@ -28,7 +28,7 @@ Most of these features can be controlled not only from the toolbar, but also usi
     - Example: `view=output` will only display the output
 
 - **Backend**: Control which backend will compile your code using the `backend` parameter
-    - Options are: `core`, `thermite`
+    - Options are: `core`, `thermite`, `slides`, `flare`, `mathbox`
     - Example: `backend=thermite` will use the thermite backend
 
 - **Auto Compile**: Automatic compilation can be turned off using the `compile` parameter
