@@ -336,6 +336,16 @@ $(function() {
                      extra_styling: '<link rel="stylesheet" href="css/flare.css">',
                      extra_body: '<div id="controls"></div><div id="output"></div><div id="tests"></div><canvas id="canvas" width="800" height="600"></canvas>'
                    };
+        } else if (backend === "mathbox") {
+            return { backend: "mathbox",
+                     endpoint: "https://compile.purescript.org/purescript-mathbox",
+                     mainGist: "aeecffd458fa8a365b4af3b3cd9d7759",
+                     extra_styling:
+                           [ '<script src="js/mathbox-bundle.js"></script>'
+                           , '<link rel="stylesheet" href="css/mathbox.css">'
+                           ].join("\n"),
+                     extra_body: ''
+                   };
         } else { // core
             return { backend: "core",
                      endpoint: "https://compile.purescript.org/try",
@@ -363,7 +373,11 @@ $(function() {
           backend = getBackend($('input[name=backend_inputs]').filter(':checked').val());
       }
       if ($('#code_textarea').val() === "") {
-          $('#code_textarea').val(backend.mainSnippet);
+          if (typeof backend.mainSnippet === "undefined") {
+            loadFromGist(backend.mainGist);
+          } else {
+            $('#code_textarea').val(backend.mainSnippet);
+          }
       }
 
       var showjs = $.QueryString["js"];
@@ -380,7 +394,11 @@ $(function() {
       $('input[name=backend_inputs]').change(function (e) {
           var backend = getBackend($(this).filter(':checked').val());
           if (confirm("Replace your current code with the " + backend.backend + " backend sample code?")) {
-              ace.edit("code").setValue(backend.mainSnippet, -1);
+              if (typeof backend.mainSnippet === "undefined") {
+                loadFromGist(backend.mainGist);
+              } else {
+                ace.edit("code").setValue(backend.mainSnippet, -1);
+              }
               if (!$("#auto_compile").is(":checked")) {
                   setTimeout(compile, 1000);
               }
@@ -507,9 +525,7 @@ $(function() {
             , '</html>'
             ].join('\n')
         );
-        document.getElementById("output-iframe").contentWindow.document.body.onclick = function() {
-            hideMenus();
-        };
+        iframe.close();
 
         // Replace any require() statements with the PS['...'] form using a regex substitution.
         var replaced = js.replace(/require\("[^"]*"\)/g, function(s) {
@@ -530,13 +546,21 @@ $(function() {
 
         var script = iframe.createElement('script');
         script.appendChild(iframe.createTextNode(scripts));
-        var head = iframe.getElementsByTagName('head')[0];
 
-        if (head) {
-            head.appendChild(script);
-        } else {
-            console.log("<head> element is missing!");
-        }
+        $('iframe').load(function() {
+                  var body = iframe.getElementsByTagName('body')[0];
+
+                  body.onclick = function() {
+                      hideMenus();
+                  };
+
+                  if (body) {
+                      body.appendChild(script);
+                  } else {
+                      console.log("<body> element is missing!");
+                  }
+        });
+
     };
 
     var compile = function() {
@@ -635,6 +659,20 @@ $(function() {
 
                           myconsole.warn("Unable to load JS bundle", err);
                         });
+                      } else if ($('input[name=backend_inputs]').filter(':checked').val() === "mathbox") {
+                           $.when($.get("js/mathbox-bundle.js"),
+                                  $.get(backend.endpoint + "/bundle")
+                                ).done(function(mathboxBundle, bundle) {
+
+                           var replaced = bundle[0].replace(/require\("Data.Either"\)/g, "PS['Data.Either']")
+                                                   .replace(/require\("Data.Maybe"\)/g, "PS['Data.Maybe']")
+                                                   .replace(/require\("Mathbox.Field"\)/g, "PS['Mathbox.Field']")
+
+                           execute(res.js, [ replaced ].join("\n"));
+                        }).fail(function(err) {
+
+                           myconsole.warn("Unable to load JS bundle", err);
+                        });
                       } else {
                           $.get(backend.endpoint + '/bundle').done(function(bundle) {
 
@@ -724,7 +762,7 @@ $(function() {
 
 
     var publishNewGist = function() {
-        if (!confirm('Do you really want to publish this code as an annonymous Gist?\n\nNote: this code will be available to anyone with a link to the Gist.')) { return; }
+        if (!confirm('Do you really want to publish this code as an anonymous Gist?\n\nNote: this code will be available to anyone with a link to the Gist.')) { return; }
 
         var data = {
             "description": "Published with try.purescript.org",
