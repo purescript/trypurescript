@@ -659,20 +659,6 @@ $(function() {
 
                           myconsole.warn("Unable to load JS bundle", err);
                         });
-                      } else if ($('input[name=backend_inputs]').filter(':checked').val() === "mathbox") {
-                           $.when($.get("js/mathbox-bundle.js"),
-                                  $.get(backend.endpoint + "/bundle")
-                                ).done(function(mathboxBundle, bundle) {
-
-                           var replaced = bundle[0].replace(/require\("Data.Either"\)/g, "PS['Data.Either']")
-                                                   .replace(/require\("Data.Maybe"\)/g, "PS['Data.Maybe']")
-                                                   .replace(/require\("Mathbox.Field"\)/g, "PS['Mathbox.Field']")
-
-                           execute(res.js, [ replaced ].join("\n"));
-                        }).fail(function(err) {
-
-                           myconsole.warn("Unable to load JS bundle", err);
-                        });
                       } else {
                           $.get(backend.endpoint + '/bundle').done(function(bundle) {
 
