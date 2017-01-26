@@ -25,314 +25,27 @@ $.ajaxSetup({ dataType: 'text' });
 
 })(jQuery);
 
-
-var coreStart =
-    ['module Main where'
-    ,''
-    ,'import Prelude'
-    ,'import Data.Foldable (fold)'
-    ,'import TryPureScript'
-    ,''
-    ,'main ='
-    ,'    render $ fold'
-    ,'      [ h1 (text "Try PureScript!")'
-    ,'      , p (text "Try out the examples below, or create your own!")'
-    ,'      , h2 (text "Examples")'
-    ,'      , list (map fromExample examples)'
-    ,'      , h2 (text "Try PureScript Libraries")'
-    ,'      , list [ link "?backend=thermite" (text "Try Thermite") '
-    ,'               <> text ", a front-end library for PureScript which uses React"'
-    ,'             , link "?backend=slides" (text "Try Slides") '
-    ,'               <> text ", an EDSL in PureScript for creating presentations"'
-    ,'             , link "?backend=flare" (text "Try Flare") '
-    ,'               <> text ", a special-purpose, reactive UI library"'
-    ,'             ]'
-    ,'      , h2 (text "Share Your Code")'
-    ,'      , p (text "Code can be loaded from a GitHub Gist. To share code, simply include the Gist ID in the URL as follows:")'
-    ,'      , indent (p (code (text "  try.purescript.org?gist=gist-id")))'
-    ,'      , p (fold'
-    ,'          [ text "The Gist should contain a file named "'
-    ,'          , code (text "Main.purs")'
-    ,'          , text " containing your PureScript code."'
-    ,'          ])'
-    ,'      ]'
-    ,'  where'
-    ,'    fromExample { title, gist } ='
-    ,'      link ("?gist=" <> gist) (text title)'
-    ,''
-    ,'    examples ='
-    ,'      [ { title: "Algebraic Data Types"'
-    ,'        , gist: "37c3c97f47a43f20c548"'
-    ,'        }'
-    ,'      , { title: "Loops"'
-    ,'        , gist: "cfdabdcd085d4ac3dc46"'
-    ,'        }'
-    ,'      , { title: "Operators"'
-    ,'        , gist: "3044550f29a7c5d3d0d0"'
-    ,'        }'
-    ,'      , { title: "Records"'
-    ,'        , gist: "b80be527ada3eab47dc5"'
-    ,'        }'
-    ,'      , { title: "Recursion"'
-    ,'        , gist: "ff49cc7dc85923a75613"'
-    ,'        }'
-    ,'      , { title: "Do Notation"'
-    ,'        , gist: "47c2d9913c5dbda1e963"'
-    ,'        }'
-    ,'      , { title: "Type Classes"'
-    ,'        , gist: "1a3b845e8c6defde659a"'
-    ,'        }'
-    ,'      , { title: "Generic Programming"'
-    ,'        , gist: "3f735aa2a652af592101"'
-    ,'        }'
-    ,'      , { title: "QuickCheck"'
-    ,'        , gist: "69f7f94fe4ff3bd47f4b"'
-    ,'        }'
-    ,'      ]'
-    ].join('\n');
-
-
-thermiteStart =
-    ['module Main where'
-    ,''
-    ,'import Prelude'
-    ,''
-    ,'import React as R'
-    ,'import React.DOM as R'
-    ,'import React.DOM.Props as RP'
-    ,'import Thermite as T'
-    ,'import Thermite.Try as T'
-    ,''
-    ,'type Link ='
-    ,'  { title :: String'
-    ,'  , gist  :: String'
-    ,'  }'
-    ,''
-    ,'lessons :: Array Link'
-    ,'lessons ='
-    ,'  [ { title: "State"'
-    ,'    , gist: "82cf5744940bcc4553f7bde5c68e0342&backend=thermite"'
-    ,'    }'
-    ,'  , { title: "Actions"'
-    ,'    , gist: "f2e21dc17f614df71dd445b523e53af0&backend=thermite"'
-    ,'    }'
-    ,'  , { title: "Async"'
-    ,'    , gist: "e6a2142e872dbc7e6557a78a55f03589&backend=thermite"'
-    ,'    }'
-    ,'  , { title: "Components"'
-    ,'    , gist: "144765549b8524116b1ada5b6fbcb487&backend=thermite"'
-    ,'    }'
-    ,'  , { title: "Lists"'
-    ,'    , gist: "ff03c99df15bd16f2289&backend=thermite"'
-    ,'    }'
-    ,'  ]'
-    ,''
-    ,'examples :: Array Link'
-    ,'examples ='
-    ,'  [ { title: "Task List"'
-    ,'    , gist: "f5f273e4c5e4161fceff&backend=thermite"'
-    ,'    }'
-    ,'  ]'
-    ,''
-    ,'renderLink :: Link -> Array R.ReactElement'
-    ,'renderLink link ='
-    ,'  [ R.a [ RP.href ("?gist=" <> link.gist)'
-    ,'        , RP.target "_top"'
-    ,'        ]'
-    ,'        [ R.text link.title ]'
-    ,'  ]'
-    ,''
-    ,'render :: T.Render _ _ _'
-    ,'render _ _ _ _ ='
-    ,'  [ R.h1\' [ R.text "Try Thermite!" ]'
-    ,'  , R.p\'  [ R.text "Browse the lessons and examples below, or check out the "'
-    ,'          , R.a [ RP.href "http://pursuit.purescript.org/packages/purescript-thermite/"'
-    ,'                , RP.target "_new"'
-    ,'                ]'
-    ,'                [ R.text "Thermite documentation" ]'
-    ,'          , R.text "."'
-    ,'          ]'
-    ,'  , R.h2\' [ R.text "Lessons" ]'
-    ,'  , R.ol\' (map (R.li\' <<< renderLink) lessons)'
-    ,'  , R.h2\' [ R.text "Examples" ]'
-    ,'  , R.ul\' (map (R.li\' <<< renderLink) examples)'
-    ,'  , R.h2\' [ R.text "Try PureScript" ]'
-    ,'  , R.p\'  [ R.p\' [ R.text "New to PureScript? You might want to try PureScript using the core libraries." ]'
-    ,'           , R.p\' [ R.text "You can do that "'
-    ,'                   , R.a [ RP.href "?backend=core"'
-    ,'                         , RP.target "_top"'
-    ,'                         ]'
-    ,'                         [ R.text "here" ]'
-    ,'                   , R.text "."'
-    ,'                   ]'
-    ,'          ]'
-    ,'  , R.hr\' []'
-    ,'  , R.p\'  [ R.small\' [ R.text "Powered by "'
-    ,'                     , R.a [ RP.href "http://purescript.org/"'
-    ,'                           , RP.target "_new"'
-    ,'                           ]'
-    ,'                           [ R.text "PureScript" ]'
-    ,'                     , R.text "."'
-    ,'                     ]'
-    ,'          ]'
-    ,'  ]'
-    ,''
-    ,'spec :: T.Spec _ _ _ _'
-    ,'spec = T.simpleSpec T.defaultPerformAction render'
-    ,''
-    ,'main = T.defaultMain spec unit'
-    ].join('\n');
-
-var slidesStart =
-    ['module Main where'
-    ,''
-    ,'import Prelude (($), (<>))'
-    ,'import Slides'
-    ,'import Slides.Remember'
-    ,''
-    ,'main = runSlidesAndRemember'
-    ,'  [ slide "Slides" $'
-    ,'    valign'
-    ,'      [ image "https://i.imgur.com/Hm9pTxy.gif"'
-    ,'      , title "Let\'s build a presentation!"'
-    ,'      , center $'
-    ,'          text "(In "'
-    ,'          <+> link "http://purescript.org" (text "PureScript")'
-    ,'          <>  text ", Using "'
-    ,'          <+> link "https://github.com/soupi/purescript-slides" (text "purescript-slides")'
-    ,'          <>  text ")"'
-    ,'      , text ""'
-    ,'      , center $'
-    ,'          text "New to PureScript? Perhaps you want to"'
-    ,'          <+> link "?backend=core" (text "try PureScript")'
-    ,'          <+> text "using the core libraries."'
-    ,'      ]'
-    ,''
-    ,'  , slide "Primitives" $'
-    ,'    valign'
-    ,'      [ text "We have the following primitives:"'
-    ,'      , ulist'
-    ,'          [ code "text" <+> text "- write a block of text"'
-    ,'          , code "code" <+> text "- write a block of code"'
-    ,'          , code "link" <+> text "- turn an element into a clickable link"'
-    ,'          , code "image" <+> text "- display an image from a url"'
-    ,'          , code "title" <+> text "- a title"'
-    ,'          , code "center" <+> text "- center an element"'
-    ,'          , code "bold"  <> text "/" <> code "italic" <+> text "-"'
-    ,'            <+> bold (text "bold")'
-    ,'            <+> text "and"'
-    ,'            <+> italic (text "italic")'
-    ,'          , code "withClass" <> text "/" <> code "withId" <+> text "- add a class or id to element"'
-    ,'          ]'
-    ,'      ]'
-    ,''
-    ,'  , slide "Combinators" $'
-    ,'    valign'
-    ,'      [ text "To combine elements, we can use the following combinators:"'
-    ,'      , center $ ulist'
-    ,'          [ code "valign" <+> text "- vertically align elements in a list"'
-    ,'          , code "halign" <+> text "- horizontally align elements in a list"'
-    ,'          , code "group" <+> text "- group an array of elements"'
-    ,'          , code "ulist" <+> text "- create a list of bullets"'
-    ,'          ]'
-    ,'      ]'
-    ,''
-    ,'  , slide "Creating slides" $'
-    ,'    ulist'
-    ,'      [ text "to create a slide, call the" <+> code "slide" <+> text "function with a title string and an element"'
-    ,'      , text "to create slides, call the" <+> code "mkSlides" <+> text "function with a list of slides"'
-    ,'      , text "to run the slides, call the" <+> code "runSlides" <+> text "function with the slides"'
-    ,'      ]'
-    ,'  '
-    ,'    ,slide "That\'s it!" $'
-    ,'    valign'
-    ,'      [ text "This library is still tiny and may grow in the future :)"'
-    ,'      , center $ text "Interested? Check the source on" <+> link "https://github.com/soupi/purescript-slides" (text "Github") <> text "!"'
-    ,'      ]'
-    ,'  ]'
-    ].join("\n");
-
-var flareStart =
-    ['module Main where'
-	,'import Prelude'
-	,''
-	,'import Text.Smolder.HTML as H'
-	,'import Text.Smolder.Markup ((!), text)'
-	,'import Text.Smolder.HTML.Attributes as A'
-	,''
-	,'import Color (black, toHexString)'
-	,''
-	,'import Flare.Smolder (runFlareHTML)'
-	,'import Flare'
-	,''
-	,'main = runFlareHTML "controls" "output" ui'
-	,''
-	,'-- This is the full user interface definition:'
-	,'ui = markup <$> string    "Title"     "Try Flare!"'
-	,'            <*> color     "Color"     black'
-	,'            <*> intSlider "Font size" 5 50 26'
-	,'            <*> boolean   "Italic"    false'
-	,''
-	,''
-	,'markup title color fontSize italic = do'
-	,'  H.h1 ! A.style ("color: " <> toHexString color <> ";" <>'
-	,'                  "font-size: " <> show fontSize <> "px;" <>'
-	,'                  "font-style: " <> if italic then "italic" else "normal")'
-	,'       $ (text title)'
-	,''
-	,'  H.p $ text "The Flare library allows you to quickly create reactive web interfaces like the one above."'
-	,'  H.p $ text $ "You can change the PureScript code in the editor on the left. " <>'
-	,'                 "For example, try to replace \'intSlider\' by \'intRange\'. " <>'
-	,'                 "For something more challenging, try to add a slider to control the x-position (\'margin-left\') of the message."'
-	,'  H.p $ do'
-	,'    text "For help, see the "'
-	,'    H.a ! A.href "http://pursuit.purescript.org/packages/purescript-flare/"'
-	,'        ! A.target "top"'
-	,'            $ text "Flare module documentation."'
-	,''
-	,''
-	,'  H.h2 $ text "Examples"'
-	,'  H.p $ text "Look at more code examples below, or create your own!"'
-	,'  H.ul $ do'
-	,'    example "Basic Flare UI" "3f467239e50a516a7a17"'
-	,'    example "Maintaining state: A counter" "cbc3896505769e367779"'
-	,'    example "Radio groups: Temperature conversion" "4dda75028367a04440b7"'
-	,'    example "Multiple buttons" "7cc18f15e869c67da984"'
-	,'    example "Time dependence: Incremental game" "6ab3ee1c9aa532ed5b5c"'
-	,'    example "Simple Drawing example" "e4506e5991523e30f8cb"'
-	,'    example "Simple HTML example" "67a8544640a9900d43ac"'
-	,'    example "Interactive animation" "c579fcec1a1ce53367cc"'
-	,'  H.p $ text "FlareCheck examples"'
-	,'  H.ul $ do'
-	,'    example "Basic example" "1b115f1135bc2fb6e643"'
-	,''
-	,'  where'
-	,'    example name gist = H.li $ H.a ! A.href ("?gist=" <> gist <> "&backend=flare")'
-	,'                                   ! A.target "top"'
-	,'                                   $ text name'
-    ].join("\n");
-
 $(function() {
 
     var getBackend = function(backend) {
         if (backend === "thermite") {
             return { backend: backend,
                      endpoint: "https://compile.purescript.org/thermite",
-                     mainSnippet: thermiteStart,
+                     mainGist: "85383bb058471109cfef379bbb6bc11c",
                      extra_styling: '    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">',
                      extra_body: '    <div id="app"></div>'
                    };
         } else if (backend === "slides") {
             return { backend: "slides",
                      endpoint: "https://compile.purescript.org/slides",
-                     mainSnippet: slidesStart,
+                     mainGist: "c62b5778a6a5f2bcd32dd97b294c068a",
                      extra_styling: '<link rel="stylesheet" href="css/slides.css">',
                      extra_body: '<div id="main"></div>'
                    };
         } else if (backend === "flare") {
             return { backend: "flare",
                      endpoint: "https://compile.purescript.org/flare",
-                     mainSnippet: flareStart,
+                     mainGist: "4f54d6dd213caa54d736ead597e17fee",
                      extra_styling: '<link rel="stylesheet" href="css/flare.css">',
                      extra_body: '<div id="controls"></div><div id="output"></div><div id="tests"></div><canvas id="canvas" width="800" height="600"></canvas>'
                    };
@@ -349,7 +62,7 @@ $(function() {
         } else { // core
             return { backend: "core",
                      endpoint: "https://compile.purescript.org/try",
-                     mainSnippet: coreStart,
+                     mainGist: "b57a766d417e109785540d584266fc33",
                      extra_styling: '',
                      extra_body: ''
                    };
@@ -373,11 +86,7 @@ $(function() {
           backend = getBackend($('input[name=backend_inputs]').filter(':checked').val());
       }
       if ($('#code_textarea').val() === "") {
-          if (typeof backend.mainSnippet === "undefined") {
-            loadFromGist(backend.mainGist);
-          } else {
-            $('#code_textarea').val(backend.mainSnippet);
-          }
+          loadFromGist(backend.mainGist);
       }
 
       var showjs = $.QueryString["js"];
@@ -394,11 +103,7 @@ $(function() {
       $('input[name=backend_inputs]').change(function (e) {
           var backend = getBackend($(this).filter(':checked').val());
           if (confirm("Replace your current code with the " + backend.backend + " backend sample code?")) {
-              if (typeof backend.mainSnippet === "undefined") {
-                loadFromGist(backend.mainGist);
-              } else {
-                ace.edit("code").setValue(backend.mainSnippet, -1);
-              }
+              loadFromGist(backend.mainGist);
               if (!$("#auto_compile").is(":checked")) {
                   setTimeout(compile, 1000);
               }
