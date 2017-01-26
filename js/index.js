@@ -103,6 +103,8 @@ $(function() {
       $('input[name=backend_inputs]').change(function (e) {
           var backend = getBackend($(this).filter(':checked').val());
           if (confirm("Replace your current code with the " + backend.backend + " backend sample code?")) {
+              $.QueryString['backend'] = backend.backend;
+              $.setQueryParameters($.QueryString);
               loadFromGist(backend.mainGist);
               if (!$("#auto_compile").is(":checked")) {
                   setTimeout(compile, 1000);
