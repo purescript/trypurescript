@@ -420,11 +420,13 @@ $(function() {
                     setupEditor();
                 }).fail(function() {
                     console.log("Unable to load gist contents");
+                    $('#code_textarea').val("-- Unable to load gist contents. Gist = " + id);
                     setupEditor();
                 });
         }).fail(function() {
 
             console.log("Unable to load gist metadata");
+            $('#code_textarea').val("-- Unable to load gist metadata. Gist = " + id);
             setupEditor();
         });
     };
