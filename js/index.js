@@ -395,6 +395,7 @@ $(function() {
 
             return $.ajax({
                 url: url,
+                async: false,
                 dataType: 'text'
             });
         } else {
@@ -410,6 +411,7 @@ $(function() {
     var loadFromGist = function(id) {
         $.ajax({
             url: 'https://api.github.com/gists/' + id,
+            async: false,
             dataType: 'json'
         }).done(function(gistInfo) {
             tryLoadFileFromGist(gistInfo, "Main.purs")
