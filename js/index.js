@@ -69,7 +69,7 @@ $(function() {
         }
     };
 
-    var loadOptions = function() {
+    var loadOptions = function(tryLoad) {
 
       var view_mode = $.QueryString["view"];
       if (view_mode && (view_mode === "sidebyside" || view_mode === "code" || view_mode === "output")) {
@@ -85,7 +85,7 @@ $(function() {
       else {
           backend = getBackend($('input[name=backend_inputs]').filter(':checked').val());
       }
-      if ($('#code_textarea').val() === "") {
+      if (tryLoad && $('#code_textarea').val() === "") {
           loadFromGist(backend.mainGist);
       }
 
@@ -196,9 +196,9 @@ $(function() {
         $('#backend').removeClass("show-sub-menu");
     };
 
-    var setupEditor = function() {
+    var setupEditor = function(tryLoad) {
 
-        loadOptions();
+        loadOptions(tryLoad);
         setupEditorWith('code', 'code_textarea', 'ace/mode/haskell');
         cacheCurrentCode();
     };
@@ -417,17 +417,15 @@ $(function() {
             tryLoadFileFromGist(gistInfo, "Main.purs")
                 .done(function(code) {
                     code && $('#code_textarea').val(code);
-                    setupEditor();
+                    setupEditor(false);
                 }).fail(function() {
                     console.log("Unable to load gist contents");
-                    $('#code_textarea').val("-- Unable to load gist contents. Gist = " + id);
-                    setupEditor();
+                    setupEditor(false);
                 });
         }).fail(function() {
 
             console.log("Unable to load gist metadata");
-            $('#code_textarea').val("-- Unable to load gist metadata. Gist = " + id);
-            setupEditor();
+            setupEditor(false);
         });
     };
 
@@ -516,7 +514,7 @@ $(function() {
     if (gist) {
         loadFromGist(gist);
     } else {
-        setupEditor();
+        setupEditor(true);
     }
 
 });
