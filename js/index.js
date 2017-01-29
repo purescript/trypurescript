@@ -28,6 +28,16 @@ $.ajaxSetup({
 
 $(function() {
 
+  var defaultBundleAndExecute = function(js, backend) {
+    $.get(backend.endpoint + '/bundle').done(function(bundle) {
+
+      execute(js, bundle, backend);
+    }).fail(function(err) {
+
+      myconsole.warn("Unable to load JS bundle", err);
+    });
+  };
+
   var getBackend = function(backend) {
     if (backend === "thermite") {
       return {
@@ -35,7 +45,25 @@ $(function() {
         endpoint: "https://compile.purescript.org/thermite",
         mainGist: "85383bb058471109cfef379bbb6bc11c",
         extra_styling: '    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">',
-        extra_body: '    <div id="app"></div>'
+        extra_body: '    <div id="app"></div>',
+        bundleAndExecute: function(js, backend) {
+          $.when(
+            $.get("js/console.js"),
+            $.get("js/react.min.js"),
+            $.get("js/react-dom.min.js"),
+            $.get(backend.endpoint + "/bundle")
+          ).done(function(consoleScript, react, react_dom, bundle) {
+
+            var replaced = bundle[0].replace(/require\("react"\)/g, 'window.React')
+              .replace(/require\("react-dom"\)/g, 'window.ReactDOM')
+              .replace(/require\("react-dom\/server"\)/g, 'window.ReactDOM');
+
+            execute(js, [consoleScript[0], react[0], react_dom[0], replaced].join("\n"), backend);
+          }).fail(function(err) {
+
+            myconsole.warn("Unable to load JS bundle", err);
+          });
+        }
       };
     } else if (backend === "slides") {
       return {
@@ -320,31 +348,7 @@ $(function() {
               .empty()
               .append($('<pre>').append($('<code>').append(res.js)));
           } else {
-            if ($('input[name=backend_inputs]').filter(':checked').val() === "thermite") {
-              $.when($.get("js/console.js"),
-                $.get("js/react.min.js"),
-                $.get("js/react-dom.min.js"),
-                $.get(backend.endpoint + "/bundle")
-              ).done(function(consoleScript, react, react_dom, bundle) {
-
-                var replaced = bundle[0].replace(/require\("react"\)/g, 'window.React')
-                  .replace(/require\("react-dom"\)/g, 'window.ReactDOM')
-                  .replace(/require\("react-dom\/server"\)/g, 'window.ReactDOM');
-
-                execute(res.js, [consoleScript[0], react[0], react_dom[0], replaced].join("\n"), backend);
-              }).fail(function(err) {
-
-                myconsole.warn("Unable to load JS bundle", err);
-              });
-            } else {
-              $.get(backend.endpoint + '/bundle').done(function(bundle) {
-
-                execute(res.js, bundle, backend);
-              }).fail(function(err) {
-
-                myconsole.warn("Unable to load JS bundle", err);
-              });
-            }
+            (backend.bundleAndExecute || defaultBundleAndExecute)(res.js, backend);
           }
         }
       },
