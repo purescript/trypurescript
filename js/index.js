@@ -233,9 +233,20 @@ $(function() {
     var iframe = $iframe.get(0).contentWindow.document;
     iframe.open();
     iframe.write(
-      ['<!DOCTYPE html>', '<html>', '  <head>'
-
-        , '    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">', '    <meta content="utf-8" http-equiv="encoding">', '    <meta name="viewport" content="width=device-width, initial-scale=1.0">', '    <title>Try PureScript!</title>', '    <link rel="stylesheet" href="css/style.css">', backend.extra_styling, '  </head>', '  <body>', backend.extra_body, '  </body>', '</html>'
+      ['<!DOCTYPE html>'
+      , '<html>'
+      , '  <head>'
+      , '    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">'
+      , '    <meta content="utf-8" http-equiv="encoding">'
+      , '    <meta name="viewport" content="width=device-width, initial-scale=1.0">'
+      , '    <title>Try PureScript!</title>'
+      , '    <link rel="stylesheet" href="css/style.css">'
+      , backend.extra_styling
+      , '  </head>'
+      , '  <body>'
+      , backend.extra_body
+      , '  </body>'
+      , '</html>'
       ].join('\n')
     );
     iframe.close();
@@ -247,7 +258,13 @@ $(function() {
     });
 
     // Wrap the compiled code so that main() runs.
-    var wrapped = ['var module = {};', '(function(module) {', replaced, '})(module);', 'module.exports.main && module.exports.main();'].join('\n');
+    var wrapped =
+      [ 'var module = {};'
+      , '(function(module) {'
+      , replaced
+      , '})(module);'
+      , 'module.exports.main && module.exports.main();'
+      ].join('\n');
 
     var scripts = [bundle, wrapped].join("\n");
 
