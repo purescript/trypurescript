@@ -174,12 +174,13 @@ $(function() {
       if (code) {
         $('#code_textarea').val(code);
       }
+      return backend;
     }
   }
 
   var editor, cleanupActions = [];
 
-  var setupEditorWith = function(name, ta_name, lang, backend) {
+  var setupEditorWith = function(name, ta_name, lang) {
 
     editor = ace.edit(name);
 
@@ -200,7 +201,7 @@ $(function() {
 
       $('#' + ta_name).val(session.getValue());
 
-      var backend = getBackend($(this).filter(':checked').val());
+      var backend = getBackend($('input[name=backend_inputs]').filter(':checked').val());
       cacheCurrentCode(backend);
       if ($("#auto_compile").is(":checked")) {
         compile();
@@ -219,7 +220,7 @@ $(function() {
   var setupEditor = function(backend) {
 
     loadOptions(backend);
-    setupEditorWith('code', 'code_textarea', 'ace/mode/haskell', backend);
+    setupEditorWith('code', 'code_textarea', 'ace/mode/haskell');
     cacheCurrentCode(backend);
   };
 
@@ -496,9 +497,12 @@ $(function() {
   });
 
   var sessionId = setupSession();
-  tryRestoreCachedCode(sessionId);
-
-  var backend = getBackend($.QueryString["backend"]);
-  var gist = $.QueryString["gist"] || backend.mainGist;
-  loadFromGist(gist, backend);
+  var cachedBackend = tryRestoreCachedCode(sessionId);
+  if (cachedBackend) {
+      setupEditor(getBackend(cachedBackend));
+  } else {
+    var backend = getBackend($.QueryString["backend"]);
+    var gist = $.QueryString["gist"] || backend.mainGist;
+    loadFromGist(gist, backend);
+  }
 });
