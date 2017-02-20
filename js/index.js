@@ -126,7 +126,7 @@ $(function() {
         location.href = "?backend=" + backend.backend;
       } else {
         setTimeout(function() {
-          compile(backend);
+          compile();
           cacheCurrentCode(backend);
         }, 1000);
       }
@@ -200,13 +200,14 @@ $(function() {
 
       $('#' + ta_name).val(session.getValue());
 
+      var backend = getBackend($(this).filter(':checked').val());
       cacheCurrentCode(backend);
       if ($("#auto_compile").is(":checked")) {
-        compile(backend);
+        compile();
       }
     }, 750));
 
-    compile(backend);
+    compile();
   };
 
   var hideMenus = function() {
@@ -287,9 +288,9 @@ $(function() {
 
   };
 
-  var compile = function(backend) {
+  var compile = function() {
 
-    backend = backend || getBackend($('input[name=backend_inputs]').filter(':checked').val());
+    backend = getBackend($('input[name=backend_inputs]').filter(':checked').val());
 
     $('#column2')
       .empty()
