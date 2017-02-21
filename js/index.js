@@ -126,7 +126,7 @@ $(function() {
         location.href = "?backend=" + backend.backend;
       } else {
         setTimeout(function() {
-          compile();
+          compile(backend);
           cacheCurrentCode(backend);
         }, 1000);
       }
@@ -174,13 +174,12 @@ $(function() {
       if (code) {
         $('#code_textarea').val(code);
       }
-      return backend;
     }
   }
 
   var editor, cleanupActions = [];
 
-  var setupEditorWith = function(name, ta_name, lang) {
+  var setupEditorWith = function(name, ta_name, lang, backend) {
 
     editor = ace.edit(name);
 
@@ -201,14 +200,13 @@ $(function() {
 
       $('#' + ta_name).val(session.getValue());
 
-      var backend = getBackend($('input[name=backend_inputs]').filter(':checked').val());
       cacheCurrentCode(backend);
       if ($("#auto_compile").is(":checked")) {
-        compile();
+        compile(backend);
       }
     }, 750));
 
-    compile();
+    compile(backend);
   };
 
   var hideMenus = function() {
@@ -220,7 +218,7 @@ $(function() {
   var setupEditor = function(backend) {
 
     loadOptions(backend);
-    setupEditorWith('code', 'code_textarea', 'ace/mode/haskell');
+    setupEditorWith('code', 'code_textarea', 'ace/mode/haskell', backend);
     cacheCurrentCode(backend);
   };
 
@@ -289,9 +287,9 @@ $(function() {
 
   };
 
-  var compile = function() {
+  var compile = function(backend) {
 
-    backend = getBackend($('input[name=backend_inputs]').filter(':checked').val());
+    backend = backend || getBackend($('input[name=backend_inputs]').filter(':checked').val());
 
     $('#column2')
       .empty()
@@ -497,12 +495,9 @@ $(function() {
   });
 
   var sessionId = setupSession();
-  var cachedBackend = tryRestoreCachedCode(sessionId);
-  if (cachedBackend) {
-      setupEditor(getBackend(cachedBackend));
-  } else {
-    var backend = getBackend($.QueryString["backend"]);
-    var gist = $.QueryString["gist"] || backend.mainGist;
-    loadFromGist(gist, backend);
-  }
+  tryRestoreCachedCode(sessionId);
+
+  var backend = getBackend($.QueryString["backend"]);
+  var gist = $.QueryString["gist"] || backend.mainGist;
+  loadFromGist(gist, backend);
 });
