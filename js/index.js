@@ -173,8 +173,8 @@ $(function() {
       }
       if (code) {
         $('#code_textarea').val(code);
+        return backend;
       }
-      return backend;
     }
   }
 
