@@ -368,7 +368,7 @@ $(function() {
           if ($("#showjs").is(":checked")) {
             $('#column2')
               .empty()
-              .append($('<pre>').append($('<code>').append(res.js)));
+              .append($('<pre>').append($('<code>').text(res.js)));
           } else {
             (backend.bundleAndExecute || defaultBundleAndExecute)(res.js, backend);
           }
