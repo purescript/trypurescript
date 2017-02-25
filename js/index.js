@@ -19,7 +19,7 @@ $.ajaxSetup({
   $.setQueryParameters = function(params) {
     var url = location.href.split('?')[0];
     var encodedParams = Object.keys(params).map(function(key) {
-      return key + '=' + encodeURIComponent(params[key]);
+      return key + '=' + encodeURIComponent(params[key].replace('\/', ''));
     }).join('&');
 
     document.location = url + '?' + encodedParams;
@@ -30,10 +30,8 @@ $(function() {
 
   var defaultBundleAndExecute = function(js, backend) {
     $.get(backend.endpoint + '/bundle').done(function(bundle) {
-
       execute(js, bundle, backend);
     }).fail(function(err) {
-
       myconsole.warn("Unable to load JS bundle", err);
     });
   };
@@ -71,7 +69,8 @@ $(function() {
         endpoint: "https://compile.purescript.org/slides",
         mainGist: "c62b5778a6a5f2bcd32dd97b294c068a",
         extra_styling: '<link rel="stylesheet" href="css/slides.css">',
-        extra_body: '<div id="main"></div>'
+        extra_body: '<div id="main"></div>',
+        bundleAndExecute: defaultBundleAndExecute
       };
     } else if (backend === "flare") {
       return {
@@ -79,7 +78,8 @@ $(function() {
         endpoint: "https://compile.purescript.org/flare",
         mainGist: "4f54d6dd213caa54d736ead597e17fee",
         extra_styling: '<link rel="stylesheet" href="css/flare.css">',
-        extra_body: '<div id="controls"></div><div id="output"></div><div id="tests"></div><canvas id="canvas" width="800" height="600"></canvas>'
+        extra_body: '<div id="controls"></div><div id="output"></div><div id="tests"></div><canvas id="canvas" width="800" height="600"></canvas>',
+        bundleAndExecute: defaultBundleAndExecute
       };
     } else if (backend === "mathbox") {
       return {
@@ -87,7 +87,8 @@ $(function() {
         endpoint: "https://compile.purescript.org/purescript-mathbox",
         mainGist: "aeecffd458fa8a365b4af3b3cd9d7759",
         extra_styling: ['<script src="js/mathbox-bundle.js"></script>', '<link rel="stylesheet" href="css/mathbox.css">'].join("\n"),
-        extra_body: ''
+        extra_body: '',
+        bundleAndExecute: defaultBundleAndExecute
       };
     } else { // core
       return {
@@ -95,7 +96,8 @@ $(function() {
         endpoint: "https://compile.purescript.org/try",
         mainGist: "b57a766d417e109785540d584266fc33",
         extra_styling: '',
-        extra_body: ''
+        extra_body: '',
+        bundleAndExecute: defaultBundleAndExecute
       };
     }
   };
@@ -134,9 +136,9 @@ $(function() {
     });
   };
 
-  var setupSession = function() {
-    function guid() {
-      function s4() {
+  var setupSession = function(onSessionExists) {
+    var guid = function() {
+      var s4 = function() {
         return Math.floor((1 + Math.random()) * 0x10000)
           .toString(16)
           .substring(1);
@@ -146,12 +148,12 @@ $(function() {
     }
 
     var sessionId = $.QueryString['session'];
-    if (!sessionId) {
+    if (sessionId) {
+      onSessionExists(sessionId);
+    } else {
       $.QueryString['session'] = sessionId = guid();
       $.setQueryParameters($.QueryString);
     }
-
-    return sessionId;
   };
 
   var cacheCurrentCode = function(backend) {
@@ -273,7 +275,8 @@ $(function() {
     var script = iframe.createElement('script');
     script.appendChild(iframe.createTextNode(scripts));
 
-    $('iframe').load(function() {
+    $('iframe').ready(function() {
+
       var body = iframe.getElementsByTagName('body')[0];
 
       body.onclick = function() {
@@ -496,13 +499,15 @@ $(function() {
     hideMenus();
   });
 
-  var sessionId = setupSession();
-  var cachedBackend = tryRestoreCachedCode(sessionId);
-  if (cachedBackend) {
+  function withSession(sessionId) {
+    var cachedBackend = tryRestoreCachedCode(sessionId);
+    if (cachedBackend) {
       setupEditor(getBackend(cachedBackend));
-  } else {
-    var backend = getBackend($.QueryString["backend"]);
-    var gist = $.QueryString["gist"] || backend.mainGist;
-    loadFromGist(gist, backend);
-  }
+    } else {
+      var backend = getBackend($.QueryString["backend"]);
+      var gist = $.QueryString["gist"] || backend.mainGist;
+      loadFromGist(gist, backend);
+    }
+  };
+  setupSession(withSession);
 });
