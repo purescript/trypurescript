@@ -276,18 +276,17 @@ $(function() {
     script.appendChild(iframe.createTextNode(scripts));
 
     $('iframe').ready(function() {
+      var checkExists = setInterval(function() {
+        var body = iframe.getElementsByTagName('body')[0];
+        if (body) {
+          body.onclick = function() {
+            hideMenus();
+          };
+          body.appendChild(script);
+          clearInterval(checkExists);
+        }
+      }, 100);
 
-      var body = iframe.getElementsByTagName('body')[0];
-
-      body.onclick = function() {
-        hideMenus();
-      };
-
-      if (body) {
-        body.appendChild(script);
-      } else {
-        console.log("<body> element is missing!");
-      }
     });
 
   };
