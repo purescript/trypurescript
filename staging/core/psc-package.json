@@ -21,6 +21,7 @@
         "functions",
         "functors",
         "generics",
+        "generics-rep",
         "globals",
         "graphs",
         "identity",
