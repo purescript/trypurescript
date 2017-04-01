@@ -32,6 +32,7 @@ import           GHC.Generics (Generic)
 import qualified Language.PureScript as P
 import qualified Language.PureScript.Bundle as Bundle
 import qualified Language.PureScript.CodeGen.JS as J
+import qualified Language.PureScript.CodeGen.JS.Printer as P
 import qualified Language.PureScript.CoreFn as CF
 import qualified Language.PureScript.Errors.JSON as P
 import qualified Language.PureScript.Interactive as I
@@ -105,13 +106,13 @@ server bundled externs initEnv port = do
         Nothing -> Scotty.json $ A.object [ "error" .= ("Cannot parse type" :: Text) ]
         Just ty -> do
           let elabs = lookupAllConstructors initEnv ty
-              search = M.toList . TS.typeSearch (Just []) initEnv (P.emptyCheckState initEnv)
+              search = fst . TS.typeSearch (Just []) initEnv (P.emptyCheckState initEnv)
               results = nubBy ((==) `on` fst) $ do
                 elab <- elabs
                 let strictMatches = search (replaceTypeVariablesAndDesugar (\nm s -> P.Skolem nm s (P.SkolemScope 0) Nothing) elab)
                     flexMatches = search (replaceTypeVariablesAndDesugar (const P.TUnknown) elab)
                 take 50 (strictMatches ++ flexMatches)
-          Scotty.json $ A.object [ "results" .= [ P.showQualified P.runIdent k
+          Scotty.json $ A.object [ "results" .= [ P.showQualified id k
                                                 | (k, _) <- take 50 results
                                                 ]
                                  ]
