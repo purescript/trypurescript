@@ -19,12 +19,12 @@ module TryPureScript
   ) where
 
 import Prelude
-import Control.Monad.Eff (Eff)
+import Control.Monad.Eff (kind Effect, Eff)
 import Data.Foldable (class Foldable, foldMap)
 import Data.String (joinWith)
 import Data.Monoid (class Monoid)
 
-foreign import data DOM :: !
+foreign import data DOM :: Effect
 
 foreign import setInnerHTML
   :: forall eff
