@@ -22,7 +22,7 @@ executable trypurescript
                    scotty -any,
                    purescript ==0.11.5,
                    containers -any,
-                   http-types >= 0.8.5,
+                   http-types >= 0.9.1,
                    transformers ==0.5.*,
                    mtl ==2.2.1,
                    parsec,
