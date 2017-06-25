@@ -98,6 +98,13 @@ body {
   border-left: solid 1px #fff;
   border-right: solid 1px #fff;
 }
+#view_mode a {
+  display:block;
+  color: white;
+}
+#view_mode a:visited {
+  color: white;
+}
 
 #view_mode input[type="radio"]:checked + label, #backend input[type="radio"]:checked + label {
   color: #c4953a;
