@@ -121,6 +121,12 @@ $(function() {
       $('input:checkbox[name=auto_compile]').prop('checked', auto_compile === "true");
     }
 
+    var gist = $.QueryString["gist"];
+    if (gist) {
+      $('#view_gist').attr('href', 'https://gist.github.com/' + gist);
+    } else {
+      $('#view_gist_li').hide();
+    }
 
     $('input[name=backend_inputs]').change(function(e) {
       var backend = getBackend($(this).filter(':checked').val());
