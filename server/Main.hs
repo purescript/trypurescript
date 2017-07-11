@@ -69,7 +69,7 @@ server bundled externs initEnv port = do
             Right (_, m) | P.getModuleName m == P.ModuleName [P.ProperName "Main"] -> do
               (resultMay, _) <- runLogger' . runExceptT . flip runReaderT P.defaultOptions $ do
                 ((P.Module ss coms moduleName elaborated exps, env), nextVar) <- P.runSupplyT 0 $ do
-                  [desugared] <- P.desugar externs [P.addDefaultImport (P.ModuleName [P.ProperName "Prim"]) m]
+                  [desugared] <- P.desugar externs [P.addDefaultImport (P.Qualified Nothing (P.ModuleName [P.ProperName "Prim"])) m]
                   P.runCheck' (P.emptyCheckState initEnv) $ P.typeCheckModule desugared
                 regrouped <- P.createBindingGroups moduleName . P.collapseBindingGroups $ elaborated
                 let mod' = P.Module ss coms moduleName regrouped exps
