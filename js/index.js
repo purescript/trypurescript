@@ -90,6 +90,15 @@ $(function() {
         extra_body: '',
         bundleAndExecute: defaultBundleAndExecute
       };
+    } else if (backend === "behaviors") {
+      return {
+        backend: "behaviors",
+        endpoint: "https://compile.purescript.org/behaviors",
+        mainGist: "ff1e87f0872d2d891e77d209d8f7706d",
+        extra_styling: '',
+        extra_body: '<canvas id="canvas" width="800" height="600"></canvas>',
+        bundleAndExecute: defaultBundleAndExecute
+      };
     } else { // core
       return {
         backend: "core",
