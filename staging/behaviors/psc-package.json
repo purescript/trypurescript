@@ -1,0 +1,10 @@
+{
+    "name": "trybehaviors",
+    "set": "master",
+    "source": "https://github.com/purescript/package-sets.git",
+    "depends": [
+        "drawing",
+        "behaviors",
+        "prelude"
+    ]
+}
