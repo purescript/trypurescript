@@ -227,6 +227,9 @@ iframe {
 }
 
 @media all and (max-width: 720px) {
+  #editor_view {
+    flex-direction: column;
+  }
   #home_link {
     display: inline-block;
   }
