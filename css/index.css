@@ -226,6 +226,12 @@ iframe {
     display: inline-block ! important;
 }
 
+@media all and (max-width: 480px) {
+  #editor_view {
+    flex-direction: column;
+  }
+}
+
 @media all and (max-width: 720px) {
   #home_link {
     display: inline-block;
