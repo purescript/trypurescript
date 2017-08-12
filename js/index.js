@@ -99,6 +99,15 @@ $(function() {
         extra_body: '<canvas id="canvas" width="800" height="600"></canvas>',
         bundleAndExecute: defaultBundleAndExecute
       };
+    } else if (backend === "halogen") {
+      return {
+        backend: "halogen",
+        endpoint: "https://compile.purescript.org/halogen",
+        mainGist: "15536d7b4c66ac512b2c8dca98e0e3d3",
+        extra_styling: '',
+        extra_body: '',
+        bundleAndExecute: defaultBundleAndExecute
+      };
     } else { // core
       return {
         backend: "core",
@@ -249,27 +258,6 @@ $(function() {
       .empty()
       .append($iframe);
 
-    var iframe = $iframe.get(0).contentWindow.document;
-    iframe.open();
-    iframe.write(
-      ['<!DOCTYPE html>'
-      , '<html>'
-      , '  <head>'
-      , '    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">'
-      , '    <meta content="utf-8" http-equiv="encoding">'
-      , '    <meta name="viewport" content="width=device-width, initial-scale=1.0">'
-      , '    <title>Try PureScript!</title>'
-      , '    <link rel="stylesheet" href="css/style.css">'
-      , backend.extra_styling
-      , '  </head>'
-      , '  <body>'
-      , backend.extra_body
-      , '  </body>'
-      , '</html>'
-      ].join('\n')
-    );
-    iframe.close();
-
     // Replace any require() statements with the PS['...'] form using a regex substitution.
     var replaced = js.replace(/require\("[^"]*"\)/g, function(s) {
 
@@ -287,23 +275,29 @@ $(function() {
 
     var scripts = [bundle, wrapped].join("\n");
 
-    var script = iframe.createElement('script');
-    script.appendChild(iframe.createTextNode(scripts));
-
-    $('iframe').ready(function() {
-      var checkExists = setInterval(function() {
-        var body = iframe.getElementsByTagName('body')[0];
-        if (body) {
-          body.onclick = function() {
-            hideMenus();
-          };
-          body.appendChild(script);
-          clearInterval(checkExists);
-        }
-      }, 100);
-
-    });
-
+      var iframe = $iframe.get(0).contentWindow.document;
+      iframe.open();
+      iframe.write(
+          ['<!DOCTYPE html>'
+           , '<html>'
+           , '  <head>'
+           , '    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">'
+           , '    <meta content="utf-8" http-equiv="encoding">'
+           , '    <meta name="viewport" content="width=device-width, initial-scale=1.0">'
+           , '    <title>Try PureScript!</title>'
+           , '    <link rel="stylesheet" href="css/style.css">'
+           , backend.extra_styling
+           , '  </head>'
+           , '  <body>'
+           , backend.extra_body
+           , '    <script>'
+           , scripts
+           , '    </script>'
+           , '  </body>'
+           , '</html>'
+          ].join('\n')
+      );
+      iframe.close();
   };
 
   var compile = function() {
