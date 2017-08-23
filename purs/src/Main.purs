@@ -3,8 +3,9 @@ module Main where
 import Prelude
 
 import Control.Monad.Eff (Eff)
+import Control.Monad.Eff.Console (CONSOLE, warn)
 import Control.Monad.Eff.JQuery (JQuery, on, ready, select, toggleClass)
-import Control.Monad.Eff.Uncurried (EffFn1, EffFn2, EffFn3, EffFn4, mkEffFn1, mkEffFn2, runEffFn1, runEffFn2, runEffFn4)
+import Control.Monad.Eff.Uncurried (EffFn1, EffFn2, EffFn3, EffFn4, mkEffFn1, mkEffFn2, runEffFn1, runEffFn2, runEffFn3, runEffFn4)
 import DOM (DOM)
 import Data.Foldable (fold)
 import Partial.Unsafe (unsafePartial)
@@ -52,9 +53,22 @@ setupEditor = mkEffFn2 \exports backend -> do
   runEffFn4 setupEditorWith exports "code" "code_textarea" "ace/mode/haskell"
   runEffFn1 cacheCurrentCode backend
 
-foreign import changeViewMode :: forall eff. EffFn1 (dom :: DOM | eff) JQuery Unit
+defaultBundleAndExecute :: forall eff. EffFn2 (console :: CONSOLE, dom :: DOM | eff) JS BackendConfig Unit
+defaultBundleAndExecute = mkEffFn2 \js bc@(BackendConfig backend) -> do
+  runEffFn3 get
+    (backend.endpoint <> "/bundle")
+    (mkEffFn1 \bundle -> runEffFn3 execute js (JS bundle) bc)
+    (mkEffFn1 \err -> warn ("Unable to load JS bundle: " <> err))
 
-foreign import defaultBundleAndExecute :: forall eff. EffFn2 (dom :: DOM | eff) JS BackendConfig Unit
+foreign import get
+  :: forall eff
+   . EffFn3 (dom :: DOM | eff)
+            String
+            (EffFn1 (dom :: DOM | eff) String Unit)
+            (EffFn1 (dom :: DOM | eff) String Unit)
+            Unit
+
+foreign import changeViewMode :: forall eff. EffFn1 (dom :: DOM | eff) JQuery Unit
 
 foreign import bundleAndExecuteThermite :: forall eff. EffFn2 (dom :: DOM | eff) JS BackendConfig Unit
 
@@ -93,7 +107,7 @@ newtype BackendConfig = BackendConfig
   , mainGist         :: String
   , extra_styling    :: String
   , extra_body       :: String
-  , bundleAndExecute :: forall eff. EffFn2 (dom :: DOM | eff) JS BackendConfig Unit
+  , bundleAndExecute :: forall eff. EffFn2 (console :: CONSOLE, dom :: DOM | eff) JS BackendConfig Unit
   }
 
 data Backend
