@@ -1,12 +1,10 @@
 "use strict";
 
-var myconsole = console;
-
 exports.defaultBundleAndExecute = function(js, backend) {
   $.get(backend.endpoint + '/bundle').done(function(bundle) {
     exports.execute(js, bundle, backend);
   }).fail(function(err) {
-    myconsole.warn("Unable to load JS bundle", err);
+    console.warn("Unable to load JS bundle", err);
   });
 };
 
@@ -25,7 +23,7 @@ exports.bundleAndExecuteThermite = function(js, backend) {
     exports.execute(js, [consoleScript[0], react[0], react_dom[0], replaced].join("\n"), backend);
   }).fail(function(err) {
 
-    myconsole.warn("Unable to load JS bundle", err);
+    console.warn("Unable to load JS bundle", err);
   });
 };
 
