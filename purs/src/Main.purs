@@ -52,12 +52,6 @@ setupEditor = mkEffFn2 \exports backend -> do
   runEffFn4 setupEditorWith exports "code" "code_textarea" "ace/mode/haskell"
   runEffFn1 cacheCurrentCode backend
 
--- | Set up AJAX parameters in Jquery for future AJAX calls.
-foreign import setupAjax :: forall eff. Eff (dom :: DOM | eff) Unit
-
--- | Add plugins to the global Jquery object.
-foreign import setupJqueryPlugins :: forall eff. Eff (dom :: DOM | eff) Unit
-
 foreign import changeViewMode :: forall eff. EffFn1 (dom :: DOM | eff) JQuery Unit
 
 foreign import defaultBundleAndExecute :: forall eff. EffFn2 (dom :: DOM | eff) JS BackendConfig Unit
@@ -192,7 +186,4 @@ getBackendFromString s = getBackend (unsafePartial backendFromString s)
 
 main :: Eff (dom :: DOM) Unit
 main = do
-  setupAjax
-  ready do
-    setupJqueryPlugins
-    init
+  ready init

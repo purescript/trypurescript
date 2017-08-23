@@ -527,34 +527,6 @@ var PS = {};
 
   var myconsole = console;
 
-  exports.setupJqueryPlugins = function() {
-    $.QueryString = (function(a) {
-      if (a == "") return {};
-      var b = {};
-      for (var i = 0; i < a.length; ++i) {
-        var p = a[i].split('=');
-        if (p.length != 2) continue;
-        b[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
-      }
-      return b;
-    })(window.location.search.substr(1).split('&'));
-
-    $.setQueryParameters = function(params) {
-      var url = location.href.split('?')[0];
-      var encodedParams = Object.keys(params).map(function(key) {
-        return key + '=' + encodeURIComponent(params[key].replace('/', ''));
-      }).join('&');
-
-      document.location = url + '?' + encodedParams;
-    };
-  };
-
-  exports.setupAjax = function() {
-    $.ajaxSetup({
-      dataType: 'text'
-    });
-  };
-
   exports.defaultBundleAndExecute = function(js, backend) {
     $.get(backend.endpoint + '/bundle').done(function(bundle) {
       exports.execute(js, bundle, backend);
@@ -1107,7 +1079,7 @@ var PS = {};
               bundleAndExecute: $foreign.defaultBundleAndExecute
           };
       };
-      throw new Error("Failed pattern match at Main line 132, column 1 - line 132, column 39: " + [ v.constructor.name ]);
+      throw new Error("Failed pattern match at Main line 126, column 1 - line 126, column 39: " + [ v.constructor.name ]);
   };
   var eqBackend = new Data_Eq.Eq(function (x) {
       return function (y) {
@@ -1184,7 +1156,7 @@ var PS = {};
           if (x instanceof Flare && y instanceof Flare) {
               return Data_Ordering.EQ.value;
           };
-          throw new Error("Failed pattern match at Main line 130, column 8 - line 130, column 42: " + [ x.constructor.name, y.constructor.name ]);
+          throw new Error("Failed pattern match at Main line 124, column 8 - line 124, column 42: " + [ x.constructor.name, y.constructor.name ]);
       };
   });
   var backendToString = function (v) {
@@ -1206,7 +1178,7 @@ var PS = {};
       if (v instanceof Flare) {
           return "flare";
       };
-      throw new Error("Failed pattern match at Main line 121, column 1 - line 121, column 37: " + [ v.constructor.name ]);
+      throw new Error("Failed pattern match at Main line 115, column 1 - line 115, column 37: " + [ v.constructor.name ]);
   };
   var backendFromString = function (dictPartial) {
       return function (v) {
@@ -1234,7 +1206,7 @@ var PS = {};
               if (v === "flare") {
                   return Flare.value;
               };
-              throw new Error("Failed pattern match at Main line 113, column 1 - line 113, column 50: " + [ v.constructor.name ]);
+              throw new Error("Failed pattern match at Main line 107, column 1 - line 107, column 50: " + [ v.constructor.name ]);
           })());
       };
   };
@@ -1290,13 +1262,7 @@ var PS = {};
           return Control_Monad_Eff_Uncurried.runEffFn2($foreign.withSession)(exportedFunctions)(x);
       }))();
   };
-  var main = function __do() {
-      $foreign.setupAjax();
-      return Control_Monad_Eff_JQuery.ready(function __do() {
-          $foreign.setupJqueryPlugins();
-          return init();
-      })();
-  };
+  var main = Control_Monad_Eff_JQuery.ready(init);
   exports["ExportedFunctions"] = ExportedFunctions;
   exports["exportedFunctions"] = exportedFunctions;
   exports["init"] = init;
@@ -1317,8 +1283,6 @@ var PS = {};
   exports["main"] = main;
   exports["eqBackend"] = eqBackend;
   exports["ordBackend"] = ordBackend;
-  exports["setupAjax"] = $foreign.setupAjax;
-  exports["setupJqueryPlugins"] = $foreign.setupJqueryPlugins;
   exports["changeViewMode"] = $foreign.changeViewMode;
   exports["defaultBundleAndExecute"] = $foreign.defaultBundleAndExecute;
   exports["bundleAndExecuteThermite"] = $foreign.bundleAndExecuteThermite;
