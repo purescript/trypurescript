@@ -4,25 +4,6 @@ exports.get = function(uri, done, fail) {
   $.get(uri).done(done).fail(fail);
 };
 
-exports.bundleAndExecuteThermite = function(js, backend) {
-  $.when(
-    $.get("js/console.js"),
-    $.get("js/react.min.js"),
-    $.get("js/react-dom.min.js"),
-    $.get(backend.endpoint + "/bundle")
-  ).done(function(consoleScript, react, react_dom, bundle) {
-
-    var replaced = bundle[0].replace(/require\("react"\)/g, 'window.React')
-      .replace(/require\("react-dom"\)/g, 'window.ReactDOM')
-      .replace(/require\("react-dom\/server"\)/g, 'window.ReactDOM');
-
-    exports.execute(js, [consoleScript[0], react[0], react_dom[0], replaced].join("\n"), backend);
-  }).fail(function(err) {
-
-    console.warn("Unable to load JS bundle", err);
-  });
-};
-
 exports.loadOptions = function(pursImports, backend) {
 
   $('#backend_' + backend.backend).attr('checked', 'checked');

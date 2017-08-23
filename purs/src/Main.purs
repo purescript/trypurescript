@@ -2,12 +2,19 @@ module Main where
 
 import Prelude
 
+import Control.Monad.Cont.Trans (ContT(..), runContT)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Console (CONSOLE, warn)
 import Control.Monad.Eff.JQuery (JQuery, on, ready, select, toggleClass)
 import Control.Monad.Eff.Uncurried (EffFn1, EffFn2, EffFn3, EffFn4, mkEffFn1, mkEffFn2, runEffFn1, runEffFn2, runEffFn3, runEffFn4)
+import Control.Monad.Except.Trans (ExceptT(..), runExceptT)
+import Control.Parallel (parTraverse)
 import DOM (DOM)
-import Data.Foldable (fold)
+import Data.Either (Either(..))
+import Data.Foldable (fold, intercalate)
+import Data.String.Regex (replace)
+import Data.String.Regex.Flags (global)
+import Data.String.Regex.Unsafe (unsafeRegex)
 import Partial.Unsafe (unsafePartial)
 
 -- | A record of functions that we export to the foreign JavaScript code
@@ -60,6 +67,31 @@ defaultBundleAndExecute = mkEffFn2 \js bc@(BackendConfig backend) -> do
     (mkEffFn1 \bundle -> runEffFn3 execute js (JS bundle) bc)
     (mkEffFn1 \err -> warn ("Unable to load JS bundle: " <> err))
 
+bundleAndExecuteThermite :: forall eff. EffFn2 (console :: CONSOLE, dom :: DOM | eff) JS BackendConfig Unit
+bundleAndExecuteThermite =
+  mkEffFn2 \js bc@(BackendConfig backend) ->
+    let getAll = parTraverse getContT
+          [ "js/console.js"
+          , "js/react.min.js"
+          , "js/react-dom.min.js"
+          , backend.endpoint <> "/bundle"
+          ]
+
+        onComplete :: Partial
+                   => Either String (Array String)
+                   -> Eff ( console :: CONSOLE
+                          , dom :: DOM
+                          | eff
+                          ) Unit
+        onComplete (Left err) = warn ("Unable to load JS bundle: " <> err)
+        onComplete (Right [consoleScript, react, react_dom, bundle]) =
+          let replaced = bundle
+                           # replace (unsafeRegex "require\\(\"react\"\\)" global) "window.React"
+                           # replace (unsafeRegex "require\\(\"react-dom\"\\)" global) "window.ReactDOM"
+                           # replace (unsafeRegex "require\\(\"react-dom\\/server\"\\)" global) "window.ReactDOM"
+          in runEffFn3 execute js (JS (intercalate "\n" [consoleScript, react, react_dom, replaced])) bc
+    in runContT (runExceptT getAll) (unsafePartial onComplete)
+
 foreign import get
   :: forall eff
    . EffFn3 (dom :: DOM | eff)
@@ -68,9 +100,11 @@ foreign import get
             (EffFn1 (dom :: DOM | eff) String Unit)
             Unit
 
-foreign import changeViewMode :: forall eff. EffFn1 (dom :: DOM | eff) JQuery Unit
+-- | A wrapper for `get` which uses `ContT`.
+getContT :: forall eff. String -> ExceptT String (ContT Unit (Eff (dom :: DOM | eff))) String
+getContT uri = ExceptT (ContT \k -> runEffFn3 get uri (mkEffFn1 (k <<< Right)) (mkEffFn1 (k <<< Left)))
 
-foreign import bundleAndExecuteThermite :: forall eff. EffFn2 (dom :: DOM | eff) JS BackendConfig Unit
+foreign import changeViewMode :: forall eff. EffFn1 (dom :: DOM | eff) JQuery Unit
 
 foreign import cacheCurrentCode :: forall eff. EffFn1 (dom :: DOM | eff) BackendConfig Unit
 
