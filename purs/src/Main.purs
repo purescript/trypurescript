@@ -44,11 +44,18 @@ foreign import getGistById
 getGistByIdContT :: forall eff. String -> ExceptT String (ContT Unit (Eff (dom :: DOM | eff))) GistInfo
 getGistByIdContT id_ = ExceptT (ContT \k -> runEffFn3 getGistById id_ (mkEffFn1 (k <<< Right)) (mkEffFn1 (k <<< Left)))
 
-setupEditor :: forall eff. EffFn1 (confirm :: CONFIRM, dom :: DOM, timer :: TIMER | eff) BackendConfig Unit
+setupEditor
+  :: forall eff
+   . EffFn1 ( console :: CONSOLE
+            , confirm :: CONFIRM
+            , dom :: DOM
+            , timer :: TIMER
+            | eff
+            ) BackendConfig Unit
 setupEditor = mkEffFn1 \backend -> do
   runEffFn1 loadOptions backend
   runEffFn4 setupEditorWith backend "code" "code_textarea" "ace/mode/haskell"
-  runEffFn1 cacheCurrentCode backend
+  cacheCurrentCode
 
 defaultBundleAndExecute :: forall eff. EffFn2 (console :: CONSOLE, dom :: DOM | eff) JS BackendConfig Unit
 defaultBundleAndExecute = mkEffFn2 \js bc@(BackendConfig backend) -> do
@@ -118,7 +125,19 @@ foreign import get
 getContT :: forall eff. String -> ExceptT String (ContT Unit (Eff (dom :: DOM | eff))) String
 getContT uri = ExceptT (ContT \k -> runEffFn3 get uri (mkEffFn1 (k <<< Right)) (mkEffFn1 (k <<< Left)))
 
-foreign import cacheCurrentCode :: forall eff. EffFn1 (dom :: DOM | eff) BackendConfig Unit
+-- | Store the current session state
+foreign import storeSession :: forall eff. EffFn2 (dom :: DOM | eff) String { code :: String, backend :: String } Unit
+
+-- | Cache the current code in the session state
+cacheCurrentCode :: forall eff. Eff (console :: CONSOLE, dom :: DOM | eff) Unit
+cacheCurrentCode = do
+  sessionId <- getQueryStringMaybe "session"
+  case sessionId of
+    Just sessionId_ -> do
+      code <- fold <$> (select "#code_textarea" >>= getValueMaybe)
+      backend <- getBackendNameFromView
+      runEffFn2 storeSession sessionId_ { code, backend }
+    Nothing -> error "No session ID"
 
 foreign import compile :: forall eff. EffFn1 (dom :: DOM | eff) BackendConfig Unit
 
@@ -172,11 +191,9 @@ publishNewGist = do
           window >>= alert "Failed to create gist"
           error ("Failed to create gist: " <> err)
         Right gistId -> do
-          backend <- select "input[name=backend_inputs]"
-                       >>= \jq -> runEffFn2 filter jq ":checked"
-                       >>= getValueMaybe
+          backend <- getBackendNameFromView
           runEffFn2 setQueryString "gist" gistId
-          runEffFn2 setQueryString "backend" (fromMaybe "core" backend)
+          runEffFn2 setQueryString "backend" backend
 
 -- | Look up the session by ID, or create a new session ID.
 setupSession :: forall eff. EffFn1 (dom :: DOM, random :: RANDOM | eff) (EffFn1 (dom :: DOM, random :: RANDOM | eff) String Unit) Unit
@@ -252,17 +269,27 @@ changeViewMode = mkEffFn1 \jq -> do
       select "#showjs_label" >>= display
       select "#showjs" >>= display
 
+-- | Get the backend name from whatever is selected in the menu.
+getBackendNameFromView :: forall eff. Eff (dom :: DOM | eff) String
+getBackendNameFromView =
+  fromMaybe "core" <$>
+    (select "input[name=backend_inputs]"
+      >>= \jq -> runEffFn2 filter jq ":checked"
+      >>= getValueMaybe)
+
 -- | Get the backend configuration from whatever is selected in the menu.
 getBackendConfigFromView :: forall eff. Eff (dom :: DOM | eff) BackendConfig
-getBackendConfigFromView = getBackendFromString <$> getBackendNameFromView where
-  getBackendNameFromView =
-    fromMaybe "core" <$>
-      (select "input[name=backend_inputs]"
-        >>= \jq -> runEffFn2 filter jq ":checked"
-        >>= getValueMaybe)
+getBackendConfigFromView = getBackendFromString <$> getBackendNameFromView
 
 -- | Read query string options and update the state accordingly
-loadOptions :: forall eff. EffFn1 (confirm :: CONFIRM, dom :: DOM, timer :: TIMER | eff) BackendConfig Unit
+loadOptions
+  :: forall eff
+   . EffFn1 ( console :: CONSOLE
+            , confirm :: CONFIRM
+            , dom :: DOM
+            , timer :: TIMER
+            | eff
+            ) BackendConfig Unit
 loadOptions = mkEffFn1 \bc@(BackendConfig backend) -> do
   select ("#backend_" <> backend.backend) >>= attr { checked: "checked" }
 
@@ -298,7 +325,7 @@ loadOptions = mkEffFn1 \bc@(BackendConfig backend) -> do
       then navigateTo ("?backend=" <> newBackend.backend)
       else void $ setTimeout 1000 do
              runEffFn1 compile bc_
-             runEffFn1 cacheCurrentCode bc_
+             cacheCurrentCode
     hideMenus
 
 newtype JS = JS String

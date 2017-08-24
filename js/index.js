@@ -2209,13 +2209,10 @@ var PS = {};
     };
   };
 
-  exports.cacheCurrentCode = function(backend) {
+  exports.storeSession = function(sessionId, state) {
     if (window.localStorage) {
-      var sessionId = $.QueryString['session'];
-      var code = $('#code_textarea').val();
-
-      localStorage.setItem(sessionId, code);
-      localStorage.setItem(sessionId + 'backend', backend.backend);
+      localStorage.setItem(sessionId, state.code);
+      localStorage.setItem(sessionId + 'backend', state.backend);
     }
   };
 
@@ -2552,23 +2549,23 @@ var PS = {};
   // | A wrapper for `uploadGist` which uses `ContT`.
   var uploadGistContT = function (content) {
       return function (k) {
-          return Control_Monad_Eff_Uncurried.runEffFn3($foreign.uploadGist)(content)(Control_Monad_Eff_Uncurried.mkEffFn1(function ($100) {
-              return k(Data_Either.Right.create($100));
-          }))(Control_Monad_Eff_Uncurried.mkEffFn1(function ($101) {
-              return k(Data_Either.Left.create($101));
+          return Control_Monad_Eff_Uncurried.runEffFn3($foreign.uploadGist)(content)(Control_Monad_Eff_Uncurried.mkEffFn1(function ($108) {
+              return k(Data_Either.Right.create($108));
+          }))(Control_Monad_Eff_Uncurried.mkEffFn1(function ($109) {
+              return k(Data_Either.Left.create($109));
           }));
       };
   };
-  var tryRestoreCachedCodeMaybe = function ($102) {
-      return Data_Functor.map(Control_Monad_Eff.functorEff)(Data_Nullable.toMaybe)(Control_Monad_Eff_Uncurried.runEffFn1($foreign.tryRestoreCachedCode)($102));
+  var tryRestoreCachedCodeMaybe = function ($110) {
+      return Data_Functor.map(Control_Monad_Eff.functorEff)(Data_Nullable.toMaybe)(Control_Monad_Eff_Uncurried.runEffFn1($foreign.tryRestoreCachedCode)($110));
   };
   var tryLoadFileFromGistContT = function (gi) {
       return function (filename) {
           return function (k) {
-              return Control_Monad_Eff_Uncurried.runEffFn4($foreign.tryLoadFileFromGist)(gi)(filename)(Control_Monad_Eff_Uncurried.mkEffFn1(function ($103) {
-                  return k(Data_Either.Right.create($103));
-              }))(Control_Monad_Eff_Uncurried.mkEffFn1(function ($104) {
-                  return k(Data_Either.Left.create($104));
+              return Control_Monad_Eff_Uncurried.runEffFn4($foreign.tryLoadFileFromGist)(gi)(filename)(Control_Monad_Eff_Uncurried.mkEffFn1(function ($111) {
+                  return k(Data_Either.Right.create($111));
+              }))(Control_Monad_Eff_Uncurried.mkEffFn1(function ($112) {
+                  return k(Data_Either.Left.create($112));
               }));
           };
       };
@@ -2577,8 +2574,8 @@ var PS = {};
       var padLeft = function (s) {
           return Data_String.drop(Data_String.length(s) - 1 | 0)("000" + s);
       };
-      var s4 = Data_Functor.map(Control_Monad_Eff.functorEff)(function ($105) {
-          return padLeft(Data_Int.toStringAs(Data_Int.hexadecimal)($105));
+      var s4 = Data_Functor.map(Control_Monad_Eff.functorEff)(function ($113) {
+          return padLeft(Data_Int.toStringAs(Data_Int.hexadecimal)($113));
       })(Control_Monad_Eff_Random.randomInt(0)(256 * 256 | 0));
       return Data_Newtype.unwrap(Data_Functor_App.newtypeApp)(Data_Semigroup.append(Data_Functor_App.semigroupApp(Control_Monad_Eff.applyEff)(Data_Semigroup.semigroupString))(s4)(Data_Semigroup.append(Data_Functor_App.semigroupApp(Control_Monad_Eff.applyEff)(Data_Semigroup.semigroupString))(s4)(Data_Semigroup.append(Data_Functor_App.semigroupApp(Control_Monad_Eff.applyEff)(Data_Semigroup.semigroupString))(Control_Applicative.pure(Data_Functor_App.applicativeApp(Control_Monad_Eff.applicativeEff))("-"))(Data_Semigroup.append(Data_Functor_App.semigroupApp(Control_Monad_Eff.applyEff)(Data_Semigroup.semigroupString))(s4)(Data_Semigroup.append(Data_Functor_App.semigroupApp(Control_Monad_Eff.applyEff)(Data_Semigroup.semigroupString))(Control_Applicative.pure(Data_Functor_App.applicativeApp(Control_Monad_Eff.applicativeEff))("-"))(Data_Semigroup.append(Data_Functor_App.semigroupApp(Control_Monad_Eff.applyEff)(Data_Semigroup.semigroupString))(s4)(Data_Semigroup.append(Data_Functor_App.semigroupApp(Control_Monad_Eff.applyEff)(Data_Semigroup.semigroupString))(Control_Applicative.pure(Data_Functor_App.applicativeApp(Control_Monad_Eff.applicativeEff))("-"))(Data_Semigroup.append(Data_Functor_App.semigroupApp(Control_Monad_Eff.applyEff)(Data_Semigroup.semigroupString))(s4)(Data_Semigroup.append(Data_Functor_App.semigroupApp(Control_Monad_Eff.applyEff)(Data_Semigroup.semigroupString))(Control_Applicative.pure(Data_Functor_App.applicativeApp(Control_Monad_Eff.applicativeEff))("-"))(Data_Semigroup.append(Data_Functor_App.semigroupApp(Control_Monad_Eff.applyEff)(Data_Semigroup.semigroupString))(s4)(Data_Semigroup.append(Data_Functor_App.semigroupApp(Control_Monad_Eff.applyEff)(Data_Semigroup.semigroupString))(s4)(s4))))))))))));
   })();
@@ -2589,9 +2586,57 @@ var PS = {};
       Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#view_mode"))(Control_Monad_Eff_JQuery.removeClass("show-sub-menu"))();
       return Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#backend"))(Control_Monad_Eff_JQuery.removeClass("show-sub-menu"))();
   };
-  var getValueMaybe = function ($106) {
-      return Data_Functor.map(Control_Monad_Eff.functorEff)(Data_Nullable.toMaybe)(Control_Monad_Eff_Uncurried.runEffFn1($foreign.getValue)($106));
+  var getValueMaybe = function ($114) {
+      return Data_Functor.map(Control_Monad_Eff.functorEff)(Data_Nullable.toMaybe)(Control_Monad_Eff_Uncurried.runEffFn1($foreign.getValue)($114));
   };
+  var getQueryStringMaybe = function ($115) {
+      return Data_Functor.map(Control_Monad_Eff.functorEff)(Data_Nullable.toMaybe)(Control_Monad_Eff_Uncurried.runEffFn1($foreign.getQueryString)($115));
+  };
+
+  // | Look up the session by ID, or create a new session ID.
+  var setupSession = Control_Monad_Eff_Uncurried.mkEffFn1(function (k) {
+      return function __do() {
+          var v = getQueryStringMaybe("session")();
+          if (v instanceof Data_Maybe.Just) {
+              return Control_Monad_Eff_Uncurried.runEffFn1(k)(v.value0)();
+          };
+          if (v instanceof Data_Maybe.Nothing) {
+              return Control_Bind.bind(Control_Monad_Eff.bindEff)(randomGuid)(Control_Monad_Eff_Uncurried.runEffFn2($foreign.setQueryString)("session"))();
+          };
+          throw new Error("Failed pattern match at Main line 202, column 3 - line 206, column 1: " + [ v.constructor.name ]);
+      };
+  });
+  var getJS = function (v) {
+      return v;
+  };
+
+  // | A wrapper for `getGistById` which uses `ContT`.
+  var getGistByIdContT = function (id_) {
+      return function (k) {
+          return Control_Monad_Eff_Uncurried.runEffFn3($foreign.getGistById)(id_)(Control_Monad_Eff_Uncurried.mkEffFn1(function ($116) {
+              return k(Data_Either.Right.create($116));
+          }))(Control_Monad_Eff_Uncurried.mkEffFn1(function ($117) {
+              return k(Data_Either.Left.create($117));
+          }));
+      };
+  };
+
+  // | A wrapper for `get` which uses `ContT`.
+  var getContT = function (uri) {
+      return function (k) {
+          return Control_Monad_Eff_Uncurried.runEffFn3($foreign.get)(uri)(Control_Monad_Eff_Uncurried.mkEffFn1(function ($118) {
+              return k(Data_Either.Right.create($118));
+          }))(Control_Monad_Eff_Uncurried.mkEffFn1(function ($119) {
+              return k(Data_Either.Left.create($119));
+          }));
+      };
+  };
+
+  // | Get the backend name from whatever is selected in the menu.
+  var getBackendNameFromView = Data_Functor.map(Control_Monad_Eff.functorEff)(Data_Maybe.fromMaybe("core"))(function __do() {
+      var jq = Control_Monad_Eff_JQuery.select("input[name=backend_inputs]")();
+      return Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_Uncurried.runEffFn2($foreign.filter)(jq)(":checked"))(getValueMaybe)();
+  });
 
   // | Create a new Gist using the current content
   var publishNewGist = function __do() {
@@ -2607,59 +2652,14 @@ var PS = {};
               };
               if (v2 instanceof Data_Either.Right) {
                   return function __do() {
-                      var v3 = (function __do() {
-                          var jq = Control_Monad_Eff_JQuery.select("input[name=backend_inputs]")();
-                          return Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_Uncurried.runEffFn2($foreign.filter)(jq)(":checked"))(getValueMaybe)();
-                      })();
+                      var v3 = getBackendNameFromView();
                       Control_Monad_Eff_Uncurried.runEffFn2($foreign.setQueryString)("gist")(v2.value0)();
-                      return Control_Monad_Eff_Uncurried.runEffFn2($foreign.setQueryString)("backend")(Data_Maybe.fromMaybe("core")(v3))();
+                      return Control_Monad_Eff_Uncurried.runEffFn2($foreign.setQueryString)("backend")(v3)();
                   };
               };
-              throw new Error("Failed pattern match at Main line 170, column 7 - line 179, column 72: " + [ v2.constructor.name ]);
+              throw new Error("Failed pattern match at Main line 189, column 7 - line 196, column 53: " + [ v2.constructor.name ]);
           })();
       })();
-  };
-  var getQueryStringMaybe = function ($107) {
-      return Data_Functor.map(Control_Monad_Eff.functorEff)(Data_Nullable.toMaybe)(Control_Monad_Eff_Uncurried.runEffFn1($foreign.getQueryString)($107));
-  };
-
-  // | Look up the session by ID, or create a new session ID.
-  var setupSession = Control_Monad_Eff_Uncurried.mkEffFn1(function (k) {
-      return function __do() {
-          var v = getQueryStringMaybe("session")();
-          if (v instanceof Data_Maybe.Just) {
-              return Control_Monad_Eff_Uncurried.runEffFn1(k)(v.value0)();
-          };
-          if (v instanceof Data_Maybe.Nothing) {
-              return Control_Bind.bind(Control_Monad_Eff.bindEff)(randomGuid)(Control_Monad_Eff_Uncurried.runEffFn2($foreign.setQueryString)("session"))();
-          };
-          throw new Error("Failed pattern match at Main line 185, column 3 - line 189, column 1: " + [ v.constructor.name ]);
-      };
-  });
-  var getJS = function (v) {
-      return v;
-  };
-
-  // | A wrapper for `getGistById` which uses `ContT`.
-  var getGistByIdContT = function (id_) {
-      return function (k) {
-          return Control_Monad_Eff_Uncurried.runEffFn3($foreign.getGistById)(id_)(Control_Monad_Eff_Uncurried.mkEffFn1(function ($108) {
-              return k(Data_Either.Right.create($108));
-          }))(Control_Monad_Eff_Uncurried.mkEffFn1(function ($109) {
-              return k(Data_Either.Left.create($109));
-          }));
-      };
-  };
-
-  // | A wrapper for `get` which uses `ContT`.
-  var getContT = function (uri) {
-      return function (k) {
-          return Control_Monad_Eff_Uncurried.runEffFn3($foreign.get)(uri)(Control_Monad_Eff_Uncurried.mkEffFn1(function ($110) {
-              return k(Data_Either.Right.create($110));
-          }))(Control_Monad_Eff_Uncurried.mkEffFn1(function ($111) {
-              return k(Data_Either.Left.create($111));
-          }));
-      };
   };
   var eqBackend = new Data_Eq.Eq(function (x) {
       return function (y) {
@@ -2736,7 +2736,7 @@ var PS = {};
           if (x instanceof Flare && y instanceof Flare) {
               return Data_Ordering.EQ.value;
           };
-          throw new Error("Failed pattern match at Main line 343, column 8 - line 343, column 42: " + [ x.constructor.name, y.constructor.name ]);
+          throw new Error("Failed pattern match at Main line 370, column 8 - line 370, column 42: " + [ x.constructor.name, y.constructor.name ]);
       };
   });
   var defaultBundleAndExecute = Control_Monad_Eff_Uncurried.mkEffFn2(function (js) {
@@ -2771,13 +2771,30 @@ var PS = {};
           return Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#showjs"))(Control_Monad_Eff_JQuery.display)();
       };
   });
+
+  // | Cache the current code in the session state
+  var cacheCurrentCode = function __do() {
+      var v = getQueryStringMaybe("session")();
+      if (v instanceof Data_Maybe.Just) {
+          var v1 = Data_Functor.map(Control_Monad_Eff.functorEff)(Data_Foldable.fold(Data_Foldable.foldableMaybe)(Data_Monoid.monoidString))(Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#code_textarea"))(getValueMaybe))();
+          var v2 = getBackendNameFromView();
+          return Control_Monad_Eff_Uncurried.runEffFn2($foreign.storeSession)(v.value0)({
+              code: v1,
+              backend: v2
+          })();
+      };
+      if (v instanceof Data_Maybe.Nothing) {
+          return Control_Monad_Eff_Console.error("No session ID")();
+      };
+      throw new Error("Failed pattern match at Main line 135, column 3 - line 142, column 1: " + [ v.constructor.name ]);
+  };
   var bundleAndExecuteThermite = Control_Monad_Eff_Uncurried.mkEffFn2(function (js) {
       return function (v) {
           var onComplete = function (dictPartial) {
               return function (v1) {
                   var __unused = function (dictPartial1) {
-                      return function ($dollar37) {
-                          return $dollar37;
+                      return function ($dollar40) {
+                          return $dollar40;
                       };
                   };
                   return __unused(dictPartial)((function () {
@@ -2788,7 +2805,7 @@ var PS = {};
                           var replaced = Data_String_Regex.replace(Data_String_Regex_Unsafe.unsafeRegex("require\\(\"react-dom\\/server\"\\)")(Data_String_Regex_Flags.global))("window.ReactDOM")(Data_String_Regex.replace(Data_String_Regex_Unsafe.unsafeRegex("require\\(\"react-dom\"\\)")(Data_String_Regex_Flags.global))("window.ReactDOM")(Data_String_Regex.replace(Data_String_Regex_Unsafe.unsafeRegex("require\\(\"react\"\\)")(Data_String_Regex_Flags.global))("window.React")(v1["value0"][3])));
                           return Control_Monad_Eff_Uncurried.runEffFn3($foreign.execute)(js)(Data_Foldable.intercalate(Data_Foldable.foldableArray)(Data_Monoid.monoidString)("\x0a")([ v1["value0"][0], v1["value0"][1], v1["value0"][2], replaced ]))(v);
                       };
-                      throw new Error("Failed pattern match at Main line 70, column 9 - line 75, column 33: " + [ v1.constructor.name ]);
+                      throw new Error("Failed pattern match at Main line 77, column 9 - line 82, column 33: " + [ v1.constructor.name ]);
                   })());
               };
           };
@@ -2857,7 +2874,7 @@ var PS = {};
               bundleAndExecute: defaultBundleAndExecute
           };
       };
-      throw new Error("Failed pattern match at Main line 345, column 1 - line 345, column 39: " + [ v.constructor.name ]);
+      throw new Error("Failed pattern match at Main line 372, column 1 - line 372, column 39: " + [ v.constructor.name ]);
   };
   var backendToString = function (v) {
       if (v instanceof Core) {
@@ -2878,13 +2895,13 @@ var PS = {};
       if (v instanceof Flare) {
           return "flare";
       };
-      throw new Error("Failed pattern match at Main line 334, column 1 - line 334, column 37: " + [ v.constructor.name ]);
+      throw new Error("Failed pattern match at Main line 361, column 1 - line 361, column 37: " + [ v.constructor.name ]);
   };
   var backendFromString = function (dictPartial) {
       return function (v) {
           var __unused = function (dictPartial1) {
-              return function ($dollar42) {
-                  return $dollar42;
+              return function ($dollar45) {
+                  return $dollar45;
               };
           };
           return __unused(dictPartial)((function () {
@@ -2906,7 +2923,7 @@ var PS = {};
               if (v === "flare") {
                   return Flare.value;
               };
-              throw new Error("Failed pattern match at Main line 326, column 1 - line 326, column 50: " + [ v.constructor.name ]);
+              throw new Error("Failed pattern match at Main line 353, column 1 - line 353, column 50: " + [ v.constructor.name ]);
           })());
       };
   };
@@ -2915,13 +2932,7 @@ var PS = {};
   };
 
   // | Get the backend configuration from whatever is selected in the menu.
-  var getBackendConfigFromView = (function () {
-      var getBackendNameFromView = Data_Functor.map(Control_Monad_Eff.functorEff)(Data_Maybe.fromMaybe("core"))(function __do() {
-          var jq = Control_Monad_Eff_JQuery.select("input[name=backend_inputs]")();
-          return Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_Uncurried.runEffFn2($foreign.filter)(jq)(":checked"))(getValueMaybe)();
-      });
-      return Data_Functor.map(Control_Monad_Eff.functorEff)(getBackendFromString)(getBackendNameFromView);
-  })();
+  var getBackendConfigFromView = Data_Functor.map(Control_Monad_Eff.functorEff)(getBackendFromString)(getBackendNameFromView);
 
   // | Read query string options and update the state accordingly
   var loadOptions = Control_Monad_Eff_Uncurried.mkEffFn1(function (v) {
@@ -2960,7 +2971,7 @@ var PS = {};
               if (v4 instanceof Data_Maybe.Nothing) {
                   return Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#view_gist_li"))(Control_Monad_Eff_JQuery.hide);
               };
-              throw new Error("Failed pattern match at Main line 289, column 3 - line 291, column 47: " + [ v4.constructor.name ]);
+              throw new Error("Failed pattern match at Main line 316, column 3 - line 318, column 47: " + [ v4.constructor.name ]);
           })()();
           return Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("input[name=backend_inputs]"))(Control_Monad_Eff_JQuery.on("change")(function (e) {
               return function (jq) {
@@ -2973,7 +2984,7 @@ var PS = {};
                           };
                           return Data_Functor["void"](Control_Monad_Eff.functorEff)(Control_Monad_Eff_Timer.setTimeout(1000)(function __do() {
                               Control_Monad_Eff_Uncurried.runEffFn1($foreign.compile)(v5)();
-                              return Control_Monad_Eff_Uncurried.runEffFn1($foreign.cacheCurrentCode)(v5)();
+                              return cacheCurrentCode();
                           }));
                       })()();
                       return hideMenus();
@@ -2986,7 +2997,7 @@ var PS = {};
       return function __do() {
           Control_Monad_Eff_Uncurried.runEffFn1(loadOptions)(backend)();
           Control_Monad_Eff_Uncurried.runEffFn4($foreign.setupEditorWith)(backend)("code")("code_textarea")("ace/mode/haskell")();
-          return Control_Monad_Eff_Uncurried.runEffFn1($foreign.cacheCurrentCode)(backend)();
+          return cacheCurrentCode();
       };
   });
   var loadFromGist = Control_Monad_Eff_Uncurried.mkEffFn2(function (id_) {
@@ -3006,7 +3017,7 @@ var PS = {};
                       return Control_Monad_Eff_Uncurried.runEffFn1(setupEditor)(backend)();
                   };
               };
-              throw new Error("Failed pattern match at Main line 88, column 5 - line 94, column 38: " + [ v.constructor.name ]);
+              throw new Error("Failed pattern match at Main line 95, column 5 - line 101, column 38: " + [ v.constructor.name ]);
           });
       };
   });
@@ -3017,13 +3028,13 @@ var PS = {};
               return Control_Monad_Eff_Uncurried.runEffFn1(setupEditor)(getBackendFromString(v.value0))();
           };
           if (v instanceof Data_Maybe.Nothing) {
-              var v1 = Data_Functor.map(Control_Monad_Eff.functorEff)(function ($112) {
-                  return getBackendFromString(Data_Maybe.fromMaybe("core")($112));
+              var v1 = Data_Functor.map(Control_Monad_Eff.functorEff)(function ($120) {
+                  return getBackendFromString(Data_Maybe.fromMaybe("core")($120));
               })(getQueryStringMaybe("backend"))();
               var v2 = Data_Functor.map(Control_Monad_Eff.functorEff)(Data_Maybe.fromMaybe(v1.mainGist))(getQueryStringMaybe("gist"))();
               return Control_Monad_Eff_Uncurried.runEffFn2(loadFromGist)(v2)(v1)();
           };
-          throw new Error("Failed pattern match at Main line 102, column 3 - line 107, column 37: " + [ v.constructor.name ]);
+          throw new Error("Failed pattern match at Main line 109, column 3 - line 114, column 37: " + [ v.constructor.name ]);
       };
   });
   var main = Control_Monad_Eff_JQuery.ready(function __do() {
@@ -3083,6 +3094,7 @@ var PS = {};
   exports["tryRestoreCachedCodeMaybe"] = tryRestoreCachedCodeMaybe;
   exports["withSession"] = withSession;
   exports["getContT"] = getContT;
+  exports["cacheCurrentCode"] = cacheCurrentCode;
   exports["uploadGistContT"] = uploadGistContT;
   exports["randomGuid"] = randomGuid;
   exports["publishNewGist"] = publishNewGist;
@@ -3092,6 +3104,7 @@ var PS = {};
   exports["getValueMaybe"] = getValueMaybe;
   exports["hideMenus"] = hideMenus;
   exports["changeViewMode"] = changeViewMode;
+  exports["getBackendNameFromView"] = getBackendNameFromView;
   exports["getBackendConfigFromView"] = getBackendConfigFromView;
   exports["loadOptions"] = loadOptions;
   exports["JS"] = JS;
@@ -3112,7 +3125,7 @@ var PS = {};
   exports["ordBackend"] = ordBackend;
   exports["getGistById"] = $foreign.getGistById;
   exports["get"] = $foreign.get;
-  exports["cacheCurrentCode"] = $foreign.cacheCurrentCode;
+  exports["storeSession"] = $foreign.storeSession;
   exports["compile"] = $foreign.compile;
   exports["execute"] = $foreign.execute;
   exports["uploadGist"] = $foreign.uploadGist;

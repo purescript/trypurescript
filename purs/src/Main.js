@@ -42,13 +42,10 @@ exports.navigateTo = function(url) {
   };
 };
 
-exports.cacheCurrentCode = function(backend) {
+exports.storeSession = function(sessionId, state) {
   if (window.localStorage) {
-    var sessionId = $.QueryString['session'];
-    var code = $('#code_textarea').val();
-
-    localStorage.setItem(sessionId, code);
-    localStorage.setItem(sessionId + 'backend', backend.backend);
+    localStorage.setItem(sessionId, state.code);
+    localStorage.setItem(sessionId + 'backend', state.backend);
   }
 };
 
