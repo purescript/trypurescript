@@ -4,7 +4,7 @@ import Prelude
 
 import Control.Monad.Cont.Trans (ContT(..), runContT)
 import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Console (CONSOLE, log, warn)
+import Control.Monad.Eff.Console (CONSOLE, error)
 import Control.Monad.Eff.JQuery (JQuery, Selector, attr, display, hide, on, ready, removeClass, select, setProp, setValue, toggleClass)
 import Control.Monad.Eff.Random (RANDOM, randomInt)
 import Control.Monad.Eff.Timer (TIMER, setTimeout)
@@ -62,7 +62,7 @@ defaultBundleAndExecute = mkEffFn2 \js bc@(BackendConfig backend) -> do
   runEffFn3 get
     (backend.endpoint <> "/bundle")
     (mkEffFn1 \bundle -> runEffFn3 execute js (JS bundle) bc)
-    (mkEffFn1 \err -> warn ("Unable to load JS bundle: " <> err))
+    (mkEffFn1 \err -> error ("Unable to load JS bundle: " <> err))
 
 bundleAndExecuteThermite :: forall eff. EffFn2 (console :: CONSOLE, dom :: DOM | eff) JS BackendConfig Unit
 bundleAndExecuteThermite =
@@ -80,7 +80,7 @@ bundleAndExecuteThermite =
                           , dom :: DOM
                           | eff
                           ) Unit
-        onComplete (Left err) = warn ("Unable to load JS bundle: " <> err)
+        onComplete (Left err) = error ("Unable to load JS bundle: " <> err)
         onComplete (Right [consoleScript, react, react_dom, bundle]) =
           let replaced = bundle
                            # replace (unsafeRegex "require\\(\"react\"\\)" global) "window.React"
@@ -94,7 +94,7 @@ loadFromGist = mkEffFn2 \id_ backend -> do
   runContT (runExceptT (getGistByIdContT id_ >>= \gi -> tryLoadFileFromGistContT gi "Main.purs")) $
     case _ of
       Left err -> do
-        log ("Unable to load gist metadata or contents: " <> err)
+        error ("Unable to load gist metadata or contents: " <> err)
         runEffFn2 setupEditor exportedFunctions backend
       Right code -> do
         select "#code_textarea" >>= setValue code

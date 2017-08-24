@@ -260,9 +260,7 @@ exports.compile = function(pursImports) {
 };
 
 exports.tryLoadFileFromGist = function(gistInfo, filename, done, fail) {
-
   if (gistInfo.files && gistInfo.files.hasOwnProperty(filename)) {
-
     var url = gistInfo.files[filename].raw_url;
 
     return $.ajax({
@@ -272,14 +270,7 @@ exports.tryLoadFileFromGist = function(gistInfo, filename, done, fail) {
       fail(err.statusText);
     });
   } else {
-
-    console.log("File named " + filename + " does not exist in gist");
-
-    var promise = $.Deferred();
-    promise.resolve(null);
-    return promise.done(done).fail(function(err) {
-      fail(err.statusText);
-    });
+    done("");
   }
 };
 
