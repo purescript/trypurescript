@@ -68,7 +68,7 @@ exports.tryRestoreCachedCode = function(sessionId) {
 
 var editor, cleanupActions = [];
 
-exports.setupEditorWith = function(pursImports, name, ta_name, lang) {
+exports.setupEditorWith = function(backend, name, ta_name, lang) {
 
   editor = ace.edit(name);
 
@@ -89,14 +89,13 @@ exports.setupEditorWith = function(pursImports, name, ta_name, lang) {
 
     $('#' + ta_name).val(session.getValue());
 
-    var backend = pursImports.getBackend($('input[name=backend_inputs]').filter(':checked').val());
     exports.cacheCurrentCode(backend);
     if ($("#auto_compile").is(":checked")) {
-      exports.compile(pursImports);
+      exports.compile(backend);
     }
   }, 750));
 
-  exports.compile(pursImports);
+  exports.compile(backend);
 };
 
 exports.execute = function(js, bundle, backend) {
@@ -162,9 +161,7 @@ exports.execute = function(js, bundle, backend) {
   });
 };
 
-exports.compile = function(pursImports) {
-
-  var backend = pursImports.getBackend($('input[name=backend_inputs]').filter(':checked').val());
+exports.compile = function(backend) {
 
   $('#column2')
     .empty()
