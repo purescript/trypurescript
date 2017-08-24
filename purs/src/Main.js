@@ -36,12 +36,6 @@ exports.getValue = function(jq) {
   return jq.val();
 };
 
-exports.confirm = function(msg) {
-  return function() {
-    return window.confirm(msg);
-  };
-};
-
 exports.navigateTo = function(url) {
   return function() {
     location.href = url;
@@ -274,17 +268,13 @@ exports.tryLoadFileFromGist = function(gistInfo, filename, done, fail) {
   }
 };
 
-exports.publishNewGist = function() {
-  if (!confirm('Do you really want to publish this code as an anonymous Gist?\n\nNote: this code will be available to anyone with a link to the Gist.')) {
-    return;
-  }
-
+exports.uploadGist = function(content, done, fail) {
   var data = {
     "description": "Published with try.purescript.org",
     "public": false,
     "files": {
       "Main.purs": {
-        "content": $('#code_textarea').val()
+        "content": content
       }
     }
   };
@@ -295,16 +285,8 @@ exports.publishNewGist = function() {
     dataType: 'json',
     data: JSON.stringify(data)
   }).success(function(e) {
-    console.log(e);
-    var sess = $.QueryString.session;
-    delete $.QueryString.session;
-    $.QueryString.gist = e.id;
-    var backend = $('input[name=backend_inputs]').filter(':checked').val();
-    $.QueryString.backend = backend;
-    $.QueryString.session = sess;
-    $.setQueryParameters($.QueryString);
+    done(e.id);
   }).error(function(e) {
-    alert("Failed to create gist.");
-    console.warn("Gist creation failed: ", e);
+    fail(e);
   });
 };

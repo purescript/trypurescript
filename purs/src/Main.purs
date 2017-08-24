@@ -12,6 +12,9 @@ import Control.Monad.Eff.Uncurried (EffFn1, EffFn2, EffFn3, EffFn4, mkEffFn1, mk
 import Control.Monad.Except.Trans (ExceptT(..), runExceptT)
 import Control.Parallel (parTraverse)
 import DOM (DOM)
+import DOM.HTML (window)
+import DOM.HTML.Types (ALERT, CONFIRM)
+import DOM.HTML.Window (alert, confirm)
 import Data.Either (Either(..))
 import Data.Foldable (elem, fold, intercalate)
 import Data.Functor.App (App(..))
@@ -51,7 +54,7 @@ foreign import getGistById
 getGistByIdContT :: forall eff. String -> ExceptT String (ContT Unit (Eff (dom :: DOM | eff))) GistInfo
 getGistByIdContT id_ = ExceptT (ContT \k -> runEffFn3 getGistById id_ (mkEffFn1 (k <<< Right)) (mkEffFn1 (k <<< Left)))
 
-setupEditor :: forall eff. EffFn2 (dom :: DOM, timer :: TIMER | eff) ExportedFunctions BackendConfig Unit
+setupEditor :: forall eff. EffFn2 (confirm :: CONFIRM, dom :: DOM, timer :: TIMER | eff) ExportedFunctions BackendConfig Unit
 setupEditor = mkEffFn2 \exports backend -> do
   runEffFn1 loadOptions backend
   runEffFn4 setupEditorWith exports "code" "code_textarea" "ace/mode/haskell"
@@ -89,7 +92,7 @@ bundleAndExecuteThermite =
           in runEffFn3 execute js (JS (intercalate "\n" [consoleScript, react, react_dom, replaced])) bc
     in runContT (runExceptT getAll) (unsafePartial onComplete)
 
-loadFromGist :: forall eff. EffFn2 (console :: CONSOLE, dom :: DOM, timer :: TIMER | eff) String BackendConfig Unit
+loadFromGist :: forall eff. EffFn2 (confirm :: CONFIRM, console :: CONSOLE, dom :: DOM, timer :: TIMER | eff) String BackendConfig Unit
 loadFromGist = mkEffFn2 \id_ backend -> do
   runContT (runExceptT (getGistByIdContT id_ >>= \gi -> tryLoadFileFromGistContT gi "Main.purs")) $
     case _ of
@@ -103,7 +106,7 @@ loadFromGist = mkEffFn2 \id_ backend -> do
 tryRestoreCachedCodeMaybe :: forall eff. String -> Eff (dom :: DOM | eff) (Maybe String)
 tryRestoreCachedCodeMaybe = map toMaybe <<< runEffFn1 tryRestoreCachedCode
 
-withSession :: forall eff. EffFn1 (console :: CONSOLE, dom :: DOM, timer :: TIMER | eff) String Unit
+withSession :: forall eff. EffFn1 (confirm :: CONFIRM, console :: CONSOLE, dom :: DOM, timer :: TIMER | eff) String Unit
 withSession = mkEffFn1 \sessionId -> do
   cachedBackend <- tryRestoreCachedCodeMaybe sessionId
   case cachedBackend of
@@ -131,7 +134,17 @@ foreign import compile :: forall eff. EffFn1 (dom :: DOM | eff) ExportedFunction
 
 foreign import execute :: forall eff. EffFn3 (dom :: DOM | eff) JS JS BackendConfig Unit
 
-foreign import publishNewGist :: forall eff. Eff (dom :: DOM | eff) Unit
+foreign import uploadGist
+  :: forall eff
+   . EffFn3 (dom :: DOM | eff)
+            String
+            (EffFn1 (dom :: DOM | eff) String Unit)
+            (EffFn1 (dom :: DOM | eff) String Unit)
+            Unit
+
+-- | A wrapper for `uploadGist` which uses `ContT`.
+uploadGistContT :: forall eff. String -> ExceptT String (ContT Unit (Eff (dom :: DOM | eff))) String
+uploadGistContT content = ExceptT (ContT \k -> runEffFn3 uploadGist content (mkEffFn1 (k <<< Right)) (mkEffFn1 (k <<< Left)))
 
 foreign import setupEditorWith :: forall eff. EffFn4 (dom :: DOM | eff) ExportedFunctions String String String Unit
 
@@ -145,6 +158,35 @@ randomGuid =
   where
     s4 = padLeft <<< toStringAs hexadecimal <$> randomInt 0 (256 * 256)
     padLeft s = drop (length s - 1) ("000" <> s)
+
+-- | Create a new Gist using the current content
+publishNewGist
+  :: forall eff
+   . Eff ( alert :: ALERT
+         , confirm :: CONFIRM
+         , console :: CONSOLE
+         , dom :: DOM
+         | eff
+         ) Unit
+publishNewGist = do
+  ok <- window >>= confirm (intercalate "\n"
+          [ "Do you really want to publish this code as an anonymous Gist?"
+          , ""
+          , "Note: this code will be available to anyone with a link to the Gist."
+          ])
+  when ok do
+    content <- fold <$> (select "#code_textarea" >>= getValueMaybe)
+    runContT (runExceptT (uploadGistContT content)) $
+      case _ of
+        Left err -> do
+          window >>= alert "Failed to create gist"
+          error ("Failed to create gist: " <> err)
+        Right gistId -> do
+          backend <- select "input[name=backend_inputs]"
+                       >>= \jq -> runEffFn2 filter jq ":checked"
+                       >>= getValueMaybe
+          runEffFn2 setQueryString "gist" gistId
+          runEffFn2 setQueryString "backend" (fromMaybe "core" backend)
 
 -- | Look up the session by ID, or create a new session ID.
 setupSession :: forall eff. EffFn1 (dom :: DOM, random :: RANDOM | eff) (EffFn1 (dom :: DOM, random :: RANDOM | eff) String Unit) Unit
@@ -186,9 +228,6 @@ foreign import filter :: forall eff. EffFn2 (dom :: DOM | eff) JQuery Selector J
 -- | Get the value of the first element, if it exists.
 foreign import getValue :: forall eff. EffFn1 (dom :: DOM | eff) JQuery (Nullable String)
 
--- | Present the user with a confirmation dialog
-foreign import confirm :: forall eff. String -> Eff (dom :: DOM | eff) Boolean
-
 -- | Navigate to the specified URL.
 foreign import navigateTo :: forall eff. String -> Eff (dom :: DOM | eff) Unit
 
@@ -224,7 +263,7 @@ changeViewMode = mkEffFn1 \jq -> do
       select "#showjs" >>= display
 
 -- | Read query string options and update the state accordingly
-loadOptions :: forall eff. EffFn1 (dom :: DOM, timer :: TIMER | eff) BackendConfig Unit
+loadOptions :: forall eff. EffFn1 (confirm :: CONFIRM, dom :: DOM, timer :: TIMER | eff) BackendConfig Unit
 loadOptions = mkEffFn1 \bc@(BackendConfig backend) -> do
   select ("#backend_" <> backend.backend) >>= attr { checked: "checked" }
 
@@ -255,7 +294,7 @@ loadOptions = mkEffFn1 \bc@(BackendConfig backend) -> do
   select "input[name=backend_inputs]" >>= on "change" \e jq -> do
     bc_@(BackendConfig newBackend) <- getBackendFromString <$> map (fromMaybe "core") (runEffFn2 filter jq ":checked" >>= getValueMaybe)
 
-    ok <- confirm ("Replace your current code with the " <> newBackend.backend <> " backend sample code?")
+    ok <- window >>= confirm ("Replace your current code with the " <> newBackend.backend <> " backend sample code?")
     if ok
       then navigateTo ("?backend=" <> newBackend.backend)
       else void $ setTimeout 1000 do
@@ -365,7 +404,13 @@ getBackend Flare     = BackendConfig
 getBackendFromString :: String -> BackendConfig
 getBackendFromString s = getBackend (unsafePartial backendFromString s)
 
-main :: Eff (console :: CONSOLE, dom :: DOM, timer :: TIMER, random :: RANDOM) Unit
+main :: Eff ( alert :: ALERT
+            , confirm :: CONFIRM
+            , console :: CONSOLE
+            , dom :: DOM
+            , random :: RANDOM
+            , timer :: TIMER
+            ) Unit
 main = ready do
   select "#showjs" >>= on "change" \e _ -> runEffFn1 compile exportedFunctions
   select "#compile_label" >>= on "click" \e _ -> runEffFn1 compile exportedFunctions
