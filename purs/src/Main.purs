@@ -6,6 +6,7 @@ import Control.Monad.Cont.Trans (ContT(..), runContT)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Console (CONSOLE, log, warn)
 import Control.Monad.Eff.JQuery (JQuery, Selector, attr, display, hide, on, ready, removeClass, select, setProp, setValue, toggleClass)
+import Control.Monad.Eff.Random (RANDOM, randomInt)
 import Control.Monad.Eff.Timer (TIMER, setTimeout)
 import Control.Monad.Eff.Uncurried (EffFn1, EffFn2, EffFn3, EffFn4, mkEffFn1, mkEffFn2, runEffFn1, runEffFn2, runEffFn3, runEffFn4)
 import Control.Monad.Except.Trans (ExceptT(..), runExceptT)
@@ -13,8 +14,12 @@ import Control.Parallel (parTraverse)
 import DOM (DOM)
 import Data.Either (Either(..))
 import Data.Foldable (elem, fold, intercalate)
+import Data.Functor.App (App(..))
+import Data.Int (hexadecimal, toStringAs)
 import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Newtype (unwrap)
 import Data.Nullable (Nullable, toMaybe)
+import Data.String (drop, length)
 import Data.String.Regex (replace)
 import Data.String.Regex.Flags (global)
 import Data.String.Regex.Unsafe (unsafeRegex)
@@ -130,7 +135,24 @@ foreign import publishNewGist :: forall eff. Eff (dom :: DOM | eff) Unit
 
 foreign import setupEditorWith :: forall eff. EffFn4 (dom :: DOM | eff) ExportedFunctions String String String Unit
 
-foreign import setupSession :: forall eff. EffFn1 (dom :: DOM | eff) (EffFn1 (dom :: DOM | eff) String Unit) Unit
+randomGuid :: forall eff. Eff (random :: RANDOM | eff) String
+randomGuid =
+    unwrap (App s4 <> App s4 <> pure "-" <>
+            App s4 <> pure "-" <>
+            App s4 <> pure "-" <>
+            App s4 <> pure "-" <>
+            App s4 <> App s4 <> App s4)
+  where
+    s4 = padLeft <<< toStringAs hexadecimal <$> randomInt 0 (256 * 256)
+    padLeft s = drop (length s - 1) ("000" <> s)
+
+-- | Look up the session by ID, or create a new session ID.
+setupSession :: forall eff. EffFn1 (dom :: DOM, random :: RANDOM | eff) (EffFn1 (dom :: DOM, random :: RANDOM | eff) String Unit) Unit
+setupSession = mkEffFn1 \k -> do
+  sessionId <- getQueryStringMaybe "session"
+  case sessionId of
+    Just sessionId_ -> runEffFn1 k sessionId_
+    Nothing -> randomGuid >>= runEffFn2 setQueryString "session"
 
 foreign import tryLoadFileFromGist
   :: forall eff
@@ -151,6 +173,9 @@ foreign import getQueryString :: forall eff. EffFn1 (dom :: DOM | eff) String (N
 
 getQueryStringMaybe :: forall eff. String -> Eff (dom :: DOM | eff) (Maybe String)
 getQueryStringMaybe = map toMaybe <<< runEffFn1 getQueryString
+
+-- | Set the value of a query string parameter
+foreign import setQueryString :: forall eff. EffFn2 (dom :: DOM | eff) String String Unit
 
 -- | Simulate a click event on the specified element.
 foreign import click :: forall eff. JQuery -> Eff (dom :: DOM | eff) Unit
@@ -340,7 +365,7 @@ getBackend Flare     = BackendConfig
 getBackendFromString :: String -> BackendConfig
 getBackendFromString s = getBackend (unsafePartial backendFromString s)
 
-main :: Eff (console :: CONSOLE, dom :: DOM, timer :: TIMER) Unit
+main :: Eff (console :: CONSOLE, dom :: DOM, timer :: TIMER, random :: RANDOM) Unit
 main = ready do
   select "#showjs" >>= on "change" \e _ -> runEffFn1 compile exportedFunctions
   select "#compile_label" >>= on "click" \e _ -> runEffFn1 compile exportedFunctions

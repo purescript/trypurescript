@@ -19,6 +19,11 @@ exports.getQueryString = function(key) {
   return $.QueryString[key];
 };
 
+exports.setQueryString = function(key, value) {
+  $.QueryString[key] = value;
+  $.setQueryParameters($.QueryString);
+};
+
 exports.click = function(jq) {
   jq.click();
 };
@@ -41,26 +46,6 @@ exports.navigateTo = function(url) {
   return function() {
     location.href = url;
   };
-};
-
-exports.setupSession = function(onSessionExists) {
-  var guid = function() {
-    var s4 = function() {
-      return Math.floor((1 + Math.random()) * 0x10000)
-        .toString(16)
-        .substring(1);
-    }
-    return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
-      s4() + '-' + s4() + s4() + s4();
-  }
-
-  var sessionId = $.QueryString['session'];
-  if (sessionId) {
-    onSessionExists(sessionId);
-  } else {
-    $.QueryString['session'] = sessionId = guid();
-    $.setQueryParameters($.QueryString);
-  }
 };
 
 exports.cacheCurrentCode = function(backend) {
