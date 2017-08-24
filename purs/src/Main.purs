@@ -5,7 +5,7 @@ import Prelude
 import Control.Monad.Cont.Trans (ContT(..), runContT)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Console (CONSOLE, log, warn)
-import Control.Monad.Eff.JQuery (JQuery, Selector, attr, hide, on, ready, select, setProp, setValue, toggleClass)
+import Control.Monad.Eff.JQuery (JQuery, Selector, attr, display, hide, on, ready, removeClass, select, setProp, setValue, toggleClass)
 import Control.Monad.Eff.Timer (TIMER, setTimeout)
 import Control.Monad.Eff.Uncurried (EffFn1, EffFn2, EffFn3, EffFn4, mkEffFn1, mkEffFn2, runEffFn1, runEffFn2, runEffFn3, runEffFn4)
 import Control.Monad.Except.Trans (ExceptT(..), runExceptT)
@@ -120,15 +120,11 @@ foreign import get
 getContT :: forall eff. String -> ExceptT String (ContT Unit (Eff (dom :: DOM | eff))) String
 getContT uri = ExceptT (ContT \k -> runEffFn3 get uri (mkEffFn1 (k <<< Right)) (mkEffFn1 (k <<< Left)))
 
-foreign import changeViewMode :: forall eff. EffFn1 (dom :: DOM | eff) JQuery Unit
-
 foreign import cacheCurrentCode :: forall eff. EffFn1 (dom :: DOM | eff) BackendConfig Unit
 
 foreign import compile :: forall eff. EffFn1 (dom :: DOM | eff) ExportedFunctions Unit
 
 foreign import execute :: forall eff. EffFn3 (dom :: DOM | eff) JS JS BackendConfig Unit
-
-foreign import hideMenus :: forall eff. Eff (dom :: DOM | eff) Unit
 
 foreign import publishNewGist :: forall eff. Eff (dom :: DOM | eff) Unit
 
@@ -174,6 +170,35 @@ foreign import navigateTo :: forall eff. String -> Eff (dom :: DOM | eff) Unit
 getValueMaybe :: forall eff. JQuery -> Eff (dom :: DOM | eff) (Maybe String)
 getValueMaybe = map toMaybe <<< runEffFn1 getValue
 
+-- | Hide the drop down menus
+hideMenus :: forall eff. Eff (dom :: DOM | eff) Unit
+hideMenus = do
+  select "#menu" >>= removeClass "show"
+  select "#view_mode" >>= removeClass "show-sub-menu"
+  select "#backend" >>= removeClass "show-sub-menu"
+
+-- | Update the view mode based on the menu selection
+changeViewMode :: forall eff. EffFn1 (dom :: DOM | eff) JQuery Unit
+changeViewMode = mkEffFn1 \jq -> do
+  viewMode <- runEffFn2 filter jq ":checked" >>= getValueMaybe
+  case viewMode of
+    Just "code" -> do
+      select "#column1" >>= display
+      select "#column2" >>= hide
+      select "#showjs_label" >>= hide
+      select "#showjs" >>= hide
+    Just "output" -> do
+      select "#column1" >>= hide
+      select "#column2" >>= display
+      select "#showjs_label" >>= display
+      select "#showjs" >>= display
+    _ -> do
+      select "#column1" >>= display
+      select "#column2" >>= display
+      select "#showjs_label" >>= display
+      select "#showjs" >>= display
+
+-- | Read query string options and update the state accordingly
 loadOptions :: forall eff. EffFn1 (dom :: DOM, timer :: TIMER | eff) BackendConfig Unit
 loadOptions = mkEffFn1 \bc@(BackendConfig backend) -> do
   select ("#backend_" <> backend.backend) >>= attr { checked: "checked" }

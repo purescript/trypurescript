@@ -120,33 +120,6 @@ exports.setupEditorWith = function(pursImports, name, ta_name, lang) {
   exports.compile(pursImports);
 };
 
-exports.hideMenus = function() {
-  $('#menu').removeClass("show");
-  $('#view_mode').removeClass("show-sub-menu");
-  $('#backend').removeClass("show-sub-menu");
-};
-
-exports.changeViewMode = function(jq) {
-  var view_mode = $(jq).filter(':checked').val();
-
-  if (view_mode === "code") {
-    $('#column1').show();
-    $('#column2').hide();
-    $('#showjs_label').hide();
-    $('#showjs').hide();
-  } else if (view_mode === "output") {
-    $('#column1').hide();
-    $('#column2').show();
-    $('#showjs_label').show();
-    $('#showjs').show();
-  } else { // (view_mode === "sidebyside")
-    $('#column1').show();
-    $('#column2').show();
-    $('#showjs_label').show();
-    $('#showjs').show();
-  }
-};
-
 exports.execute = function(js, bundle, backend) {
 
   var $iframe = $('<iframe id="output-iframe">');

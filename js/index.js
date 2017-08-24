@@ -449,6 +449,16 @@ var PS = {};
       };
   };
 
+  exports.setClass = function(cls) {
+      return function(flag) {
+          return function(ob) {
+              return function() {
+                  ob.toggleClass(cls, flag);
+              };
+          };
+      };
+  };
+
   exports.setProp = function(p) {
       return function(val) {
           return function(ob) {
@@ -695,9 +705,15 @@ var PS = {};
   var Data_Foreign = PS["Data.Foreign"];
   var Data_Functor = PS["Data.Functor"];
   var Data_Maybe = PS["Data.Maybe"];
-  var Prelude = PS["Prelude"];
+  var Prelude = PS["Prelude"];        
+  var removeClass = function (cls) {
+      return $foreign.setClass(cls)(false);
+  };
   var hide = $foreign.setVisible(false);
+  var display = $foreign.setVisible(true);
+  exports["removeClass"] = removeClass;
   exports["hide"] = hide;
+  exports["display"] = display;
   exports["ready"] = $foreign.ready;
   exports["select"] = $foreign.select;
   exports["attr"] = $foreign.attr;
@@ -1888,33 +1904,6 @@ var PS = {};
     exports.compile(pursImports);
   };
 
-  exports.hideMenus = function() {
-    $('#menu').removeClass("show");
-    $('#view_mode').removeClass("show-sub-menu");
-    $('#backend').removeClass("show-sub-menu");
-  };
-
-  exports.changeViewMode = function(jq) {
-    var view_mode = $(jq).filter(':checked').val();
-
-    if (view_mode === "code") {
-      $('#column1').show();
-      $('#column2').hide();
-      $('#showjs_label').hide();
-      $('#showjs').hide();
-    } else if (view_mode === "output") {
-      $('#column1').hide();
-      $('#column2').show();
-      $('#showjs_label').show();
-      $('#showjs').show();
-    } else { // (view_mode === "sidebyside")
-      $('#column1').show();
-      $('#column2').show();
-      $('#showjs_label').show();
-      $('#showjs').show();
-    }
-  };
-
   exports.execute = function(js, bundle, backend) {
 
     var $iframe = $('<iframe id="output-iframe">');
@@ -2216,25 +2205,32 @@ var PS = {};
       Flare.value = new Flare();
       return Flare;
   })();
-  var tryRestoreCachedCodeMaybe = function ($81) {
-      return Data_Functor.map(Control_Monad_Eff.functorEff)(Data_Nullable.toMaybe)(Control_Monad_Eff_Uncurried.runEffFn1($foreign.tryRestoreCachedCode)($81));
+  var tryRestoreCachedCodeMaybe = function ($86) {
+      return Data_Functor.map(Control_Monad_Eff.functorEff)(Data_Nullable.toMaybe)(Control_Monad_Eff_Uncurried.runEffFn1($foreign.tryRestoreCachedCode)($86));
   };
   var tryLoadFileFromGistContT = function (gi) {
       return function (filename) {
           return function (k) {
-              return Control_Monad_Eff_Uncurried.runEffFn4($foreign.tryLoadFileFromGist)(gi)(filename)(Control_Monad_Eff_Uncurried.mkEffFn1(function ($82) {
-                  return k(Data_Either.Right.create($82));
-              }))(Control_Monad_Eff_Uncurried.mkEffFn1(function ($83) {
-                  return k(Data_Either.Left.create($83));
+              return Control_Monad_Eff_Uncurried.runEffFn4($foreign.tryLoadFileFromGist)(gi)(filename)(Control_Monad_Eff_Uncurried.mkEffFn1(function ($87) {
+                  return k(Data_Either.Right.create($87));
+              }))(Control_Monad_Eff_Uncurried.mkEffFn1(function ($88) {
+                  return k(Data_Either.Left.create($88));
               }));
           };
       };
   };
-  var getValueMaybe = function ($84) {
-      return Data_Functor.map(Control_Monad_Eff.functorEff)(Data_Nullable.toMaybe)(Control_Monad_Eff_Uncurried.runEffFn1($foreign.getValue)($84));
+
+  // | Hide the drop down menus
+  var hideMenus = function __do() {
+      Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#menu"))(Control_Monad_Eff_JQuery.removeClass("show"))();
+      Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#view_mode"))(Control_Monad_Eff_JQuery.removeClass("show-sub-menu"))();
+      return Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#backend"))(Control_Monad_Eff_JQuery.removeClass("show-sub-menu"))();
   };
-  var getQueryStringMaybe = function ($85) {
-      return Data_Functor.map(Control_Monad_Eff.functorEff)(Data_Nullable.toMaybe)(Control_Monad_Eff_Uncurried.runEffFn1($foreign.getQueryString)($85));
+  var getValueMaybe = function ($89) {
+      return Data_Functor.map(Control_Monad_Eff.functorEff)(Data_Nullable.toMaybe)(Control_Monad_Eff_Uncurried.runEffFn1($foreign.getValue)($89));
+  };
+  var getQueryStringMaybe = function ($90) {
+      return Data_Functor.map(Control_Monad_Eff.functorEff)(Data_Nullable.toMaybe)(Control_Monad_Eff_Uncurried.runEffFn1($foreign.getQueryString)($90));
   };
   var getJS = function (v) {
       return v;
@@ -2243,10 +2239,10 @@ var PS = {};
   // | A wrapper for `getGistById` which uses `ContT`.
   var getGistByIdContT = function (id_) {
       return function (k) {
-          return Control_Monad_Eff_Uncurried.runEffFn3($foreign.getGistById)(id_)(Control_Monad_Eff_Uncurried.mkEffFn1(function ($86) {
-              return k(Data_Either.Right.create($86));
-          }))(Control_Monad_Eff_Uncurried.mkEffFn1(function ($87) {
-              return k(Data_Either.Left.create($87));
+          return Control_Monad_Eff_Uncurried.runEffFn3($foreign.getGistById)(id_)(Control_Monad_Eff_Uncurried.mkEffFn1(function ($91) {
+              return k(Data_Either.Right.create($91));
+          }))(Control_Monad_Eff_Uncurried.mkEffFn1(function ($92) {
+              return k(Data_Either.Left.create($92));
           }));
       };
   };
@@ -2254,10 +2250,10 @@ var PS = {};
   // | A wrapper for `get` which uses `ContT`.
   var getContT = function (uri) {
       return function (k) {
-          return Control_Monad_Eff_Uncurried.runEffFn3($foreign.get)(uri)(Control_Monad_Eff_Uncurried.mkEffFn1(function ($88) {
-              return k(Data_Either.Right.create($88));
-          }))(Control_Monad_Eff_Uncurried.mkEffFn1(function ($89) {
-              return k(Data_Either.Left.create($89));
+          return Control_Monad_Eff_Uncurried.runEffFn3($foreign.get)(uri)(Control_Monad_Eff_Uncurried.mkEffFn1(function ($93) {
+              return k(Data_Either.Right.create($93));
+          }))(Control_Monad_Eff_Uncurried.mkEffFn1(function ($94) {
+              return k(Data_Either.Left.create($94));
           }));
       };
   };
@@ -2336,7 +2332,7 @@ var PS = {};
           if (x instanceof Flare && y instanceof Flare) {
               return Data_Ordering.EQ.value;
           };
-          throw new Error("Failed pattern match at Main line 255, column 8 - line 255, column 42: " + [ x.constructor.name, y.constructor.name ]);
+          throw new Error("Failed pattern match at Main line 280, column 8 - line 280, column 42: " + [ x.constructor.name, y.constructor.name ]);
       };
   });
   var defaultBundleAndExecute = Control_Monad_Eff_Uncurried.mkEffFn2(function (js) {
@@ -2348,13 +2344,36 @@ var PS = {};
           }));
       };
   });
+
+  // | Update the view mode based on the menu selection
+  var changeViewMode = Control_Monad_Eff_Uncurried.mkEffFn1(function (jq) {
+      return function __do() {
+          var v = Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_Uncurried.runEffFn2($foreign.filter)(jq)(":checked"))(getValueMaybe)();
+          if (v instanceof Data_Maybe.Just && v.value0 === "code") {
+              Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#column1"))(Control_Monad_Eff_JQuery.display)();
+              Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#column2"))(Control_Monad_Eff_JQuery.hide)();
+              Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#showjs_label"))(Control_Monad_Eff_JQuery.hide)();
+              return Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#showjs"))(Control_Monad_Eff_JQuery.hide)();
+          };
+          if (v instanceof Data_Maybe.Just && v.value0 === "output") {
+              Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#column1"))(Control_Monad_Eff_JQuery.hide)();
+              Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#column2"))(Control_Monad_Eff_JQuery.display)();
+              Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#showjs_label"))(Control_Monad_Eff_JQuery.display)();
+              return Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#showjs"))(Control_Monad_Eff_JQuery.display)();
+          };
+          Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#column1"))(Control_Monad_Eff_JQuery.display)();
+          Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#column2"))(Control_Monad_Eff_JQuery.display)();
+          Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#showjs_label"))(Control_Monad_Eff_JQuery.display)();
+          return Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#showjs"))(Control_Monad_Eff_JQuery.display)();
+      };
+  });
   var bundleAndExecuteThermite = Control_Monad_Eff_Uncurried.mkEffFn2(function (js) {
       return function (v) {
           var onComplete = function (dictPartial) {
               return function (v1) {
                   var __unused = function (dictPartial1) {
-                      return function ($dollar31) {
-                          return $dollar31;
+                      return function ($dollar32) {
+                          return $dollar32;
                       };
                   };
                   return __unused(dictPartial)((function () {
@@ -2434,7 +2453,7 @@ var PS = {};
               bundleAndExecute: defaultBundleAndExecute
           };
       };
-      throw new Error("Failed pattern match at Main line 257, column 1 - line 257, column 39: " + [ v.constructor.name ]);
+      throw new Error("Failed pattern match at Main line 282, column 1 - line 282, column 39: " + [ v.constructor.name ]);
   };
   var backendToString = function (v) {
       if (v instanceof Core) {
@@ -2455,13 +2474,13 @@ var PS = {};
       if (v instanceof Flare) {
           return "flare";
       };
-      throw new Error("Failed pattern match at Main line 246, column 1 - line 246, column 37: " + [ v.constructor.name ]);
+      throw new Error("Failed pattern match at Main line 271, column 1 - line 271, column 37: " + [ v.constructor.name ]);
   };
   var backendFromString = function (dictPartial) {
       return function (v) {
           var __unused = function (dictPartial1) {
-              return function ($dollar36) {
-                  return $dollar36;
+              return function ($dollar37) {
+                  return $dollar37;
               };
           };
           return __unused(dictPartial)((function () {
@@ -2483,7 +2502,7 @@ var PS = {};
               if (v === "flare") {
                   return Flare.value;
               };
-              throw new Error("Failed pattern match at Main line 238, column 1 - line 238, column 50: " + [ v.constructor.name ]);
+              throw new Error("Failed pattern match at Main line 263, column 1 - line 263, column 50: " + [ v.constructor.name ]);
           })());
       };
   };
@@ -2493,6 +2512,8 @@ var PS = {};
   var exportedFunctions = {
       getBackend: getBackendFromString
   };
+
+  // | Read query string options and update the state accordingly
   var loadOptions = Control_Monad_Eff_Uncurried.mkEffFn1(function (v) {
       return function __do() {
           Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#backend_" + v.backend))(Control_Monad_Eff_JQuery.attr({
@@ -2529,7 +2550,7 @@ var PS = {};
               if (v4 instanceof Data_Maybe.Nothing) {
                   return Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#view_gist_li"))(Control_Monad_Eff_JQuery.hide);
               };
-              throw new Error("Failed pattern match at Main line 201, column 3 - line 203, column 47: " + [ v4.constructor.name ]);
+              throw new Error("Failed pattern match at Main line 226, column 3 - line 228, column 47: " + [ v4.constructor.name ]);
           })()();
           return Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("input[name=backend_inputs]"))(Control_Monad_Eff_JQuery.on("change")(function (e) {
               return function (jq) {
@@ -2545,7 +2566,7 @@ var PS = {};
                               return Control_Monad_Eff_Uncurried.runEffFn1($foreign.cacheCurrentCode)(v5)();
                           }));
                       })()();
-                      return $foreign.hideMenus();
+                      return hideMenus();
                   };
               };
           }))();
@@ -2588,8 +2609,8 @@ var PS = {};
               return Control_Monad_Eff_Uncurried.runEffFn2(setupEditor)(exportedFunctions)(getBackendFromString(v.value0))();
           };
           if (v instanceof Data_Maybe.Nothing) {
-              var v1 = Data_Functor.map(Control_Monad_Eff.functorEff)(function ($90) {
-                  return getBackendFromString(Data_Maybe.fromMaybe("core")($90));
+              var v1 = Data_Functor.map(Control_Monad_Eff.functorEff)(function ($95) {
+                  return getBackendFromString(Data_Maybe.fromMaybe("core")($95));
               })(getQueryStringMaybe("backend"))();
               var v2 = Data_Functor.map(Control_Monad_Eff.functorEff)(Data_Maybe.fromMaybe(v1.mainGist))(getQueryStringMaybe("gist"))();
               return Control_Monad_Eff_Uncurried.runEffFn2(loadFromGist)(v2)(v1)();
@@ -2610,7 +2631,7 @@ var PS = {};
       }))();
       Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("input[name=view_mode]"))(Control_Monad_Eff_JQuery.on("change")(function (v) {
           return function (jq) {
-              return Control_Monad_Eff_Uncurried.runEffFn1($foreign.changeViewMode)(jq);
+              return Control_Monad_Eff_Uncurried.runEffFn1(changeViewMode)(jq);
           };
       }))();
       Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#gist_save"))(Control_Monad_Eff_JQuery.on("click")(function (e) {
@@ -2635,7 +2656,7 @@ var PS = {};
       }))();
       Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#editor_view"))(Control_Monad_Eff_JQuery.on("click")(function (e) {
           return function (v) {
-              return $foreign.hideMenus;
+              return hideMenus;
           };
       }))();
       return Control_Monad_Eff_Uncurried.runEffFn1($foreign.setupSession)(withSession)();
@@ -2653,6 +2674,8 @@ var PS = {};
   exports["tryLoadFileFromGistContT"] = tryLoadFileFromGistContT;
   exports["getQueryStringMaybe"] = getQueryStringMaybe;
   exports["getValueMaybe"] = getValueMaybe;
+  exports["hideMenus"] = hideMenus;
+  exports["changeViewMode"] = changeViewMode;
   exports["loadOptions"] = loadOptions;
   exports["JS"] = JS;
   exports["getJS"] = getJS;
@@ -2672,11 +2695,9 @@ var PS = {};
   exports["ordBackend"] = ordBackend;
   exports["getGistById"] = $foreign.getGistById;
   exports["get"] = $foreign.get;
-  exports["changeViewMode"] = $foreign.changeViewMode;
   exports["cacheCurrentCode"] = $foreign.cacheCurrentCode;
   exports["compile"] = $foreign.compile;
   exports["execute"] = $foreign.execute;
-  exports["hideMenus"] = $foreign.hideMenus;
   exports["publishNewGist"] = $foreign.publishNewGist;
   exports["setupEditorWith"] = $foreign.setupEditorWith;
   exports["setupSession"] = $foreign.setupSession;
