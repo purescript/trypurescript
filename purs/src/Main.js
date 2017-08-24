@@ -270,7 +270,7 @@ exports.tryLoadFileFromGist = function(gistInfo, filename, done, fail) {
       fail(err.statusText);
     });
   } else {
-    done("");
+    fail("Gist does not contain a file named " + filename);
   }
 };
 
