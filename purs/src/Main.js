@@ -1,47 +1,46 @@
 "use strict";
 
 exports.get = function(uri, done, fail) {
-  $.get(uri).done(done).fail(fail);
+  $.get(uri).done(done).fail(function(err) {
+    fail(err.statusText);
+  });
 };
 
-exports.loadOptions = function(pursImports, backend) {
-
-  $('#backend_' + backend.backend).attr('checked', 'checked');
-
-  var view_mode = $.QueryString["view"];
-  if (view_mode && (view_mode === "sidebyside" || view_mode === "code" || view_mode === "output")) {
-    $('#view_' + view_mode).click();
-  }
-
-  var showjs = $.QueryString["js"];
-  if (showjs) {
-    $('input:checkbox[name=showjs]').prop('checked', showjs === "true");
-  }
-
-  var auto_compile = $.QueryString["compile"];
-  if (auto_compile) {
-    $('input:checkbox[name=auto_compile]').prop('checked', auto_compile === "true");
-  }
-
-  var gist = $.QueryString["gist"];
-  if (gist) {
-    $('#view_gist').attr('href', 'https://gist.github.com/' + gist);
-  } else {
-    $('#view_gist_li').hide();
-  }
-
-  $('input[name=backend_inputs]').change(function(e) {
-    var backend = pursImports.getBackend($(this).filter(':checked').val());
-    if (confirm("Replace your current code with the " + backend.backend + " backend sample code?")) {
-      location.href = "?backend=" + backend.backend;
-    } else {
-      setTimeout(function() {
-        exports.compile(pursImports);
-        exports.cacheCurrentCode(backend);
-      }, 1000);
-    }
-    exports.hideMenus();
+exports.getGistById = function(id, done, fail) {
+  $.ajax({
+    url: 'https://api.github.com/gists/' + id,
+    dataType: 'json'
+  }).done(done).fail(function(err) {
+    fail(err.statusText);
   });
+}
+
+exports.getQueryString = function(key) {
+  return $.QueryString[key];
+};
+
+exports.click = function(jq) {
+  jq.click();
+};
+
+exports.filter = function(jq, sel) {
+  return jq.filter(sel);
+};
+
+exports.getValue = function(jq) {
+  return jq.val();
+};
+
+exports.confirm = function(msg) {
+  return function() {
+    return window.confirm(msg);
+  };
+};
+
+exports.navigateTo = function(url) {
+  return function() {
+    location.href = url;
+  };
 };
 
 exports.setupSession = function(onSessionExists) {
@@ -302,7 +301,7 @@ exports.compile = function(pursImports) {
   });
 };
 
-exports.tryLoadFileFromGist = function(gistInfo, filename) {
+exports.tryLoadFileFromGist = function(gistInfo, filename, done, fail) {
 
   if (gistInfo.files && gistInfo.files.hasOwnProperty(filename)) {
 
@@ -311,6 +310,8 @@ exports.tryLoadFileFromGist = function(gistInfo, filename) {
     return $.ajax({
       url: url,
       dataType: 'text'
+    }).done(done).fail(function(err) {
+      fail(err.statusText);
     });
   } else {
 
@@ -318,28 +319,10 @@ exports.tryLoadFileFromGist = function(gistInfo, filename) {
 
     var promise = $.Deferred();
     promise.resolve(null);
-    return promise;
+    return promise.done(done).fail(function(err) {
+      fail(err.statusText);
+    });
   }
-};
-
-exports.loadFromGist = function(pursImports, id, backend) {
-  $.ajax({
-    url: 'https://api.github.com/gists/' + id,
-    dataType: 'json'
-  }).done(function(gistInfo) {
-    exports.tryLoadFileFromGist(gistInfo, "Main.purs")
-      .done(function(code) {
-        code && $('#code_textarea').val(code);
-        exports.setupEditor(pursImports, backend);
-      }).fail(function() {
-        console.log("Unable to load gist contents");
-        exports.setupEditor(pursImports, backend);
-      });
-  }).fail(function() {
-
-    console.log("Unable to load gist metadata");
-    exports.setupEditor(pursImports, backend);
-  });
 };
 
 exports.publishNewGist = function() {
@@ -375,15 +358,4 @@ exports.publishNewGist = function() {
     alert("Failed to create gist.");
     console.warn("Gist creation failed: ", e);
   });
-};
-
-exports.withSession = function(pursImports, sessionId) {
-  var cachedBackend = exports.tryRestoreCachedCode(sessionId);
-  if (cachedBackend) {
-    exports.setupEditor(pursImports, pursImports.getBackend(cachedBackend));
-  } else {
-    var backend = pursImports.getBackend($.QueryString["backend"] || "core");
-    var gist = $.QueryString["gist"] || backend.mainGist;
-    exports.loadFromGist(pursImports, gist, backend);
-  }
 };
