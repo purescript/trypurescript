@@ -15,18 +15,28 @@ import DOM (DOM)
 import DOM.HTML (window)
 import DOM.HTML.Types (ALERT, CONFIRM)
 import DOM.HTML.Window (alert, confirm)
+import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Foldable (elem, fold, for_, intercalate)
 import Data.Functor.App (App(..))
 import Data.Int (hexadecimal, toStringAs)
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Newtype (unwrap)
+import Data.Newtype (unwrap, wrap)
 import Data.Nullable (Nullable, toMaybe)
-import Data.String (drop, length)
+import Data.StrMap as StrMap
+import Data.String as String
 import Data.String.Regex (replace)
 import Data.String.Regex.Flags (global)
 import Data.String.Regex.Unsafe (unsafeRegex)
+import Data.Tuple (Tuple(..))
+import Global (decodeURIComponent)
 import Partial.Unsafe (unsafePartial)
+
+foreign import compile :: forall eff. EffFn1 (dom :: DOM | eff) BackendConfig Unit
+
+foreign import execute :: forall eff. EffFn3 (dom :: DOM | eff) JS JS BackendConfig Unit
+
+foreign import setupEditorWith :: forall eff. EffFn4 (dom :: DOM | eff) BackendConfig String String String Unit
 
 -- | An abstract data type representing the data we get back from the GitHub API.
 data GistInfo
@@ -150,10 +160,6 @@ tryRestoreCachedCode sessionId = do
     select "#code_textarea" >>= setValue code
   pure (map _.backend state)
 
-foreign import compile :: forall eff. EffFn1 (dom :: DOM | eff) BackendConfig Unit
-
-foreign import execute :: forall eff. EffFn3 (dom :: DOM | eff) JS JS BackendConfig Unit
-
 foreign import uploadGist
   :: forall eff
    . EffFn3 (dom :: DOM | eff)
@@ -166,8 +172,6 @@ foreign import uploadGist
 uploadGistContT :: forall eff. String -> ExceptT String (ContT Unit (Eff (dom :: DOM | eff))) String
 uploadGistContT content = ExceptT (ContT \k -> runEffFn3 uploadGist content (mkEffFn1 (k <<< Right)) (mkEffFn1 (k <<< Left)))
 
-foreign import setupEditorWith :: forall eff. EffFn4 (dom :: DOM | eff) BackendConfig String String String Unit
-
 randomGuid :: forall eff. Eff (random :: RANDOM | eff) String
 randomGuid =
     unwrap (App s4 <> App s4 <> pure "-" <>
@@ -177,7 +181,7 @@ randomGuid =
             App s4 <> App s4 <> App s4)
   where
     s4 = padLeft <<< toStringAs hexadecimal <$> randomInt 0 (256 * 256)
-    padLeft s = drop (length s - 1) ("000" <> s)
+    padLeft s = String.drop (String.length s - 1) ("000" <> s)
 
 -- | Create a new Gist using the current content
 publishNewGist
@@ -203,8 +207,8 @@ publishNewGist = do
           error ("Failed to create gist: " <> err)
         Right gistId -> do
           backend <- getBackendNameFromView
-          runEffFn2 setQueryString "gist" gistId
-          runEffFn2 setQueryString "backend" backend
+          setQueryString "gist" gistId
+          setQueryString "backend" backend
 
 -- | Look up the session by ID, or create a new session ID.
 setupSession :: forall eff. EffFn1 (dom :: DOM, random :: RANDOM | eff) (EffFn1 (dom :: DOM, random :: RANDOM | eff) String Unit) Unit
@@ -212,7 +216,7 @@ setupSession = mkEffFn1 \k -> do
   sessionId <- getQueryStringMaybe "session"
   case sessionId of
     Just sessionId_ -> runEffFn1 k sessionId_
-    Nothing -> randomGuid >>= runEffFn2 setQueryString "session"
+    Nothing -> randomGuid >>= setQueryString "session"
 
 foreign import tryLoadFileFromGist
   :: forall eff
@@ -227,13 +231,35 @@ tryLoadFileFromGistContT :: forall eff. GistInfo -> String -> ExceptT String (Co
 tryLoadFileFromGistContT gi filename = ExceptT (ContT \k -> runEffFn4 tryLoadFileFromGist gi filename (mkEffFn1 (k <<< Right)) (mkEffFn1 (k <<< Left)))
 
 -- | Get the value of a query string parameter from the jQuery plugin.
-foreign import getQueryString :: forall eff. EffFn1 (dom :: DOM | eff) String (Nullable String)
+foreign import getQueryString :: forall eff. Eff (dom :: DOM | eff) String
+
+getQueryParams :: forall eff. Eff (dom :: DOM | eff) (StrMap.StrMap String)
+getQueryParams = breakQueryString <$> getQueryString where
+  breakQueryString :: String -> StrMap.StrMap String
+  breakQueryString =
+    String.drop 1
+    >>> String.split (wrap "&")
+    >>> map (String.split (wrap "=") >>> parseQueryTerm)
+    >>> Array.catMaybes
+    >>> StrMap.fromFoldable
+
+  parseQueryTerm :: Array String -> Maybe (Tuple String String)
+  parseQueryTerm [k, v] = Just (Tuple k (decodeURIComponent (spaces v)))
+  parseQueryTerm _ = Nothing
+
+  spaces :: String -> String
+  spaces = String.replaceAll (wrap "+") (wrap " ")
 
 getQueryStringMaybe :: forall eff. String -> Eff (dom :: DOM | eff) (Maybe String)
-getQueryStringMaybe = map toMaybe <<< runEffFn1 getQueryString
+getQueryStringMaybe key = StrMap.lookup key <$> getQueryParams
 
 -- | Set the value of a query string parameter
-foreign import setQueryString :: forall eff. EffFn2 (dom :: DOM | eff) String String Unit
+foreign import setQueryParameters :: forall eff. EffFn1 (dom :: DOM | eff) (StrMap.StrMap String) Unit
+
+setQueryString :: forall eff. String -> String -> Eff (dom :: DOM | eff) Unit
+setQueryString k v = do
+  params <- getQueryParams
+  runEffFn1 setQueryParameters (StrMap.insert k v params)
 
 -- | Simulate a click event on the specified element.
 foreign import click :: forall eff. JQuery -> Eff (dom :: DOM | eff) Unit

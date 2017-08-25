@@ -15,13 +15,17 @@ exports.getGistById = function(id, done, fail) {
   });
 }
 
-exports.getQueryString = function(key) {
-  return $.QueryString[key];
+exports.getQueryString = function() {
+  return window.location.search;
 };
 
-exports.setQueryString = function(key, value) {
-  $.QueryString[key] = value;
-  $.setQueryParameters($.QueryString);
+exports.setQueryParameters = function(params) {
+  var url = location.href.split('?')[0];
+  var encodedParams = Object.keys(params).map(function(key) {
+    return key + '=' + encodeURIComponent(params[key].replace('/', ''));
+  }).join('&');
+
+  document.location = url + '?' + encodedParams;
 };
 
 exports.click = function(jq) {
