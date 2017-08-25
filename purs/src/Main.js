@@ -116,15 +116,7 @@ exports.uploadGist = function(content, done, fail) {
 
 exports.execute = function(js, bundle, backend) {
 
-  var $iframe = $('<iframe id="output-iframe">');
-
-  $('#column2')
-    .empty()
-    .append($iframe);
-
-  var iframe = $iframe.get(0).contentWindow.document;
-  iframe.open();
-  iframe.write(
+  var html =
     ['<!DOCTYPE html>'
     , '<html>'
     , '  <head>'
@@ -139,9 +131,7 @@ exports.execute = function(js, bundle, backend) {
     , backend.extra_body
     , '  </body>'
     , '</html>'
-    ].join('\n')
-  );
-  iframe.close();
+  ].join('\n');
 
   // Replace any require() statements with the PS['...'] form using a regex substitution.
   var replaced = js.replace(/require\("[^"]*"\)/g, function(s) {
@@ -160,20 +150,10 @@ exports.execute = function(js, bundle, backend) {
 
   var scripts = [bundle, wrapped].join("\n");
 
-  var script = iframe.createElement('script');
-  script.appendChild(iframe.createTextNode(scripts));
-
-  $('iframe').ready(function() {
-    var checkExists = setInterval(function() {
-      var body = iframe.getElementsByTagName('body')[0];
-      if (body) {
-        body.onclick = function() {
-          exports.hideMenus();
-        };
-        body.appendChild(script);
-        clearInterval(checkExists);
-      }
-    }, 100);
+  setupIFrame($('#column2'), html, scripts, function(body) {
+    body.onclick = function() {
+      exports.hideMenus();
+    };
   });
 };
 

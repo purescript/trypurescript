@@ -182,6 +182,35 @@
         };
       })(marker, startLine - 1));
     }
+
+    function setupIFrame($ctr, html, js, onReady) {
+      var $iframe = $('<iframe id="output-iframe">');
+      
+      $ctr
+        .empty()
+        .append($iframe);
+
+      var iframe = $iframe.get(0).contentWindow.document;
+      iframe.open();
+      iframe.write(html);
+      iframe.close();
+
+      var script = iframe.createElement('script');
+      script.appendChild(iframe.createTextNode(js));
+
+      $iframe.ready(function() {
+        var checkExists = setInterval(function() {
+          var body = iframe.getElementsByTagName('body')[0];
+          if (body) {
+            onReady(body);
+            body.appendChild(script);
+            clearInterval(checkExists);
+          }
+        }, 100);
+      });
+
+      return $iframe;
+    }
   </script>
   <script type="text/javascript" src="js/index.js"></script>
 </body>
