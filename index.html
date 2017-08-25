@@ -122,6 +122,66 @@
     $.ajaxSetup({
       dataType: 'text'
     });
+
+    var editor, cleanupActions = [];
+
+    editor = ace.edit('code');
+
+    editor.renderer.setShowGutter(true);
+    editor.setFontSize(13);
+    editor.setShowPrintMargin(false);
+
+    var session = editor.getSession();
+
+    session.setMode('ace/mode/haskell');
+    session.setOptions({
+      tabSize: 2,
+      useSoftTabs: true
+    });
+
+    function setEditorContent(value) {
+      session.setValue(value);
+    }
+
+    function onEditorChanged(callback, millis) {
+      session.on('change', _.debounce(function() {
+        callback();
+      }, millis));
+    }
+
+    function cleanUpMarkers() {
+      for (var i = 0; i < cleanupActions.length; i++) {
+        cleanupActions[i]();
+      }
+
+      cleanupActions = [];
+    }
+
+    function addErrorMarker(startLine, startColumn, endLine, endColumn) {
+      if (startLine === endLine && endColumn <= startColumn) {
+        // Make sure the range is at least one character wide.
+        if (startColumn > 0) {
+          startColumn = endColumn - 1;
+        } else {
+          endColumn = startColumn + 1;
+        }
+      }
+
+      // Add an error marker
+      var range = new(ace.require("ace/range").Range)
+        (startLine - 1, startColumn - 1, endLine - 1, endColumn - 1);
+
+      var marker = editor.session.addMarker(range, "error", "text", true);
+
+      editor.session.addGutterDecoration(startLine - 1, "gutter-error");
+
+      cleanupActions.push((function(marker, line) {
+        return function() {
+          editor.session.removeMarker(marker);
+          editor.session.removeGutterDecoration(line, "gutter-error");
+        };
+      })(marker, startLine - 1));
+    }
   </script>
   <script type="text/javascript" src="js/index.js"></script>
 </body>

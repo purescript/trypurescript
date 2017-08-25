@@ -105,34 +105,17 @@ exports.uploadGist = function(content, done, fail) {
 
 /*****************************************************************************/
 
-var editor, cleanupActions = [];
+exports.setupEditorWith = function(backend) {
+  setEditorContent($('#code_textarea').val());
 
-exports.setupEditorWith = function(backend, name, ta_name, lang) {
-
-  editor = ace.edit(name);
-
-  editor.renderer.setShowGutter(true);
-  editor.setFontSize(13);
-  editor.setShowPrintMargin(false);
-
-  var session = editor.getSession();
-
-  session.setMode(lang);
-  session.setValue($('#' + ta_name).val());
-  session.setOptions({
-    tabSize: 2,
-    useSoftTabs: true
-  });
-
-  session.on('change', _.debounce(function() {
-
+  onEditorChanged(function() {
     $('#' + ta_name).val(session.getValue());
 
     exports.cacheCurrentCode(backend);
     if ($("#auto_compile").is(":checked")) {
       exports.compile(backend);
     }
-  }, 750));
+  }, 750);
 
   exports.compile(backend);
 };
@@ -216,11 +199,7 @@ exports.compile = function(backend) {
     contentType: 'text/plain',
     success: function(res) {
 
-      for (var i = 0; i < cleanupActions.length; i++) {
-        cleanupActions[i]();
-      }
-
-      cleanupActions = [];
+      cleanUpMarkers();
 
       if (res.error) {
         switch (res.error.tag) {
@@ -235,32 +214,8 @@ exports.compile = function(backend) {
                 .append($('<h1>').addClass('error-banner').append("Error " + (i + 1) + " of " + errors.length))
                 .append($('<pre>').append($('<code>').append(error.message)));
 
-              var startColumn = error.position.startColumn;
-              var endColumn = error.position.endColumn;
-
-              if (error.position.startLine === error.position.endLine && endColumn <= error.position.startColumn) {
-                // Make sure the range is at least one character wide.
-                if (startColumn > 0) {
-                  startColumn = endColumn - 1;
-                } else {
-                  endColumn = startColumn + 1;
-                }
-              }
-
-              // Add an error marker
-              var range = new(ace.require("ace/range").Range)
-                (error.position.startLine - 1, startColumn - 1, error.position.endLine - 1, endColumn - 1);
-
-              var marker = editor.session.addMarker(range, "error", "text", true);
-
-              editor.session.addGutterDecoration(error.position.startLine - 1, "gutter-error");
-
-              cleanupActions.push((function(marker, line) {
-                return function() {
-                  editor.session.removeMarker(marker);
-                  editor.session.removeGutterDecoration(line, "gutter-error");
-                };
-              })(marker, error.position.startLine - 1));
+              addErrorMarker(error.position.startLine, error.position.startColumn,
+                error.position.endLine, error.position.endColumn);
             }
 
             break;

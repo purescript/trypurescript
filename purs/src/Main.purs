@@ -36,7 +36,7 @@ foreign import compile :: forall eff. EffFn1 (dom :: DOM | eff) BackendConfig Un
 
 foreign import execute :: forall eff. EffFn3 (dom :: DOM | eff) JS JS BackendConfig Unit
 
-foreign import setupEditorWith :: forall eff. EffFn4 (dom :: DOM | eff) BackendConfig String String String Unit
+foreign import setupEditorWith :: forall eff. EffFn1 (dom :: DOM | eff) BackendConfig Unit
 
 -- | An abstract data type representing the data we get back from the GitHub API.
 data GistInfo
@@ -64,7 +64,7 @@ setupEditor
             ) BackendConfig Unit
 setupEditor = mkEffFn1 \backend -> do
   runEffFn1 loadOptions backend
-  runEffFn4 setupEditorWith backend "code" "code_textarea" "ace/mode/haskell"
+  runEffFn1 setupEditorWith backend
   cacheCurrentCode
 
 defaultBundleAndExecute :: forall eff. EffFn2 (console :: CONSOLE, dom :: DOM | eff) JS BackendConfig Unit
