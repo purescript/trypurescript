@@ -38,9 +38,18 @@ exports.filter = function(jq, sel) {
   return jq.filter(sel);
 };
 
+exports.is = function(jq, sel) {
+  return jq.is(sel);
+};
+
 exports.getValue = function(jq) {
   return jq.val();
 };
+
+exports.setEditorContent = setEditorContent;
+exports.onEditorChanged = onEditorChanged;
+exports.cleanUpMarkers = cleanUpMarkers;
+exports.addErrorMarker = addErrorMarker;
 
 exports.navigateTo = function(url) {
   return function() {
@@ -104,21 +113,6 @@ exports.uploadGist = function(content, done, fail) {
 };
 
 /*****************************************************************************/
-
-exports.setupEditorWith = function(backend) {
-  setEditorContent($('#code_textarea').val());
-
-  onEditorChanged(function() {
-    $('#' + ta_name).val(session.getValue());
-
-    exports.cacheCurrentCode(backend);
-    if ($("#auto_compile").is(":checked")) {
-      exports.compile(backend);
-    }
-  }, 750);
-
-  exports.compile(backend);
-};
 
 exports.execute = function(js, bundle, backend) {
 

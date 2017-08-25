@@ -145,7 +145,7 @@
 
     function onEditorChanged(callback, millis) {
       session.on('change', _.debounce(function() {
-        callback();
+        callback(session.getValue());
       }, millis));
     }
 

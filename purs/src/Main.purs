@@ -36,7 +36,39 @@ foreign import compile :: forall eff. EffFn1 (dom :: DOM | eff) BackendConfig Un
 
 foreign import execute :: forall eff. EffFn3 (dom :: DOM | eff) JS JS BackendConfig Unit
 
-foreign import setupEditorWith :: forall eff. EffFn1 (dom :: DOM | eff) BackendConfig Unit
+-- | Set the editor content to the specified string.
+foreign import setEditorContent :: forall eff. EffFn1 (dom :: DOM | eff) String Unit
+
+-- | Register a callback for editor change events.
+foreign import onEditorChanged
+  :: forall eff
+   . EffFn2 (dom :: DOM | eff)
+            (EffFn1 (dom :: DOM | eff) String Unit)
+            Int
+            Unit
+
+-- | Clean up any global state associated with any visible error markers.
+foreign import cleanUpMarkers :: forall eff. Eff (dom :: DOM | eff) Unit
+
+-- | Add a visible error marker at the specified location.
+foreign import addErrorMarker :: forall eff. EffFn4 (dom :: DOM | eff) Int Int Int Int Unit
+
+-- | Set up the editor content, and registers a callback for any changes.
+setupEditorWith :: forall eff. EffFn1 (console :: CONSOLE, dom :: DOM | eff) BackendConfig Unit
+setupEditorWith = mkEffFn1 \bc -> do
+  select "#code_textarea"
+    >>= getValueMaybe
+    >>= fold
+    >>> runEffFn1 setEditorContent
+
+  runEffFn2 onEditorChanged (mkEffFn1 \value -> do
+     select "#code_textarea" >>= setValue value
+     cacheCurrentCode
+     autoCompile <- select "#auto_compile" >>= \jq -> runEffFn2 is jq ":checked"
+     when autoCompile do
+       runEffFn1 compile bc) 750
+
+  runEffFn1 compile bc
 
 -- | An abstract data type representing the data we get back from the GitHub API.
 data GistInfo
@@ -266,6 +298,9 @@ foreign import click :: forall eff. JQuery -> Eff (dom :: DOM | eff) Unit
 
 -- | Filter elements based on an additional selector.
 foreign import filter :: forall eff. EffFn2 (dom :: DOM | eff) JQuery Selector JQuery
+
+-- | Test whether elements match an additional selector.
+foreign import is :: forall eff. EffFn2 (dom :: DOM | eff) JQuery Selector Boolean
 
 -- | Get the value of the first element, if it exists.
 foreign import getValue :: forall eff. EffFn1 (dom :: DOM | eff) JQuery (Nullable String)
