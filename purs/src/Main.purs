@@ -16,7 +16,7 @@ import DOM.HTML (window)
 import DOM.HTML.Types (ALERT, CONFIRM)
 import DOM.HTML.Window (alert, confirm)
 import Data.Either (Either(..))
-import Data.Foldable (elem, fold, intercalate)
+import Data.Foldable (elem, fold, for_, intercalate)
 import Data.Functor.App (App(..))
 import Data.Int (hexadecimal, toStringAs)
 import Data.Maybe (Maybe(..), fromMaybe)
@@ -100,12 +100,9 @@ loadFromGist = mkEffFn2 \id_ backend -> do
         select "#code_textarea" >>= setValue code
         runEffFn1 setupEditor backend
 
-tryRestoreCachedCodeMaybe :: forall eff. String -> Eff (dom :: DOM | eff) (Maybe String)
-tryRestoreCachedCodeMaybe = map toMaybe <<< runEffFn1 tryRestoreCachedCode
-
 withSession :: forall eff. EffFn1 (confirm :: CONFIRM, console :: CONSOLE, dom :: DOM, timer :: TIMER | eff) String Unit
 withSession = mkEffFn1 \sessionId -> do
-  cachedBackend <- tryRestoreCachedCodeMaybe sessionId
+  cachedBackend <- tryRestoreCachedCode sessionId
   case cachedBackend of
     Just cachedBackend_ -> runEffFn1 setupEditor (getBackendFromString cachedBackend_)
     Nothing -> do
@@ -125,8 +122,11 @@ foreign import get
 getContT :: forall eff. String -> ExceptT String (ContT Unit (Eff (dom :: DOM | eff))) String
 getContT uri = ExceptT (ContT \k -> runEffFn3 get uri (mkEffFn1 (k <<< Right)) (mkEffFn1 (k <<< Left)))
 
--- | Store the current session state
+-- | Store the current session state in local storage
 foreign import storeSession :: forall eff. EffFn2 (dom :: DOM | eff) String { code :: String, backend :: String } Unit
+
+-- | Retrieve the session state from local storage
+foreign import tryRetrieveSession :: forall eff. EffFn1 (dom :: DOM | eff) String (Nullable { code :: String, backend :: String })
 
 -- | Cache the current code in the session state
 cacheCurrentCode :: forall eff. Eff (console :: CONSOLE, dom :: DOM | eff) Unit
@@ -138,6 +138,17 @@ cacheCurrentCode = do
       backend <- getBackendNameFromView
       runEffFn2 storeSession sessionId_ { code, backend }
     Nothing -> error "No session ID"
+
+-- | Retrieve the session state and apply it to the editor.
+-- | Returns the backend name
+tryRestoreCachedCode :: forall eff. String -> Eff (dom :: DOM | eff) (Maybe String)
+tryRestoreCachedCode sessionId = do
+  state <- toMaybe <$> runEffFn1 tryRetrieveSession sessionId
+  for_ state \{ code, backend } -> do
+    -- TODO: this needs to be improved
+    select ("#backend_" <> backend) >>= click
+    select "#code_textarea" >>= setValue code
+  pure (map _.backend state)
 
 foreign import compile :: forall eff. EffFn1 (dom :: DOM | eff) BackendConfig Unit
 
@@ -214,8 +225,6 @@ foreign import tryLoadFileFromGist
 
 tryLoadFileFromGistContT :: forall eff. GistInfo -> String -> ExceptT String (ContT Unit (Eff (dom :: DOM | eff))) String
 tryLoadFileFromGistContT gi filename = ExceptT (ContT \k -> runEffFn4 tryLoadFileFromGist gi filename (mkEffFn1 (k <<< Right)) (mkEffFn1 (k <<< Left)))
-
-foreign import tryRestoreCachedCode :: forall eff. EffFn1 (dom :: DOM | eff) String (Nullable String)
 
 -- | Get the value of a query string parameter from the jQuery plugin.
 foreign import getQueryString :: forall eff. EffFn1 (dom :: DOM | eff) String (Nullable String)

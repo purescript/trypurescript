@@ -25,7 +25,9 @@ exports.setQueryString = function(key, value) {
 };
 
 exports.click = function(jq) {
-  jq.click();
+  return function () {
+    jq.click();
+  };
 };
 
 exports.filter = function(jq, sel) {
@@ -49,19 +51,55 @@ exports.storeSession = function(sessionId, state) {
   }
 };
 
-exports.tryRestoreCachedCode = function(sessionId) {
+exports.tryRetrieveSession = function(sessionId) {
   if (window.localStorage) {
     var code = localStorage.getItem(sessionId);
     var backend = localStorage.getItem(sessionId + 'backend');
-    if (backend) {
-      $('#backend_' + backend).click();
-    }
-    if (code) {
-      $('#code_textarea').val(code);
-      return backend;
+    if (code && backend) {
+      return { code: code, backend: backend };
     }
   }
 };
+
+exports.tryLoadFileFromGist = function(gistInfo, filename, done, fail) {
+  if (gistInfo.files && gistInfo.files.hasOwnProperty(filename)) {
+    var url = gistInfo.files[filename].raw_url;
+
+    return $.ajax({
+      url: url,
+      dataType: 'text'
+    }).done(done).fail(function(err) {
+      fail(err.statusText);
+    });
+  } else {
+    fail("Gist does not contain a file named " + filename);
+  }
+};
+
+exports.uploadGist = function(content, done, fail) {
+  var data = {
+    "description": "Published with try.purescript.org",
+    "public": false,
+    "files": {
+      "Main.purs": {
+        "content": content
+      }
+    }
+  };
+
+  $.ajax({
+    url: 'https://api.github.com/gists',
+    type: 'POST',
+    dataType: 'json',
+    data: JSON.stringify(data)
+  }).success(function(e) {
+    done(e.id);
+  }).error(function(e) {
+    fail(e);
+  });
+};
+
+/*****************************************************************************/
 
 var editor, cleanupActions = [];
 
@@ -244,43 +282,5 @@ exports.compile = function(backend) {
         .append($('<pre>').append($('<code>').append(res.responseText)));
       console.warn("failed to communicate with compilation server", res);
     }
-  });
-};
-
-exports.tryLoadFileFromGist = function(gistInfo, filename, done, fail) {
-  if (gistInfo.files && gistInfo.files.hasOwnProperty(filename)) {
-    var url = gistInfo.files[filename].raw_url;
-
-    return $.ajax({
-      url: url,
-      dataType: 'text'
-    }).done(done).fail(function(err) {
-      fail(err.statusText);
-    });
-  } else {
-    fail("Gist does not contain a file named " + filename);
-  }
-};
-
-exports.uploadGist = function(content, done, fail) {
-  var data = {
-    "description": "Published with try.purescript.org",
-    "public": false,
-    "files": {
-      "Main.purs": {
-        "content": content
-      }
-    }
-  };
-
-  $.ajax({
-    url: 'https://api.github.com/gists',
-    type: 'POST',
-    dataType: 'json',
-    data: JSON.stringify(data)
-  }).success(function(e) {
-    done(e.id);
-  }).error(function(e) {
-    fail(e);
   });
 };
