@@ -185,7 +185,7 @@
 
     function setupIFrame($ctr, html, js, onReady) {
       var $iframe = $('<iframe id="output-iframe">');
-      
+
       $ctr
         .empty()
         .append($iframe);
@@ -202,7 +202,7 @@
         var checkExists = setInterval(function() {
           var body = iframe.getElementsByTagName('body')[0];
           if (body) {
-            onReady(body);
+            onReady($(body));
             body.appendChild(script);
             clearInterval(checkExists);
           }

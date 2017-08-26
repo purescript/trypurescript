@@ -8,7 +8,7 @@ import Control.Monad.Eff.Console (CONSOLE, error)
 import Control.Monad.Eff.JQuery (JQuery, Selector, attr, display, hide, on, ready, removeClass, select, setProp, setValue, toggleClass)
 import Control.Monad.Eff.Random (RANDOM, randomInt)
 import Control.Monad.Eff.Timer (TIMER, setTimeout)
-import Control.Monad.Eff.Uncurried (EffFn1, EffFn2, EffFn3, EffFn4, mkEffFn1, mkEffFn2, runEffFn1, runEffFn2, runEffFn3, runEffFn4)
+import Control.Monad.Eff.Uncurried (EffFn1, EffFn2, EffFn3, EffFn4, mkEffFn1, mkEffFn2, mkEffFn3, runEffFn1, runEffFn2, runEffFn3, runEffFn4)
 import Control.Monad.Except.Trans (ExceptT(..), runExceptT)
 import Control.Parallel (parTraverse)
 import DOM (DOM)
@@ -24,8 +24,9 @@ import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Newtype (unwrap, wrap)
 import Data.Nullable (Nullable, toMaybe)
 import Data.StrMap as StrMap
+import Data.String (joinWith)
 import Data.String as String
-import Data.String.Regex (replace)
+import Data.String.Regex (regex, replace, replace')
 import Data.String.Regex.Flags (global)
 import Data.String.Regex.Unsafe (unsafeRegex)
 import Data.Tuple (Tuple(..))
@@ -34,7 +35,53 @@ import Partial.Unsafe (unsafePartial)
 
 foreign import compile :: forall eff. EffFn1 (dom :: DOM | eff) BackendConfig Unit
 
-foreign import execute :: forall eff. EffFn3 (dom :: DOM | eff) JS JS BackendConfig Unit
+-- | Set up a fresh iframe in the specified container, and use it
+-- | to execute the provided JavaScript code.
+foreign import setupIFrame
+  :: forall eff
+   . EffFn4 (dom :: DOM | eff)
+            JQuery
+            String
+            String
+            (EffFn1 (dom :: DOM | eff) JQuery Unit)
+            Unit
+
+-- | Execute the compiled code in a new iframe.
+execute :: forall eff. EffFn3 (dom :: DOM | eff) JS JS BackendConfig Unit
+execute = mkEffFn3 \js bundle bc@(BackendConfig backend) -> do
+  let html = joinWith "\n"
+        [ "<!DOCTYPE html>"
+        , "<html>"
+        , "  <head>"
+        , "    <meta content=\"text/html;charset=utf-8\" http-equiv=\"Content-Type\">"
+        , "    <meta content=\"utf-8\" http-equiv=\"encoding\">"
+        , "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
+        , "    <title>Try PureScript!</title>"
+        , "    <link rel=\"stylesheet\" href=\"css/style.css\">"
+        , backend.extra_styling
+        , "  </head>"
+        , "  <body>"
+        , backend.extra_body
+        , "  </body>"
+        , "</html>"
+        ]
+
+      replaced = replace' (unsafeRegex """require\("[^"]*"\)""" global) (\s _ ->
+        "PS['" <> String.drop 12 (String.take (String.length s - 2) s) <> "']") (getJS js)
+
+      wrapped = joinWith "\n"
+        [ "var module = {};"
+        , "(function(module) {"
+        , replaced
+        , "})(module);"
+        , "module.exports.main && module.exports.main();"
+        ]
+
+      scripts = joinWith "\n" [getJS bundle, wrapped]
+
+  select "#column2" >>= \ctr ->
+    runEffFn4 setupIFrame ctr html scripts $ mkEffFn1 \body ->
+      on "click" (\_ _ -> hideMenus) body
 
 -- | Set the editor content to the specified string.
 foreign import setEditorContent :: forall eff. EffFn1 (dom :: DOM | eff) String Unit

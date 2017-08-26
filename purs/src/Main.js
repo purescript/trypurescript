@@ -50,6 +50,7 @@ exports.setEditorContent = setEditorContent;
 exports.onEditorChanged = onEditorChanged;
 exports.cleanUpMarkers = cleanUpMarkers;
 exports.addErrorMarker = addErrorMarker;
+exports.setupIFrame = setupIFrame;
 
 exports.navigateTo = function(url) {
   return function() {
@@ -113,49 +114,6 @@ exports.uploadGist = function(content, done, fail) {
 };
 
 /*****************************************************************************/
-
-exports.execute = function(js, bundle, backend) {
-
-  var html =
-    ['<!DOCTYPE html>'
-    , '<html>'
-    , '  <head>'
-    , '    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">'
-    , '    <meta content="utf-8" http-equiv="encoding">'
-    , '    <meta name="viewport" content="width=device-width, initial-scale=1.0">'
-    , '    <title>Try PureScript!</title>'
-    , '    <link rel="stylesheet" href="css/style.css">'
-    , backend.extra_styling
-    , '  </head>'
-    , '  <body>'
-    , backend.extra_body
-    , '  </body>'
-    , '</html>'
-  ].join('\n');
-
-  // Replace any require() statements with the PS['...'] form using a regex substitution.
-  var replaced = js.replace(/require\("[^"]*"\)/g, function(s) {
-
-    return "PS['" + s.substring(12, s.length - 2) + "']";
-  });
-
-  // Wrap the compiled code so that main() runs.
-  var wrapped =
-    [ 'var module = {};'
-    , '(function(module) {'
-    , replaced
-    , '})(module);'
-    , 'module.exports.main && module.exports.main();'
-    ].join('\n');
-
-  var scripts = [bundle, wrapped].join("\n");
-
-  setupIFrame($('#column2'), html, scripts, function(body) {
-    body.onclick = function() {
-      exports.hideMenus();
-    };
-  });
-};
 
 exports.compile = function(backend) {
 
