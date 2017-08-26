@@ -2747,6 +2747,22 @@ var PS = {};
 
   /*****************************************************************************/
 
+  exports.compileApi = function(backend, code, done, fail) {
+    $.ajax({
+      url: backend.endpoint + '/compile',
+      dataType: 'json',
+      data: code,
+      method: 'POST',
+      contentType: 'text/plain',
+      success: function(res) {
+        done(res);
+      },
+      error: function(res) {
+        fail(res.responseText)
+      }
+    });
+  }
+
   exports.compile = function(backend) {
 
     $('#column2')
@@ -2755,56 +2771,47 @@ var PS = {};
 
     var code = $('#code_textarea').val();
 
-    $.ajax({
-      url: backend.endpoint + '/compile',
-      dataType: 'json',
-      data: code,
-      method: 'POST',
-      contentType: 'text/plain',
-      success: function(res) {
+    exports.compileApi(backend, code, function(res) {
+      cleanUpMarkers();
 
-        cleanUpMarkers();
+      if (res.error) {
+        switch (res.error.tag) {
+          case "CompilerErrors":
+            var errors = res.error.contents;
 
-        if (res.error) {
-          switch (res.error.tag) {
-            case "CompilerErrors":
-              var errors = res.error.contents;
+            $('#column2').empty();
 
-              $('#column2').empty();
-
-              for (var i = 0; i < errors.length; i++) {
-                var error = errors[i];
-                $('#column2')
-                  .append($('<h1>').addClass('error-banner').append("Error " + (i + 1) + " of " + errors.length))
-                  .append($('<pre>').append($('<code>').append(error.message)));
-
-                addErrorMarker(error.position.startLine, error.position.startColumn,
-                  error.position.endLine, error.position.endColumn);
-              }
-
-              break;
-            case "OtherError":
+            for (var i = 0; i < errors.length; i++) {
+              var error = errors[i];
               $('#column2')
-                .empty()
-                .append($('<pre>').append($('<code>').append(res.error.contents)));
-              break;
-          }
-        } else if (res.js) {
-          if ($("#showjs").is(":checked")) {
+                .append($('<h1>').addClass('error-banner').append("Error " + (i + 1) + " of " + errors.length))
+                .append($('<pre>').append($('<code>').append(error.message)));
+
+              addErrorMarker(error.position.startLine, error.position.startColumn,
+                error.position.endLine, error.position.endColumn);
+            }
+
+            break;
+          case "OtherError":
             $('#column2')
               .empty()
-              .append($('<pre>').append($('<code>').text(res.js)));
-          } else {
-            (backend.bundleAndExecute || defaultBundleAndExecute)(res.js, backend);
-          }
+              .append($('<pre>').append($('<code>').append(res.error.contents)));
+            break;
         }
-      },
-      error: function(res) {
-        $('#column2')
-          .empty()
-          .append($('<pre>').append($('<code>').append(res.responseText)));
-        console.warn("failed to communicate with compilation server", res);
+      } else if (res.js) {
+        if ($("#showjs").is(":checked")) {
+          $('#column2')
+            .empty()
+            .append($('<pre>').append($('<code>').text(res.js)));
+        } else {
+          (backend.bundleAndExecute || defaultBundleAndExecute)(res.js, backend);
+        }
       }
+    }, function(err) {
+      $('#column2')
+        .empty()
+        .append($('<pre>').append($('<code>').append(err)));
+      console.warn("failed to communicate with compilation server", res);
     });
   };
 })(PS["Main"] = PS["Main"] || {});
@@ -2833,6 +2840,7 @@ var PS = {};
   var Data_Either = PS["Data.Either"];
   var Data_Eq = PS["Data.Eq"];
   var Data_Foldable = PS["Data.Foldable"];
+  var Data_Foreign = PS["Data.Foreign"];
   var Data_Function = PS["Data.Function"];
   var Data_Functor = PS["Data.Functor"];
   var Data_Functor_App = PS["Data.Functor.App"];
@@ -3003,7 +3011,7 @@ var PS = {};
           if (v instanceof Data_Maybe.Nothing) {
               return Control_Bind.bind(Control_Monad_Eff.bindEff)(randomGuid)(setQueryString("session"))();
           };
-          throw new Error("Failed pattern match at Main line 296, column 3 - line 300, column 1: " + [ v.constructor.name ]);
+          throw new Error("Failed pattern match at Main line 308, column 3 - line 312, column 1: " + [ v.constructor.name ]);
       };
   });
   var getJS = function (v) {
@@ -3057,7 +3065,7 @@ var PS = {};
                       return setQueryString("backend")(v3)();
                   };
               };
-              throw new Error("Failed pattern match at Main line 283, column 7 - line 290, column 43: " + [ v2.constructor.name ]);
+              throw new Error("Failed pattern match at Main line 295, column 7 - line 302, column 43: " + [ v2.constructor.name ]);
           })();
       })();
   };
@@ -3162,7 +3170,7 @@ var PS = {};
           if (x instanceof Flare && y instanceof Flare) {
               return Data_Ordering.EQ.value;
           };
-          throw new Error("Failed pattern match at Main line 487, column 8 - line 487, column 42: " + [ x.constructor.name, y.constructor.name ]);
+          throw new Error("Failed pattern match at Main line 499, column 8 - line 499, column 42: " + [ x.constructor.name, y.constructor.name ]);
       };
   });
   var defaultBundleAndExecute = Control_Monad_Eff_Uncurried.mkEffFn2(function (js) {
@@ -3212,7 +3220,7 @@ var PS = {};
       if (v instanceof Data_Maybe.Nothing) {
           return Control_Monad_Eff_Console.error("No session ID")();
       };
-      throw new Error("Failed pattern match at Main line 224, column 3 - line 231, column 1: " + [ v.constructor.name ]);
+      throw new Error("Failed pattern match at Main line 236, column 3 - line 243, column 1: " + [ v.constructor.name ]);
   };
 
   // | Set up the editor content, and registers a callback for any changes.
@@ -3253,7 +3261,7 @@ var PS = {};
                           var replaced = Data_String_Regex.replace(Data_String_Regex_Unsafe.unsafeRegex("require\\(\"react-dom\\/server\"\\)")(Data_String_Regex_Flags.global))("window.ReactDOM")(Data_String_Regex.replace(Data_String_Regex_Unsafe.unsafeRegex("require\\(\"react-dom\"\\)")(Data_String_Regex_Flags.global))("window.ReactDOM")(Data_String_Regex.replace(Data_String_Regex_Unsafe.unsafeRegex("require\\(\"react\"\\)")(Data_String_Regex_Flags.global))("window.React")(v1["value0"][3])));
                           return Control_Monad_Eff_Uncurried.runEffFn3(execute)(js)(Data_Foldable.intercalate(Data_Foldable.foldableArray)(Data_Monoid.monoidString)("\x0a")([ v1["value0"][0], v1["value0"][1], v1["value0"][2], replaced ]))(v);
                       };
-                      throw new Error("Failed pattern match at Main line 166, column 9 - line 171, column 33: " + [ v1.constructor.name ]);
+                      throw new Error("Failed pattern match at Main line 178, column 9 - line 183, column 33: " + [ v1.constructor.name ]);
                   })());
               };
           };
@@ -3322,7 +3330,7 @@ var PS = {};
               bundleAndExecute: defaultBundleAndExecute
           };
       };
-      throw new Error("Failed pattern match at Main line 489, column 1 - line 489, column 39: " + [ v.constructor.name ]);
+      throw new Error("Failed pattern match at Main line 501, column 1 - line 501, column 39: " + [ v.constructor.name ]);
   };
   var backendToString = function (v) {
       if (v instanceof Core) {
@@ -3343,7 +3351,7 @@ var PS = {};
       if (v instanceof Flare) {
           return "flare";
       };
-      throw new Error("Failed pattern match at Main line 478, column 1 - line 478, column 37: " + [ v.constructor.name ]);
+      throw new Error("Failed pattern match at Main line 490, column 1 - line 490, column 37: " + [ v.constructor.name ]);
   };
   var backendFromString = function (dictPartial) {
       return function (v) {
@@ -3371,7 +3379,7 @@ var PS = {};
               if (v === "flare") {
                   return Flare.value;
               };
-              throw new Error("Failed pattern match at Main line 470, column 1 - line 470, column 50: " + [ v.constructor.name ]);
+              throw new Error("Failed pattern match at Main line 482, column 1 - line 482, column 50: " + [ v.constructor.name ]);
           })());
       };
   };
@@ -3419,7 +3427,7 @@ var PS = {};
               if (v4 instanceof Data_Maybe.Nothing) {
                   return Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#view_gist_li"))(Control_Monad_Eff_JQuery.hide);
               };
-              throw new Error("Failed pattern match at Main line 433, column 3 - line 435, column 47: " + [ v4.constructor.name ]);
+              throw new Error("Failed pattern match at Main line 445, column 3 - line 447, column 47: " + [ v4.constructor.name ]);
           })()();
           return Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("input[name=backend_inputs]"))(Control_Monad_Eff_JQuery.on("change")(function (e) {
               return function (jq) {
@@ -3465,7 +3473,7 @@ var PS = {};
                       return Control_Monad_Eff_Uncurried.runEffFn1(setupEditor)(backend)();
                   };
               };
-              throw new Error("Failed pattern match at Main line 184, column 5 - line 190, column 38: " + [ v.constructor.name ]);
+              throw new Error("Failed pattern match at Main line 196, column 5 - line 202, column 38: " + [ v.constructor.name ]);
           });
       };
   });
@@ -3482,7 +3490,7 @@ var PS = {};
               var v2 = Data_Functor.map(Control_Monad_Eff.functorEff)(Data_Maybe.fromMaybe(v1.mainGist))(getQueryStringMaybe("gist"))();
               return Control_Monad_Eff_Uncurried.runEffFn2(loadFromGist)(v2)(v1)();
           };
-          throw new Error("Failed pattern match at Main line 195, column 3 - line 200, column 37: " + [ v.constructor.name ]);
+          throw new Error("Failed pattern match at Main line 207, column 3 - line 212, column 37: " + [ v.constructor.name ]);
       };
   });
   var main = Control_Monad_Eff_JQuery.ready(function __do() {
@@ -3575,6 +3583,7 @@ var PS = {};
   exports["main"] = main;
   exports["eqBackend"] = eqBackend;
   exports["ordBackend"] = ordBackend;
+  exports["compileApi"] = $foreign.compileApi;
   exports["compile"] = $foreign.compile;
   exports["setupIFrame"] = $foreign.setupIFrame;
   exports["setEditorContent"] = $foreign.setEditorContent;

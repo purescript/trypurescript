@@ -18,6 +18,7 @@ import DOM.HTML.Window (alert, confirm)
 import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Foldable (elem, fold, for_, intercalate)
+import Data.Foreign (Foreign)
 import Data.Functor.App (App(..))
 import Data.Int (hexadecimal, toStringAs)
 import Data.Maybe (Maybe(..), fromMaybe)
@@ -26,12 +27,23 @@ import Data.Nullable (Nullable, toMaybe)
 import Data.StrMap as StrMap
 import Data.String (joinWith)
 import Data.String as String
-import Data.String.Regex (regex, replace, replace')
+import Data.String.Regex (replace, replace')
 import Data.String.Regex.Flags (global)
 import Data.String.Regex.Unsafe (unsafeRegex)
 import Data.Tuple (Tuple(..))
 import Global (decodeURIComponent)
 import Partial.Unsafe (unsafePartial)
+
+-- | POST the specified code to the Try PureScript API, and wait for
+-- | a response.
+foreign import compileApi
+  :: forall eff
+   . EffFn4 (dom :: DOM | eff)
+            BackendConfig
+            String
+            (EffFn1 (dom :: DOM | eff) Foreign Unit)
+            (EffFn1 (dom :: DOM | eff) String Unit)
+            Unit
 
 foreign import compile :: forall eff. EffFn1 (dom :: DOM | eff) BackendConfig Unit
 

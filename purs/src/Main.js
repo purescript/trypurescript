@@ -115,6 +115,22 @@ exports.uploadGist = function(content, done, fail) {
 
 /*****************************************************************************/
 
+exports.compileApi = function(backend, code, done, fail) {
+  $.ajax({
+    url: backend.endpoint + '/compile',
+    dataType: 'json',
+    data: code,
+    method: 'POST',
+    contentType: 'text/plain',
+    success: function(res) {
+      done(res);
+    },
+    error: function(res) {
+      fail(res.responseText)
+    }
+  });
+}
+
 exports.compile = function(backend) {
 
   $('#column2')
@@ -123,55 +139,46 @@ exports.compile = function(backend) {
 
   var code = $('#code_textarea').val();
 
-  $.ajax({
-    url: backend.endpoint + '/compile',
-    dataType: 'json',
-    data: code,
-    method: 'POST',
-    contentType: 'text/plain',
-    success: function(res) {
+  exports.compileApi(backend, code, function(res) {
+    cleanUpMarkers();
 
-      cleanUpMarkers();
+    if (res.error) {
+      switch (res.error.tag) {
+        case "CompilerErrors":
+          var errors = res.error.contents;
 
-      if (res.error) {
-        switch (res.error.tag) {
-          case "CompilerErrors":
-            var errors = res.error.contents;
+          $('#column2').empty();
 
-            $('#column2').empty();
-
-            for (var i = 0; i < errors.length; i++) {
-              var error = errors[i];
-              $('#column2')
-                .append($('<h1>').addClass('error-banner').append("Error " + (i + 1) + " of " + errors.length))
-                .append($('<pre>').append($('<code>').append(error.message)));
-
-              addErrorMarker(error.position.startLine, error.position.startColumn,
-                error.position.endLine, error.position.endColumn);
-            }
-
-            break;
-          case "OtherError":
+          for (var i = 0; i < errors.length; i++) {
+            var error = errors[i];
             $('#column2')
-              .empty()
-              .append($('<pre>').append($('<code>').append(res.error.contents)));
-            break;
-        }
-      } else if (res.js) {
-        if ($("#showjs").is(":checked")) {
+              .append($('<h1>').addClass('error-banner').append("Error " + (i + 1) + " of " + errors.length))
+              .append($('<pre>').append($('<code>').append(error.message)));
+
+            addErrorMarker(error.position.startLine, error.position.startColumn,
+              error.position.endLine, error.position.endColumn);
+          }
+
+          break;
+        case "OtherError":
           $('#column2')
             .empty()
-            .append($('<pre>').append($('<code>').text(res.js)));
-        } else {
-          (backend.bundleAndExecute || defaultBundleAndExecute)(res.js, backend);
-        }
+            .append($('<pre>').append($('<code>').append(res.error.contents)));
+          break;
       }
-    },
-    error: function(res) {
-      $('#column2')
-        .empty()
-        .append($('<pre>').append($('<code>').append(res.responseText)));
-      console.warn("failed to communicate with compilation server", res);
+    } else if (res.js) {
+      if ($("#showjs").is(":checked")) {
+        $('#column2')
+          .empty()
+          .append($('<pre>').append($('<code>').text(res.js)));
+      } else {
+        (backend.bundleAndExecute || defaultBundleAndExecute)(res.js, backend);
+      }
     }
+  }, function(err) {
+    $('#column2')
+      .empty()
+      .append($('<pre>').append($('<code>').append(err)));
+    console.warn("failed to communicate with compilation server", res);
   });
 };
