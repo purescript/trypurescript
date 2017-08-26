@@ -29,8 +29,14 @@ exports.setQueryParameters = function(params) {
 };
 
 exports.click = function(jq) {
-  return function () {
+  return function() {
     jq.click();
+  };
+};
+
+exports.empty = function(jq) {
+  return function() {
+    jq.empty();
   };
 };
 
@@ -113,8 +119,6 @@ exports.uploadGist = function(content, done, fail) {
   });
 };
 
-/*****************************************************************************/
-
 exports.compileApi = function(backend, code, done, fail) {
   $.ajax({
     url: backend.endpoint + '/compile',
@@ -130,55 +134,3 @@ exports.compileApi = function(backend, code, done, fail) {
     }
   });
 }
-
-exports.compile = function(backend) {
-
-  $('#column2')
-    .empty()
-    .append($("<div>").addClass("loading").append("Loading..."));
-
-  var code = $('#code_textarea').val();
-
-  exports.compileApi(backend, code, function(res) {
-    cleanUpMarkers();
-
-    if (res.error) {
-      switch (res.error.tag) {
-        case "CompilerErrors":
-          var errors = res.error.contents;
-
-          $('#column2').empty();
-
-          for (var i = 0; i < errors.length; i++) {
-            var error = errors[i];
-            $('#column2')
-              .append($('<h1>').addClass('error-banner').append("Error " + (i + 1) + " of " + errors.length))
-              .append($('<pre>').append($('<code>').append(error.message)));
-
-            addErrorMarker(error.position.startLine, error.position.startColumn,
-              error.position.endLine, error.position.endColumn);
-          }
-
-          break;
-        case "OtherError":
-          $('#column2')
-            .empty()
-            .append($('<pre>').append($('<code>').append(res.error.contents)));
-          break;
-      }
-    } else if (res.js) {
-      if ($("#showjs").is(":checked")) {
-        $('#column2')
-          .empty()
-          .append($('<pre>').append($('<code>').text(res.js)));
-      } else {
-        (backend.bundleAndExecute || defaultBundleAndExecute)(res.js, backend);
-      }
-    }
-  }, function(err) {
-    $('#column2')
-      .empty()
-      .append($('<pre>').append($('<code>').append(err)));
-    console.warn("failed to communicate with compilation server", res);
-  });
-};

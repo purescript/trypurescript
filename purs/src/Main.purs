@@ -2,13 +2,16 @@ module Main where
 
 import Prelude
 
+import Control.Alt ((<|>))
 import Control.Monad.Cont.Trans (ContT(..), runContT)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Console (CONSOLE, error)
-import Control.Monad.Eff.JQuery (JQuery, Selector, attr, display, hide, on, ready, removeClass, select, setProp, setValue, toggleClass)
+import Control.Monad.Eff.JQuery (JQuery, Selector, addClass, appendText, attr, create, display, hide, on, ready, removeClass, select, setProp, setValue, toggleClass)
+import Control.Monad.Eff.JQuery as JQuery
 import Control.Monad.Eff.Random (RANDOM, randomInt)
 import Control.Monad.Eff.Timer (TIMER, setTimeout)
 import Control.Monad.Eff.Uncurried (EffFn1, EffFn2, EffFn3, EffFn4, mkEffFn1, mkEffFn2, mkEffFn3, runEffFn1, runEffFn2, runEffFn3, runEffFn4)
+import Control.Monad.Except (runExcept)
 import Control.Monad.Except.Trans (ExceptT(..), runExceptT)
 import Control.Parallel (parTraverse)
 import DOM (DOM)
@@ -17,9 +20,14 @@ import DOM.HTML.Types (ALERT, CONFIRM)
 import DOM.HTML.Window (alert, confirm)
 import Data.Array as Array
 import Data.Either (Either(..))
-import Data.Foldable (elem, fold, for_, intercalate)
-import Data.Foreign (Foreign)
+import Data.Foldable (elem, fold, for_, intercalate, traverse_)
+import Data.FoldableWithIndex (forWithIndex_)
+import Data.Foreign (Foreign, renderForeignError)
+import Data.Foreign.Class (class Decode, decode)
+import Data.Foreign.Generic (defaultOptions, genericDecode)
+import Data.Foreign.Generic.Types (Options, SumEncoding(..))
 import Data.Functor.App (App(..))
+import Data.Generic.Rep (class Generic)
 import Data.Int (hexadecimal, toStringAs)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Newtype (unwrap, wrap)
@@ -45,7 +53,141 @@ foreign import compileApi
             (EffFn1 (dom :: DOM | eff) String Unit)
             Unit
 
-foreign import compile :: forall eff. EffFn1 (dom :: DOM | eff) BackendConfig Unit
+-- | A wrapper for `compileApi` which uses `ContT`.
+compileContT :: forall eff. BackendConfig -> String -> ExceptT String (ContT Unit (Eff (dom :: DOM | eff))) Foreign
+compileContT bc code = ExceptT (ContT \k -> runEffFn4 compileApi bc code (mkEffFn1 (k <<< Right)) (mkEffFn1 (k <<< Left)))
+
+decodingOptions :: Options
+decodingOptions = defaultOptions { unwrapSingleConstructors = true }
+
+-- | The range of text associated with an error
+newtype ErrorPosition = ErrorPosition
+  { startLine :: Int
+  , endLine :: Int
+  , startColumn :: Int
+  , endColumn :: Int
+  }
+
+derive instance genericErrorPosition :: Generic ErrorPosition _
+
+instance decodeErrorPosition :: Decode ErrorPosition where
+  decode = genericDecode decodingOptions
+
+newtype CompilerError = CompilerError
+  { message :: String
+  , position :: ErrorPosition
+  }
+
+derive instance genericCompilerError :: Generic CompilerError _
+
+instance decodeCompilerError :: Decode CompilerError where
+  decode = genericDecode decodingOptions
+
+-- | An error reported from the compile API.
+data CompileError
+  = CompilerErrors (Array CompilerError)
+  | OtherError String
+
+derive instance genericCompileError :: Generic CompileError _
+
+instance decodeCompileError :: Decode CompileError where
+  decode = genericDecode
+    (defaultOptions
+      { sumEncoding =
+          TaggedObject
+            { tagFieldName: "tag"
+            , contentsFieldName: "contents"
+            , constructorTagTransform: id
+            }
+      })
+
+newtype SuccessResult = SuccessResult
+  { js :: String }
+
+derive instance genericSuccessResult :: Generic SuccessResult _
+
+instance decodeSuccessResult :: Decode SuccessResult where
+  decode = genericDecode decodingOptions
+
+newtype FailedResult = FailedResult
+  { error :: CompileError }
+
+derive instance genericFailedResult :: Generic FailedResult _
+
+instance decodeFailedResult :: Decode FailedResult where
+  decode = genericDecode decodingOptions
+
+-- | The result of calling the compile API.
+data CompileResult
+  = CompileSuccess SuccessResult
+  | CompileFailed FailedResult
+
+-- | Parse the result from the compile API and verify it
+instance decodeCompileResult :: Decode CompileResult where
+  decode f =
+    CompileSuccess <$> genericDecode decodingOptions f
+    <|> CompileFailed <$> genericDecode decodingOptions f
+
+-- | Compile the current code and execute it.
+compile :: forall eff. EffFn1 (console :: CONSOLE, dom :: DOM | eff) BackendConfig Unit
+compile = mkEffFn1 \bc@(BackendConfig backend) -> do
+  select "#column2" >>= \jq -> do
+    empty jq
+    create "<div>" >>= \div -> do
+      addClass "loading" div
+      appendText "Loading..." div
+      JQuery.append div jq
+
+  code <- fold <$> (select "#code_textarea" >>= getValueMaybe)
+
+  let displayPlainText s =
+        select "#column2" >>= \jq -> do
+          empty jq
+          create "<pre>" >>= \pre -> do
+            create "<code>" >>= \code_ -> do
+              JQuery.append code_ pre
+              appendText s code_
+              JQuery.append pre jq
+
+  runContT (runExceptT (compileContT bc code)) \res_ ->
+    case res_ of
+      Left err -> displayPlainText err
+      Right res -> do
+        cleanUpMarkers
+
+        case runExcept (decode res) of
+          Right (CompileSuccess (SuccessResult { js })) -> do
+            showJs <- select "#showjs" >>= \jq -> runEffFn2 is jq ":checked"
+            if showJs
+              then displayPlainText js
+              else runEffFn2 backend.bundleAndExecute (JS js) bc
+          Right (CompileFailed (FailedResult { error })) ->
+            case error of
+              CompilerErrors errs -> do
+                select "#column2" >>= empty
+                forWithIndex_ errs \i (CompilerError{ message, position: ErrorPosition pos }) -> do
+                  select "#column2" >>= \jq -> do
+                    h1 <- create "<h1>"
+                    addClass "error-banner" h1
+                    appendText ("Error " <> show (i + 1) <> " of " <> show (Array.length errs)) h1
+
+                    pre <- create "<pre>"
+                    code_ <- create "<code>"
+                    JQuery.append code_ pre
+                    appendText message code_
+
+                    JQuery.append h1 jq
+                    JQuery.append pre jq
+
+                  runEffFn4 addErrorMarker
+                    pos.startLine
+                    pos.startColumn
+                    pos.endLine
+                    pos.endColumn
+              OtherError err -> displayPlainText err
+          Left errs -> do
+            displayPlainText "Unable to parse the response from the server"
+            traverse_ (error <<< renderForeignError) errs
 
 -- | Set up a fresh iframe in the specified container, and use it
 -- | to execute the provided JavaScript code.
@@ -354,6 +496,9 @@ setQueryString k v = do
 
 -- | Simulate a click event on the specified element.
 foreign import click :: forall eff. JQuery -> Eff (dom :: DOM | eff) Unit
+
+-- | Remove all elements from the specified container element.
+foreign import empty :: forall eff. JQuery -> Eff (dom :: DOM | eff) Unit
 
 -- | Filter elements based on an additional selector.
 foreign import filter :: forall eff. EffFn2 (dom :: DOM | eff) JQuery Selector JQuery

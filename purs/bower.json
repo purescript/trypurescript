@@ -12,7 +12,8 @@
     "purescript-jquery": "^4.2.1",
     "purescript-parallel": "^3.2.0",
     "purescript-js-timers": "^3.0.0",
-    "purescript-random": "^3.0.0"
+    "purescript-random": "^3.0.0",
+    "purescript-foreign-generic": "^5.0.0"
   },
   "devDependencies": {
     "purescript-psci-support": "^3.0.0"
