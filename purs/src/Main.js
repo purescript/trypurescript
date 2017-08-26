@@ -40,16 +40,26 @@ exports.empty = function(jq) {
   };
 };
 
-exports.filter = function(jq, sel) {
-  return jq.filter(sel);
+exports.filter = function(jq) {
+  return function(sel) {
+    return function() {
+      return jq.filter(sel);
+    };
+  };
 };
 
-exports.is = function(jq, sel) {
-  return jq.is(sel);
+exports.is = function(jq) {
+  return function(sel) {
+    return function() {
+      return jq.is(sel);
+    };
+  };
 };
 
 exports.getValue = function(jq) {
-  return jq.val();
+  return function() {
+    return jq.val();
+  };
 };
 
 exports.setEditorContent = setEditorContent;

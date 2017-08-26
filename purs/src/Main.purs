@@ -10,7 +10,7 @@ import Control.Monad.Eff.JQuery (JQuery, Selector, addClass, appendText, attr, c
 import Control.Monad.Eff.JQuery as JQuery
 import Control.Monad.Eff.Random (RANDOM, randomInt)
 import Control.Monad.Eff.Timer (TIMER, setTimeout)
-import Control.Monad.Eff.Uncurried (EffFn1, EffFn2, EffFn3, EffFn4, mkEffFn1, mkEffFn2, mkEffFn3, runEffFn1, runEffFn2, runEffFn3, runEffFn4)
+import Control.Monad.Eff.Uncurried (EffFn1, EffFn2, EffFn3, EffFn4, mkEffFn1, mkEffFn2, runEffFn1, runEffFn2, runEffFn3, runEffFn4)
 import Control.Monad.Except (runExcept)
 import Control.Monad.Except.Trans (ExceptT(..), runExceptT)
 import Control.Parallel (parTraverse)
@@ -129,8 +129,8 @@ instance decodeCompileResult :: Decode CompileResult where
     <|> CompileFailed <$> genericDecode decodingOptions f
 
 -- | Compile the current code and execute it.
-compile :: forall eff. EffFn1 (console :: CONSOLE, dom :: DOM | eff) BackendConfig Unit
-compile = mkEffFn1 \bc@(BackendConfig backend) -> do
+compile :: forall eff. BackendConfig -> Eff (console :: CONSOLE, dom :: DOM | eff) Unit
+compile bc@(BackendConfig backend) = do
   select "#column2" >>= \jq -> do
     empty jq
     create "<div>" >>= \div -> do
@@ -157,10 +157,10 @@ compile = mkEffFn1 \bc@(BackendConfig backend) -> do
 
         case runExcept (decode res) of
           Right (CompileSuccess (SuccessResult { js })) -> do
-            showJs <- select "#showjs" >>= \jq -> runEffFn2 is jq ":checked"
+            showJs <- select "#showjs" >>= \jq -> is jq ":checked"
             if showJs
               then displayPlainText js
-              else runEffFn2 backend.bundleAndExecute (JS js) bc
+              else backend.bundleAndExecute (JS js) bc
           Right (CompileFailed (FailedResult { error })) ->
             case error of
               CompilerErrors errs -> do
@@ -201,8 +201,8 @@ foreign import setupIFrame
             Unit
 
 -- | Execute the compiled code in a new iframe.
-execute :: forall eff. EffFn3 (dom :: DOM | eff) JS JS BackendConfig Unit
-execute = mkEffFn3 \js bundle bc@(BackendConfig backend) -> do
+execute :: forall eff. JS -> JS -> BackendConfig -> Eff (dom :: DOM | eff) Unit
+execute js bundle bc@(BackendConfig backend) = do
   let html = joinWith "\n"
         [ "<!DOCTYPE html>"
         , "<html>"
@@ -255,8 +255,8 @@ foreign import cleanUpMarkers :: forall eff. Eff (dom :: DOM | eff) Unit
 foreign import addErrorMarker :: forall eff. EffFn4 (dom :: DOM | eff) Int Int Int Int Unit
 
 -- | Set up the editor content, and registers a callback for any changes.
-setupEditorWith :: forall eff. EffFn1 (console :: CONSOLE, dom :: DOM | eff) BackendConfig Unit
-setupEditorWith = mkEffFn1 \bc -> do
+setupEditorWith :: forall eff. BackendConfig -> Eff (console :: CONSOLE, dom :: DOM | eff) Unit
+setupEditorWith bc = do
   select "#code_textarea"
     >>= getValueMaybe
     >>= fold
@@ -265,11 +265,11 @@ setupEditorWith = mkEffFn1 \bc -> do
   runEffFn2 onEditorChanged (mkEffFn1 \value -> do
      select "#code_textarea" >>= setValue value
      cacheCurrentCode
-     autoCompile <- select "#auto_compile" >>= \jq -> runEffFn2 is jq ":checked"
+     autoCompile <- select "#auto_compile" >>= \jq -> is jq ":checked"
      when autoCompile do
-       runEffFn1 compile bc) 750
+       compile bc) 750
 
-  runEffFn1 compile bc
+  compile bc
 
 -- | An abstract data type representing the data we get back from the GitHub API.
 data GistInfo
@@ -296,41 +296,48 @@ setupEditor
             | eff
             ) BackendConfig Unit
 setupEditor = mkEffFn1 \backend -> do
-  runEffFn1 loadOptions backend
-  runEffFn1 setupEditorWith backend
+  loadOptions backend
+  setupEditorWith backend
   cacheCurrentCode
 
-defaultBundleAndExecute :: forall eff. EffFn2 (console :: CONSOLE, dom :: DOM | eff) JS BackendConfig Unit
-defaultBundleAndExecute = mkEffFn2 \js bc@(BackendConfig backend) -> do
+defaultBundleAndExecute
+  :: forall eff
+   . JS
+  -> BackendConfig
+  -> Eff (console :: CONSOLE, dom :: DOM | eff) Unit
+defaultBundleAndExecute js bc@(BackendConfig backend) = do
   runEffFn3 get
     (backend.endpoint <> "/bundle")
-    (mkEffFn1 \bundle -> runEffFn3 execute js (JS bundle) bc)
+    (mkEffFn1 \bundle -> execute js (JS bundle) bc)
     (mkEffFn1 \err -> error ("Unable to load JS bundle: " <> err))
 
-bundleAndExecuteThermite :: forall eff. EffFn2 (console :: CONSOLE, dom :: DOM | eff) JS BackendConfig Unit
-bundleAndExecuteThermite =
-  mkEffFn2 \js bc@(BackendConfig backend) ->
-    let getAll = parTraverse getContT
-          [ "js/console.js"
-          , "js/react.min.js"
-          , "js/react-dom.min.js"
-          , backend.endpoint <> "/bundle"
-          ]
+bundleAndExecuteThermite
+  :: forall eff
+   . JS
+  -> BackendConfig
+  -> Eff (console :: CONSOLE, dom :: DOM | eff) Unit
+bundleAndExecuteThermite js bc@(BackendConfig backend) =
+  let getAll = parTraverse getContT
+        [ "js/console.js"
+        , "js/react.min.js"
+        , "js/react-dom.min.js"
+        , backend.endpoint <> "/bundle"
+        ]
 
-        onComplete :: Partial
-                   => Either String (Array String)
-                   -> Eff ( console :: CONSOLE
-                          , dom :: DOM
-                          | eff
-                          ) Unit
-        onComplete (Left err) = error ("Unable to load JS bundle: " <> err)
-        onComplete (Right [consoleScript, react, react_dom, bundle]) =
-          let replaced = bundle
-                           # replace (unsafeRegex "require\\(\"react\"\\)" global) "window.React"
-                           # replace (unsafeRegex "require\\(\"react-dom\"\\)" global) "window.ReactDOM"
-                           # replace (unsafeRegex "require\\(\"react-dom\\/server\"\\)" global) "window.ReactDOM"
-          in runEffFn3 execute js (JS (intercalate "\n" [consoleScript, react, react_dom, replaced])) bc
-    in runContT (runExceptT getAll) (unsafePartial onComplete)
+      onComplete :: Partial
+                 => Either String (Array String)
+                 -> Eff ( console :: CONSOLE
+                        , dom :: DOM
+                        | eff
+                        ) Unit
+      onComplete (Left err) = error ("Unable to load JS bundle: " <> err)
+      onComplete (Right [consoleScript, react, react_dom, bundle]) =
+        let replaced = bundle
+                         # replace (unsafeRegex "require\\(\"react\"\\)" global) "window.React"
+                         # replace (unsafeRegex "require\\(\"react-dom\"\\)" global) "window.ReactDOM"
+                         # replace (unsafeRegex "require\\(\"react-dom\\/server\"\\)" global) "window.ReactDOM"
+        in execute js (JS (intercalate "\n" [consoleScript, react, react_dom, replaced])) bc
+  in runContT (runExceptT getAll) (unsafePartial onComplete)
 
 loadFromGist :: forall eff. EffFn2 (confirm :: CONFIRM, console :: CONSOLE, dom :: DOM, timer :: TIMER | eff) String BackendConfig Unit
 loadFromGist = mkEffFn2 \id_ backend -> do
@@ -343,8 +350,16 @@ loadFromGist = mkEffFn2 \id_ backend -> do
         select "#code_textarea" >>= setValue code
         runEffFn1 setupEditor backend
 
-withSession :: forall eff. EffFn1 (confirm :: CONFIRM, console :: CONSOLE, dom :: DOM, timer :: TIMER | eff) String Unit
-withSession = mkEffFn1 \sessionId -> do
+withSession
+  :: forall eff
+   . String
+  -> Eff ( confirm :: CONFIRM
+         , console :: CONSOLE
+         , dom :: DOM
+         , timer :: TIMER
+         | eff
+         ) Unit
+withSession sessionId = do
   cachedBackend <- tryRestoreCachedCode sessionId
   case cachedBackend of
     Just cachedBackend_ -> runEffFn1 setupEditor (getBackendFromString cachedBackend_)
@@ -444,11 +459,14 @@ publishNewGist = do
           setQueryString "backend" backend
 
 -- | Look up the session by ID, or create a new session ID.
-setupSession :: forall eff. EffFn1 (dom :: DOM, random :: RANDOM | eff) (EffFn1 (dom :: DOM, random :: RANDOM | eff) String Unit) Unit
-setupSession = mkEffFn1 \k -> do
+setupSession
+  :: forall eff
+   . (String -> Eff (dom :: DOM, random :: RANDOM | eff) Unit)
+  -> Eff (dom :: DOM, random :: RANDOM | eff) Unit
+setupSession k = do
   sessionId <- getQueryStringMaybe "session"
   case sessionId of
-    Just sessionId_ -> runEffFn1 k sessionId_
+    Just sessionId_ -> k sessionId_
     Nothing -> randomGuid >>= setQueryString "session"
 
 foreign import tryLoadFileFromGist
@@ -501,19 +519,19 @@ foreign import click :: forall eff. JQuery -> Eff (dom :: DOM | eff) Unit
 foreign import empty :: forall eff. JQuery -> Eff (dom :: DOM | eff) Unit
 
 -- | Filter elements based on an additional selector.
-foreign import filter :: forall eff. EffFn2 (dom :: DOM | eff) JQuery Selector JQuery
+foreign import filter :: forall eff. JQuery -> Selector -> Eff (dom :: DOM | eff) JQuery
 
 -- | Test whether elements match an additional selector.
-foreign import is :: forall eff. EffFn2 (dom :: DOM | eff) JQuery Selector Boolean
+foreign import is :: forall eff. JQuery -> Selector -> Eff (dom :: DOM | eff) Boolean
 
 -- | Get the value of the first element, if it exists.
-foreign import getValue :: forall eff. EffFn1 (dom :: DOM | eff) JQuery (Nullable String)
+foreign import getValue :: forall eff. JQuery -> Eff (dom :: DOM | eff) (Nullable String)
 
 -- | Navigate to the specified URL.
 foreign import navigateTo :: forall eff. String -> Eff (dom :: DOM | eff) Unit
 
 getValueMaybe :: forall eff. JQuery -> Eff (dom :: DOM | eff) (Maybe String)
-getValueMaybe = map toMaybe <<< runEffFn1 getValue
+getValueMaybe = map toMaybe <<< getValue
 
 -- | Hide the drop down menus
 hideMenus :: forall eff. Eff (dom :: DOM | eff) Unit
@@ -523,9 +541,9 @@ hideMenus = do
   select "#backend" >>= removeClass "show-sub-menu"
 
 -- | Update the view mode based on the menu selection
-changeViewMode :: forall eff. EffFn1 (dom :: DOM | eff) JQuery Unit
-changeViewMode = mkEffFn1 \jq -> do
-  viewMode <- runEffFn2 filter jq ":checked" >>= getValueMaybe
+changeViewMode :: forall eff. JQuery -> Eff (dom :: DOM | eff) Unit
+changeViewMode jq = do
+  viewMode <- filter jq ":checked" >>= getValueMaybe
   case viewMode of
     Just "code" -> do
       select "#column1" >>= display
@@ -548,7 +566,7 @@ getBackendNameFromView :: forall eff. Eff (dom :: DOM | eff) String
 getBackendNameFromView =
   fromMaybe "core" <$>
     (select "input[name=backend_inputs]"
-      >>= \jq -> runEffFn2 filter jq ":checked"
+      >>= \jq -> filter jq ":checked"
       >>= getValueMaybe)
 
 -- | Get the backend configuration from whatever is selected in the menu.
@@ -558,13 +576,14 @@ getBackendConfigFromView = getBackendFromString <$> getBackendNameFromView
 -- | Read query string options and update the state accordingly
 loadOptions
   :: forall eff
-   . EffFn1 ( console :: CONSOLE
-            , confirm :: CONFIRM
-            , dom :: DOM
-            , timer :: TIMER
-            | eff
-            ) BackendConfig Unit
-loadOptions = mkEffFn1 \bc@(BackendConfig backend) -> do
+   . BackendConfig
+  -> Eff ( console :: CONSOLE
+         , confirm :: CONFIRM
+         , dom :: DOM
+         , timer :: TIMER
+         | eff
+         ) Unit
+loadOptions bc@(BackendConfig backend) = do
   select ("#backend_" <> backend.backend) >>= attr { checked: "checked" }
 
   viewMode <- getQueryStringMaybe "view"
@@ -598,7 +617,7 @@ loadOptions = mkEffFn1 \bc@(BackendConfig backend) -> do
     if ok
       then navigateTo ("?backend=" <> newBackend.backend)
       else void $ setTimeout 1000 do
-             runEffFn1 compile bc_
+             compile bc_
              cacheCurrentCode
     hideMenus
 
@@ -613,7 +632,10 @@ newtype BackendConfig = BackendConfig
   , mainGist         :: String
   , extra_styling    :: String
   , extra_body       :: String
-  , bundleAndExecute :: forall eff. EffFn2 (console :: CONSOLE, dom :: DOM | eff) JS BackendConfig Unit
+  , bundleAndExecute :: forall eff
+                      . JS
+                     -> BackendConfig
+                     -> Eff (console :: CONSOLE, dom :: DOM | eff) Unit
   }
 
 data Backend
@@ -713,13 +735,13 @@ main :: Eff ( alert :: ALERT
             ) Unit
 main = ready do
   select "#showjs" >>= on "change" \e _ ->
-    getBackendConfigFromView >>= \bc -> runEffFn1 compile bc
+    getBackendConfigFromView >>= \bc -> compile bc
 
   select "#compile_label" >>= on "click" \e _ ->
-    getBackendConfigFromView >>= \bc -> runEffFn1 compile bc
+    getBackendConfigFromView >>= \bc -> compile bc
 
   select "input[name=view_mode]" >>= on "change" \_ jq ->
-    runEffFn1 changeViewMode jq
+    changeViewMode jq
 
   select "#gist_save" >>= on "click" \e _ -> publishNewGist
 
@@ -734,4 +756,4 @@ main = ready do
 
   select "#editor_view" >>= on "click" \e _ -> hideMenus
 
-  runEffFn1 setupSession withSession
+  setupSession withSession
