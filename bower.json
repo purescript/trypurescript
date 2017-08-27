@@ -1,0 +1,18 @@
+{
+  "name": "try-purescript",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "output"
+  ],
+  "dependencies": {
+    "purescript-console": "^3.0.0",
+    "purescript-foreign-generic": "^5.0.0",
+    "purescript-jquery": "^4.2.1",
+    "purescript-js-timers": "^3.0.0",
+    "purescript-parallel": "^3.2.0",
+    "purescript-prelude": "^3.1.0",
+    "purescript-random": "^3.0.0"
+  }
+}
