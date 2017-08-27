@@ -2,179 +2,88 @@ module Main where
 
 import Prelude
 
-import Control.Alt ((<|>))
-import Control.Monad.Cont.Trans (ContT(..), runContT)
+import Control.Monad.Cont.Trans (runContT)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Console (CONSOLE, error)
-import Control.Monad.Eff.JQuery (JQuery, Selector, addClass, appendText, attr, create, display, hide, on, ready, removeClass, select, setProp, setValue, toggleClass)
-import Control.Monad.Eff.JQuery as JQuery
-import Control.Monad.Eff.Random (RANDOM, randomInt)
+import Control.Monad.Eff.JQuery (JQuery, addClass, append, appendText, attr, create, display, hide, on, ready, removeClass, select, setProp, setValue, toggleClass) as JQuery
+import Control.Monad.Eff.JQuery.Extras (click, empty, filter, getValueMaybe, is) as JQuery
+import Control.Monad.Eff.Random (RANDOM)
 import Control.Monad.Eff.Timer (TIMER, setTimeout)
-import Control.Monad.Eff.Uncurried (EffFn1, EffFn2, EffFn3, EffFn4, mkEffFn1, mkEffFn2, runEffFn1, runEffFn2, runEffFn3, runEffFn4)
-import Control.Monad.Except (runExcept)
-import Control.Monad.Except.Trans (ExceptT(..), runExceptT)
+import Control.Monad.Eff.Uncurried (EffFn1, EffFn2, EffFn4, mkEffFn1, mkEffFn2, runEffFn1, runEffFn2, runEffFn4)
+import Control.Monad.Except.Trans (runExceptT)
 import Control.Parallel (parTraverse)
 import DOM (DOM)
 import DOM.HTML (window)
+import DOM.HTML.Location (setHref)
 import DOM.HTML.Types (ALERT, CONFIRM)
-import DOM.HTML.Window (alert, confirm)
+import DOM.HTML.Window (alert, confirm, location)
 import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Foldable (elem, fold, for_, intercalate, traverse_)
 import Data.FoldableWithIndex (forWithIndex_)
-import Data.Foreign (Foreign, renderForeignError)
-import Data.Foreign.Class (class Decode, decode)
-import Data.Foreign.Generic (defaultOptions, genericDecode)
-import Data.Foreign.Generic.Types (Options, SumEncoding(..))
-import Data.Functor.App (App(..))
-import Data.Generic.Rep (class Generic)
-import Data.Int (hexadecimal, toStringAs)
+import Data.Foreign (renderForeignError)
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Newtype (unwrap, wrap)
-import Data.Nullable (Nullable, toMaybe)
-import Data.StrMap as StrMap
+import Data.Newtype (unwrap)
 import Data.String (joinWith)
 import Data.String as String
 import Data.String.Regex (replace, replace')
 import Data.String.Regex.Flags (global)
 import Data.String.Regex.Unsafe (unsafeRegex)
-import Data.Tuple (Tuple(..))
-import Global (decodeURIComponent)
 import Partial.Unsafe (unsafePartial)
-
--- | POST the specified code to the Try PureScript API, and wait for
--- | a response.
-foreign import compileApi
-  :: forall eff
-   . EffFn4 (dom :: DOM | eff)
-            BackendConfig
-            String
-            (EffFn1 (dom :: DOM | eff) Foreign Unit)
-            (EffFn1 (dom :: DOM | eff) String Unit)
-            Unit
-
--- | A wrapper for `compileApi` which uses `ContT`.
-compileContT :: forall eff. BackendConfig -> String -> ExceptT String (ContT Unit (Eff (dom :: DOM | eff))) Foreign
-compileContT bc code = ExceptT (ContT \k -> runEffFn4 compileApi bc code (mkEffFn1 (k <<< Right)) (mkEffFn1 (k <<< Left)))
-
-decodingOptions :: Options
-decodingOptions = defaultOptions { unwrapSingleConstructors = true }
-
--- | The range of text associated with an error
-newtype ErrorPosition = ErrorPosition
-  { startLine :: Int
-  , endLine :: Int
-  , startColumn :: Int
-  , endColumn :: Int
-  }
-
-derive instance genericErrorPosition :: Generic ErrorPosition _
-
-instance decodeErrorPosition :: Decode ErrorPosition where
-  decode = genericDecode decodingOptions
-
-newtype CompilerError = CompilerError
-  { message :: String
-  , position :: ErrorPosition
-  }
-
-derive instance genericCompilerError :: Generic CompilerError _
-
-instance decodeCompilerError :: Decode CompilerError where
-  decode = genericDecode decodingOptions
-
--- | An error reported from the compile API.
-data CompileError
-  = CompilerErrors (Array CompilerError)
-  | OtherError String
-
-derive instance genericCompileError :: Generic CompileError _
-
-instance decodeCompileError :: Decode CompileError where
-  decode = genericDecode
-    (defaultOptions
-      { sumEncoding =
-          TaggedObject
-            { tagFieldName: "tag"
-            , contentsFieldName: "contents"
-            , constructorTagTransform: id
-            }
-      })
-
-newtype SuccessResult = SuccessResult
-  { js :: String }
-
-derive instance genericSuccessResult :: Generic SuccessResult _
-
-instance decodeSuccessResult :: Decode SuccessResult where
-  decode = genericDecode decodingOptions
-
-newtype FailedResult = FailedResult
-  { error :: CompileError }
-
-derive instance genericFailedResult :: Generic FailedResult _
-
-instance decodeFailedResult :: Decode FailedResult where
-  decode = genericDecode decodingOptions
-
--- | The result of calling the compile API.
-data CompileResult
-  = CompileSuccess SuccessResult
-  | CompileFailed FailedResult
-
--- | Parse the result from the compile API and verify it
-instance decodeCompileResult :: Decode CompileResult where
-  decode f =
-    CompileSuccess <$> genericDecode decodingOptions f
-    <|> CompileFailed <$> genericDecode decodingOptions f
+import Try.API (CompileError(..), CompileResult(..), CompilerError(..), ErrorPosition(..), FailedResult(..), SuccessResult(..), get)
+import Try.API as API
+import Try.Gist (getGistById, tryLoadFileFromGist, uploadGist)
+import Try.QueryString (getQueryStringMaybe, setQueryString)
+import Try.Session (createSessionIdIfNecessary, storeSession, tryRetrieveSession)
+import Try.Types (Backend(..), BackendConfig(..), JS(..), backendFromString)
 
 -- | Compile the current code and execute it.
 compile :: forall eff. BackendConfig -> Eff (console :: CONSOLE, dom :: DOM | eff) Unit
 compile bc@(BackendConfig backend) = do
-  select "#column2" >>= \jq -> do
-    empty jq
-    create "<div>" >>= \div -> do
-      addClass "loading" div
-      appendText "Loading..." div
+  JQuery.select "#column2" >>= \jq -> do
+    JQuery.empty jq
+    JQuery.create "<div>" >>= \div -> do
+      JQuery.addClass "loading" div
+      JQuery.appendText "Loading..." div
       JQuery.append div jq
 
-  code <- fold <$> (select "#code_textarea" >>= getValueMaybe)
+  code <- fold <$> (JQuery.select "#code_textarea" >>= JQuery.getValueMaybe)
 
   let displayPlainText s =
-        select "#column2" >>= \jq -> do
-          empty jq
-          create "<pre>" >>= \pre -> do
-            create "<code>" >>= \code_ -> do
+        JQuery.select "#column2" >>= \jq -> do
+          JQuery.empty jq
+          JQuery.create "<pre>" >>= \pre -> do
+            JQuery.create "<code>" >>= \code_ -> do
               JQuery.append code_ pre
-              appendText s code_
+              JQuery.appendText s code_
               JQuery.append pre jq
 
-  runContT (runExceptT (compileContT bc code)) \res_ ->
+  runContT (runExceptT (API.compile bc code)) \res_ ->
     case res_ of
       Left err -> displayPlainText err
       Right res -> do
         cleanUpMarkers
 
-        case runExcept (decode res) of
+        case res of
           Right (CompileSuccess (SuccessResult { js })) -> do
-            showJs <- select "#showjs" >>= \jq -> is jq ":checked"
+            showJs <- JQuery.select "#showjs" >>= \jq -> JQuery.is jq ":checked"
             if showJs
               then displayPlainText js
               else backend.bundleAndExecute (JS js) bc
           Right (CompileFailed (FailedResult { error })) ->
             case error of
               CompilerErrors errs -> do
-                select "#column2" >>= empty
+                JQuery.select "#column2" >>= JQuery.empty
                 forWithIndex_ errs \i (CompilerError{ message, position: ErrorPosition pos }) -> do
-                  select "#column2" >>= \jq -> do
-                    h1 <- create "<h1>"
-                    addClass "error-banner" h1
-                    appendText ("Error " <> show (i + 1) <> " of " <> show (Array.length errs)) h1
+                  JQuery.select "#column2" >>= \jq -> do
+                    h1 <- JQuery.create "<h1>"
+                    JQuery.addClass "error-banner" h1
+                    JQuery.appendText ("Error " <> show (i + 1) <> " of " <> show (Array.length errs)) h1
 
-                    pre <- create "<pre>"
-                    code_ <- create "<code>"
+                    pre <- JQuery.create "<pre>"
+                    code_ <- JQuery.create "<code>"
                     JQuery.append code_ pre
-                    appendText message code_
+                    JQuery.appendText message code_
 
                     JQuery.append h1 jq
                     JQuery.append pre jq
@@ -194,10 +103,10 @@ compile bc@(BackendConfig backend) = do
 foreign import setupIFrame
   :: forall eff
    . EffFn4 (dom :: DOM | eff)
-            JQuery
+            JQuery.JQuery
             String
             String
-            (EffFn1 (dom :: DOM | eff) JQuery Unit)
+            (EffFn1 (dom :: DOM | eff) JQuery.JQuery Unit)
             Unit
 
 -- | Execute the compiled code in a new iframe.
@@ -221,7 +130,7 @@ execute js bundle bc@(BackendConfig backend) = do
         ]
 
       replaced = replace' (unsafeRegex """require\("[^"]*"\)""" global) (\s _ ->
-        "PS['" <> String.drop 12 (String.take (String.length s - 2) s) <> "']") (getJS js)
+        "PS['" <> String.drop 12 (String.take (String.length s - 2) s) <> "']") (unwrap js)
 
       wrapped = joinWith "\n"
         [ "var module = {};"
@@ -231,11 +140,11 @@ execute js bundle bc@(BackendConfig backend) = do
         , "module.exports.main && module.exports.main();"
         ]
 
-      scripts = joinWith "\n" [getJS bundle, wrapped]
+      scripts = joinWith "\n" [unwrap bundle, wrapped]
 
-  select "#column2" >>= \ctr ->
+  JQuery.select "#column2" >>= \ctr ->
     runEffFn4 setupIFrame ctr html scripts $ mkEffFn1 \body ->
-      on "click" (\_ _ -> hideMenus) body
+      JQuery.on "click" (\_ _ -> hideMenus) body
 
 -- | Set the editor content to the specified string.
 foreign import setEditorContent :: forall eff. EffFn1 (dom :: DOM | eff) String Unit
@@ -257,35 +166,19 @@ foreign import addErrorMarker :: forall eff. EffFn4 (dom :: DOM | eff) Int Int I
 -- | Set up the editor content, and registers a callback for any changes.
 setupEditorWith :: forall eff. BackendConfig -> Eff (console :: CONSOLE, dom :: DOM | eff) Unit
 setupEditorWith bc = do
-  select "#code_textarea"
-    >>= getValueMaybe
+  JQuery.select "#code_textarea"
+    >>= JQuery.getValueMaybe
     >>= fold
     >>> runEffFn1 setEditorContent
 
   runEffFn2 onEditorChanged (mkEffFn1 \value -> do
-     select "#code_textarea" >>= setValue value
+     JQuery.select "#code_textarea" >>= JQuery.setValue value
      cacheCurrentCode
-     autoCompile <- select "#auto_compile" >>= \jq -> is jq ":checked"
+     autoCompile <- JQuery.select "#auto_compile" >>= \jq -> JQuery.is jq ":checked"
      when autoCompile do
        compile bc) 750
 
   compile bc
-
--- | An abstract data type representing the data we get back from the GitHub API.
-data GistInfo
-
--- | Get a gist by its ID
-foreign import getGistById
-  :: forall eff
-   . EffFn3 (dom :: DOM | eff)
-            String
-            (EffFn1 (dom :: DOM | eff) GistInfo Unit)
-            (EffFn1 (dom :: DOM | eff) String Unit)
-            Unit
-
--- | A wrapper for `getGistById` which uses `ContT`.
-getGistByIdContT :: forall eff. String -> ExceptT String (ContT Unit (Eff (dom :: DOM | eff))) GistInfo
-getGistByIdContT id_ = ExceptT (ContT \k -> runEffFn3 getGistById id_ (mkEffFn1 (k <<< Right)) (mkEffFn1 (k <<< Left)))
 
 setupEditor
   :: forall eff
@@ -306,10 +199,10 @@ defaultBundleAndExecute
   -> BackendConfig
   -> Eff (console :: CONSOLE, dom :: DOM | eff) Unit
 defaultBundleAndExecute js bc@(BackendConfig backend) = do
-  runEffFn3 get
-    (backend.endpoint <> "/bundle")
-    (mkEffFn1 \bundle -> execute js (JS bundle) bc)
-    (mkEffFn1 \err -> error ("Unable to load JS bundle: " <> err))
+  runContT (runExceptT (get (backend.endpoint <> "/bundle")))
+    case _ of
+      Left err -> error ("Unable to load JS bundle: " <> err)
+      Right bundle -> execute js (JS bundle) bc
 
 bundleAndExecuteThermite
   :: forall eff
@@ -317,7 +210,7 @@ bundleAndExecuteThermite
   -> BackendConfig
   -> Eff (console :: CONSOLE, dom :: DOM | eff) Unit
 bundleAndExecuteThermite js bc@(BackendConfig backend) =
-  let getAll = parTraverse getContT
+  let getAll = parTraverse get
         [ "js/console.js"
         , "js/react.min.js"
         , "js/react-dom.min.js"
@@ -341,13 +234,13 @@ bundleAndExecuteThermite js bc@(BackendConfig backend) =
 
 loadFromGist :: forall eff. EffFn2 (confirm :: CONFIRM, console :: CONSOLE, dom :: DOM, timer :: TIMER | eff) String BackendConfig Unit
 loadFromGist = mkEffFn2 \id_ backend -> do
-  runContT (runExceptT (getGistByIdContT id_ >>= \gi -> tryLoadFileFromGistContT gi "Main.purs")) $
+  runContT (runExceptT (getGistById id_ >>= \gi -> tryLoadFileFromGist gi "Main.purs")) $
     case _ of
       Left err -> do
         error ("Unable to load gist metadata or contents: " <> err)
         runEffFn1 setupEditor backend
       Right code -> do
-        select "#code_textarea" >>= setValue code
+        JQuery.select "#code_textarea" >>= JQuery.setValue code
         runEffFn1 setupEditor backend
 
 withSession
@@ -368,68 +261,27 @@ withSession sessionId = do
       gist <- fromMaybe backend.mainGist <$> getQueryStringMaybe "gist"
       runEffFn2 loadFromGist gist bc
 
-foreign import get
-  :: forall eff
-   . EffFn3 (dom :: DOM | eff)
-            String
-            (EffFn1 (dom :: DOM | eff) String Unit)
-            (EffFn1 (dom :: DOM | eff) String Unit)
-            Unit
-
--- | A wrapper for `get` which uses `ContT`.
-getContT :: forall eff. String -> ExceptT String (ContT Unit (Eff (dom :: DOM | eff))) String
-getContT uri = ExceptT (ContT \k -> runEffFn3 get uri (mkEffFn1 (k <<< Right)) (mkEffFn1 (k <<< Left)))
-
--- | Store the current session state in local storage
-foreign import storeSession :: forall eff. EffFn2 (dom :: DOM | eff) String { code :: String, backend :: String } Unit
-
--- | Retrieve the session state from local storage
-foreign import tryRetrieveSession :: forall eff. EffFn1 (dom :: DOM | eff) String (Nullable { code :: String, backend :: String })
-
 -- | Cache the current code in the session state
 cacheCurrentCode :: forall eff. Eff (console :: CONSOLE, dom :: DOM | eff) Unit
 cacheCurrentCode = do
   sessionId <- getQueryStringMaybe "session"
   case sessionId of
     Just sessionId_ -> do
-      code <- fold <$> (select "#code_textarea" >>= getValueMaybe)
+      code <- fold <$> (JQuery.select "#code_textarea" >>= JQuery.getValueMaybe)
       backend <- getBackendNameFromView
-      runEffFn2 storeSession sessionId_ { code, backend }
+      storeSession sessionId_ { code, backend }
     Nothing -> error "No session ID"
 
 -- | Retrieve the session state and apply it to the editor.
 -- | Returns the backend name
 tryRestoreCachedCode :: forall eff. String -> Eff (dom :: DOM | eff) (Maybe String)
 tryRestoreCachedCode sessionId = do
-  state <- toMaybe <$> runEffFn1 tryRetrieveSession sessionId
+  state <- tryRetrieveSession sessionId
   for_ state \{ code, backend } -> do
     -- TODO: this needs to be improved
-    select ("#backend_" <> backend) >>= click
-    select "#code_textarea" >>= setValue code
+    JQuery.select ("#backend_" <> backend) >>= JQuery.click
+    JQuery.select "#code_textarea" >>= JQuery.setValue code
   pure (map _.backend state)
-
-foreign import uploadGist
-  :: forall eff
-   . EffFn3 (dom :: DOM | eff)
-            String
-            (EffFn1 (dom :: DOM | eff) String Unit)
-            (EffFn1 (dom :: DOM | eff) String Unit)
-            Unit
-
--- | A wrapper for `uploadGist` which uses `ContT`.
-uploadGistContT :: forall eff. String -> ExceptT String (ContT Unit (Eff (dom :: DOM | eff))) String
-uploadGistContT content = ExceptT (ContT \k -> runEffFn3 uploadGist content (mkEffFn1 (k <<< Right)) (mkEffFn1 (k <<< Left)))
-
-randomGuid :: forall eff. Eff (random :: RANDOM | eff) String
-randomGuid =
-    unwrap (App s4 <> App s4 <> pure "-" <>
-            App s4 <> pure "-" <>
-            App s4 <> pure "-" <>
-            App s4 <> pure "-" <>
-            App s4 <> App s4 <> App s4)
-  where
-    s4 = padLeft <<< toStringAs hexadecimal <$> randomInt 0 (256 * 256)
-    padLeft s = String.drop (String.length s - 1) ("000" <> s)
 
 -- | Create a new Gist using the current content
 publishNewGist
@@ -447,127 +299,56 @@ publishNewGist = do
           , "Note: this code will be available to anyone with a link to the Gist."
           ])
   when ok do
-    content <- fold <$> (select "#code_textarea" >>= getValueMaybe)
-    runContT (runExceptT (uploadGistContT content)) $
+    content <- fold <$> (JQuery.select "#code_textarea" >>= JQuery.getValueMaybe)
+    runContT (runExceptT (uploadGist content)) $
       case _ of
         Left err -> do
-          window >>= alert "Failed to create gist"
-          error ("Failed to create gist: " <> err)
+          window >>= alert "Failed to JQuery.create gist"
+          error ("Failed to JQuery.create gist: " <> err)
         Right gistId -> do
           backend <- getBackendNameFromView
           setQueryString "gist" gistId
           setQueryString "backend" backend
 
--- | Look up the session by ID, or create a new session ID.
-setupSession
-  :: forall eff
-   . (String -> Eff (dom :: DOM, random :: RANDOM | eff) Unit)
-  -> Eff (dom :: DOM, random :: RANDOM | eff) Unit
-setupSession k = do
-  sessionId <- getQueryStringMaybe "session"
-  case sessionId of
-    Just sessionId_ -> k sessionId_
-    Nothing -> randomGuid >>= setQueryString "session"
-
-foreign import tryLoadFileFromGist
-  :: forall eff
-   . EffFn4 (dom :: DOM | eff)
-            GistInfo
-            String
-            (EffFn1 (dom :: DOM | eff) String Unit)
-            (EffFn1 (dom :: DOM | eff) String Unit)
-            Unit
-
-tryLoadFileFromGistContT :: forall eff. GistInfo -> String -> ExceptT String (ContT Unit (Eff (dom :: DOM | eff))) String
-tryLoadFileFromGistContT gi filename = ExceptT (ContT \k -> runEffFn4 tryLoadFileFromGist gi filename (mkEffFn1 (k <<< Right)) (mkEffFn1 (k <<< Left)))
-
--- | Get the value of a query string parameter from the jQuery plugin.
-foreign import getQueryString :: forall eff. Eff (dom :: DOM | eff) String
-
-getQueryParams :: forall eff. Eff (dom :: DOM | eff) (StrMap.StrMap String)
-getQueryParams = breakQueryString <$> getQueryString where
-  breakQueryString :: String -> StrMap.StrMap String
-  breakQueryString =
-    String.drop 1
-    >>> String.split (wrap "&")
-    >>> map (String.split (wrap "=") >>> parseQueryTerm)
-    >>> Array.catMaybes
-    >>> StrMap.fromFoldable
-
-  parseQueryTerm :: Array String -> Maybe (Tuple String String)
-  parseQueryTerm [k, v] = Just (Tuple k (decodeURIComponent (spaces v)))
-  parseQueryTerm _ = Nothing
-
-  spaces :: String -> String
-  spaces = String.replaceAll (wrap "+") (wrap " ")
-
-getQueryStringMaybe :: forall eff. String -> Eff (dom :: DOM | eff) (Maybe String)
-getQueryStringMaybe key = StrMap.lookup key <$> getQueryParams
-
--- | Set the value of a query string parameter
-foreign import setQueryParameters :: forall eff. EffFn1 (dom :: DOM | eff) (StrMap.StrMap String) Unit
-
-setQueryString :: forall eff. String -> String -> Eff (dom :: DOM | eff) Unit
-setQueryString k v = do
-  params <- getQueryParams
-  runEffFn1 setQueryParameters (StrMap.insert k v params)
-
--- | Simulate a click event on the specified element.
-foreign import click :: forall eff. JQuery -> Eff (dom :: DOM | eff) Unit
-
--- | Remove all elements from the specified container element.
-foreign import empty :: forall eff. JQuery -> Eff (dom :: DOM | eff) Unit
-
--- | Filter elements based on an additional selector.
-foreign import filter :: forall eff. JQuery -> Selector -> Eff (dom :: DOM | eff) JQuery
-
--- | Test whether elements match an additional selector.
-foreign import is :: forall eff. JQuery -> Selector -> Eff (dom :: DOM | eff) Boolean
-
--- | Get the value of the first element, if it exists.
-foreign import getValue :: forall eff. JQuery -> Eff (dom :: DOM | eff) (Nullable String)
-
 -- | Navigate to the specified URL.
-foreign import navigateTo :: forall eff. String -> Eff (dom :: DOM | eff) Unit
-
-getValueMaybe :: forall eff. JQuery -> Eff (dom :: DOM | eff) (Maybe String)
-getValueMaybe = map toMaybe <<< getValue
+navigateTo :: forall eff. String -> Eff (dom :: DOM | eff) Unit
+navigateTo uri = void (window >>= location >>= setHref uri)
 
 -- | Hide the drop down menus
 hideMenus :: forall eff. Eff (dom :: DOM | eff) Unit
 hideMenus = do
-  select "#menu" >>= removeClass "show"
-  select "#view_mode" >>= removeClass "show-sub-menu"
-  select "#backend" >>= removeClass "show-sub-menu"
+  JQuery.select "#menu" >>= JQuery.removeClass "show"
+  JQuery.select "#view_mode" >>= JQuery.removeClass "show-sub-menu"
+  JQuery.select "#backend" >>= JQuery.removeClass "show-sub-menu"
 
 -- | Update the view mode based on the menu selection
-changeViewMode :: forall eff. JQuery -> Eff (dom :: DOM | eff) Unit
+changeViewMode :: forall eff. JQuery.JQuery -> Eff (dom :: DOM | eff) Unit
 changeViewMode jq = do
-  viewMode <- filter jq ":checked" >>= getValueMaybe
+  viewMode <- JQuery.filter jq ":checked" >>= JQuery.getValueMaybe
   case viewMode of
     Just "code" -> do
-      select "#column1" >>= display
-      select "#column2" >>= hide
-      select "#showjs_label" >>= hide
-      select "#showjs" >>= hide
+      JQuery.select "#column1" >>= JQuery.display
+      JQuery.select "#column2" >>= JQuery.hide
+      JQuery.select "#showjs_label" >>= JQuery.hide
+      JQuery.select "#showjs" >>= JQuery.hide
     Just "output" -> do
-      select "#column1" >>= hide
-      select "#column2" >>= display
-      select "#showjs_label" >>= display
-      select "#showjs" >>= display
+      JQuery.select "#column1" >>= JQuery.hide
+      JQuery.select "#column2" >>= JQuery.display
+      JQuery.select "#showjs_label" >>= JQuery.display
+      JQuery.select "#showjs" >>= JQuery.display
     _ -> do
-      select "#column1" >>= display
-      select "#column2" >>= display
-      select "#showjs_label" >>= display
-      select "#showjs" >>= display
+      JQuery.select "#column1" >>= JQuery.display
+      JQuery.select "#column2" >>= JQuery.display
+      JQuery.select "#showjs_label" >>= JQuery.display
+      JQuery.select "#showjs" >>= JQuery.display
 
 -- | Get the backend name from whatever is selected in the menu.
 getBackendNameFromView :: forall eff. Eff (dom :: DOM | eff) String
 getBackendNameFromView =
   fromMaybe "core" <$>
-    (select "input[name=backend_inputs]"
-      >>= \jq -> filter jq ":checked"
-      >>= getValueMaybe)
+    (JQuery.select "input[name=backend_inputs]"
+      >>= \jq -> JQuery.filter jq ":checked"
+      >>= JQuery.getValueMaybe)
 
 -- | Get the backend configuration from whatever is selected in the menu.
 getBackendConfigFromView :: forall eff. Eff (dom :: DOM | eff) BackendConfig
@@ -584,33 +365,33 @@ loadOptions
          | eff
          ) Unit
 loadOptions bc@(BackendConfig backend) = do
-  select ("#backend_" <> backend.backend) >>= attr { checked: "checked" }
+  JQuery.select ("#backend_" <> backend.backend) >>= JQuery.attr { checked: "checked" }
 
   viewMode <- getQueryStringMaybe "view"
   case viewMode of
     Just viewMode_
       | viewMode_ `elem` ["sidebyside", "code", "output"]
-      -> select ("#view_" <> viewMode_) >>= click
+      -> JQuery.select ("#view_" <> viewMode_) >>= JQuery.click
     _ -> pure unit
 
   showJs <- getQueryStringMaybe "js"
   case showJs of
     Just showJs_ ->
-      select "input:checkbox[name=showjs]" >>= setProp "checked" (showJs_ == "true")
+      JQuery.select "input:checkbox[name=showjs]" >>= JQuery.setProp "checked" (showJs_ == "true")
     _ -> pure unit
 
   autoCompile <- getQueryStringMaybe "compile"
   case autoCompile of
     Just autoCompile_ ->
-      select "input:checkbox[name=auto_compile]" >>= setProp "checked" (autoCompile_ == "true")
+      JQuery.select "input:checkbox[name=auto_compile]" >>= JQuery.setProp "checked" (autoCompile_ == "true")
     _ -> pure unit
 
   gist <- getQueryStringMaybe "gist"
   case gist of
-    Just gist_ -> select "#view_gist" >>= attr { href: "https://gist.github.com/" <> gist_ }
-    Nothing -> select "#view_gist_li" >>= hide
+    Just gist_ -> JQuery.select "#view_gist" >>= JQuery.attr { href: "https://gist.github.com/" <> gist_ }
+    Nothing -> JQuery.select "#view_gist_li" >>= JQuery.hide
 
-  select "input[name=backend_inputs]" >>= on "change" \e jq -> do
+  JQuery.select "input[name=backend_inputs]" >>= JQuery.on "change" \e jq -> do
     bc_@(BackendConfig newBackend) <- getBackendConfigFromView
 
     ok <- window >>= confirm ("Replace your current code with the " <> newBackend.backend <> " backend sample code?")
@@ -620,50 +401,6 @@ loadOptions bc@(BackendConfig backend) = do
              compile bc_
              cacheCurrentCode
     hideMenus
-
-newtype JS = JS String
-
-getJS :: JS -> String
-getJS (JS js) = js
-
-newtype BackendConfig = BackendConfig
-  { backend          :: String
-  , endpoint         :: String
-  , mainGist         :: String
-  , extra_styling    :: String
-  , extra_body       :: String
-  , bundleAndExecute :: forall eff
-                      . JS
-                     -> BackendConfig
-                     -> Eff (console :: CONSOLE, dom :: DOM | eff) Unit
-  }
-
-data Backend
-  = Core
-  | Thermite
-  | Slides
-  | Mathbox
-  | Behaviors
-  | Flare
-
-backendFromString :: Partial => String -> Backend
-backendFromString "core"      = Core
-backendFromString "thermite"  = Thermite
-backendFromString "slides"    = Slides
-backendFromString "mathbox"   = Mathbox
-backendFromString "behaviors" = Behaviors
-backendFromString "flare"     = Flare
-
-backendToString :: Backend -> String
-backendToString Core      = "core"
-backendToString Thermite  = "thermite"
-backendToString Slides    = "slides"
-backendToString Mathbox   = "mathbox"
-backendToString Behaviors = "behaviors"
-backendToString Flare     = "flare"
-
-derive instance eqBackend :: Eq Backend
-derive instance ordBackend :: Ord Backend
 
 getBackend :: Backend -> BackendConfig
 getBackend Core      = BackendConfig
@@ -733,27 +470,27 @@ main :: Eff ( alert :: ALERT
             , random :: RANDOM
             , timer :: TIMER
             ) Unit
-main = ready do
-  select "#showjs" >>= on "change" \e _ ->
+main = JQuery.ready do
+  JQuery.select "#showjs" >>= JQuery.on "change" \e _ ->
     getBackendConfigFromView >>= \bc -> compile bc
 
-  select "#compile_label" >>= on "click" \e _ ->
+  JQuery.select "#compile_label" >>= JQuery.on "click" \e _ ->
     getBackendConfigFromView >>= \bc -> compile bc
 
-  select "input[name=view_mode]" >>= on "change" \_ jq ->
+  JQuery.select "input[name=view_mode]" >>= JQuery.on "change" \_ jq ->
     changeViewMode jq
 
-  select "#gist_save" >>= on "click" \e _ -> publishNewGist
+  JQuery.select "#gist_save" >>= JQuery.on "click" \e _ -> publishNewGist
 
-  select "#hamburger" >>= on "click" \e _ -> do
-    select "#menu" >>= toggleClass "show"
+  JQuery.select "#hamburger" >>= JQuery.on "click" \e _ -> do
+    JQuery.select "#menu" >>= JQuery.toggleClass "show"
 
-  select "#view_mode_label" >>= on "click" \e _ -> do
-    select "#view_mode" >>= toggleClass "show-sub-menu"
+  JQuery.select "#view_mode_label" >>= JQuery.on "click" \e _ -> do
+    JQuery.select "#view_mode" >>= JQuery.toggleClass "show-sub-menu"
 
-  select "#backend_label" >>= on "click" \e _ -> do
-    select "#backend" >>= toggleClass "show-sub-menu"
+  JQuery.select "#backend_label" >>= JQuery.on "click" \e _ -> do
+    JQuery.select "#backend" >>= JQuery.toggleClass "show-sub-menu"
 
-  select "#editor_view" >>= on "click" \e _ -> hideMenus
+  JQuery.select "#editor_view" >>= JQuery.on "click" \e _ -> hideMenus
 
-  setupSession withSession
+  createSessionIdIfNecessary withSession
