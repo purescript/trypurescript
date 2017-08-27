@@ -7,12 +7,17 @@
     "output"
   ],
   "dependencies": {
+    "ace": "^1.2.8",
+    "jquery": "^3.2.1",
     "purescript-console": "^3.0.0",
     "purescript-foreign-generic": "^5.0.0",
     "purescript-jquery": "^4.2.1",
     "purescript-js-timers": "^3.0.0",
     "purescript-parallel": "^3.2.0",
     "purescript-prelude": "^3.1.0",
-    "purescript-random": "^3.0.0"
+    "purescript-random": "^3.0.0",
+    "underscore": "^1.8.3",
+    "react": "^15.6.1",
+    "mathbox": "^0.0.5"
   }
 }
