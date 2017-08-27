@@ -2,14 +2,14 @@ module Main where
 
 import Prelude
 
-import Control.Monad.Cont.Trans (runContT)
+import Control.Monad.Cont.Trans (ContT(..), runContT)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Console (CONSOLE, error)
 import Control.Monad.Eff.JQuery (JQuery, addClass, append, appendText, attr, create, display, hide, on, ready, removeClass, select, setProp, setValue, toggleClass) as JQuery
 import Control.Monad.Eff.JQuery.Extras (click, empty, filter, getValueMaybe, is) as JQuery
 import Control.Monad.Eff.Random (RANDOM)
 import Control.Monad.Eff.Timer (TIMER, setTimeout)
-import Control.Monad.Eff.Uncurried (EffFn1, EffFn2, EffFn4, mkEffFn1, mkEffFn2, runEffFn1, runEffFn2, runEffFn4)
+import Control.Monad.Eff.Uncurried (EffFn1, EffFn2, EffFn4, mkEffFn1, runEffFn1, runEffFn2, runEffFn4)
 import Control.Monad.Except.Trans (runExceptT)
 import Control.Parallel (parTraverse)
 import DOM (DOM)
@@ -163,34 +163,33 @@ foreign import cleanUpMarkers :: forall eff. Eff (dom :: DOM | eff) Unit
 -- | Add a visible error marker at the specified location.
 foreign import addErrorMarker :: forall eff. EffFn4 (dom :: DOM | eff) Int Int Int Int Unit
 
--- | Set up the editor content, and registers a callback for any changes.
-setupEditorWith :: forall eff. BackendConfig -> Eff (console :: CONSOLE, dom :: DOM | eff) Unit
-setupEditorWith bc = do
+-- | Setup the editor component and some event handlers.
+setupEditor
+  :: forall eff
+   . BackendConfig
+  -> Eff ( console :: CONSOLE
+         , confirm :: CONFIRM
+         , dom :: DOM
+         , timer :: TIMER
+         | eff
+         ) Unit
+setupEditor bc = do
+  loadOptions bc
+  setupBackendMenu bc
+
   JQuery.select "#code_textarea"
     >>= JQuery.getValueMaybe
     >>= fold
     >>> runEffFn1 setEditorContent
 
   runEffFn2 onEditorChanged (mkEffFn1 \value -> do
-     JQuery.select "#code_textarea" >>= JQuery.setValue value
-     cacheCurrentCode
-     autoCompile <- JQuery.select "#auto_compile" >>= \jq -> JQuery.is jq ":checked"
-     when autoCompile do
-       compile bc) 750
+    JQuery.select "#code_textarea" >>= JQuery.setValue value
+    cacheCurrentCode
+    autoCompile <- JQuery.select "#auto_compile" >>= \jq -> JQuery.is jq ":checked"
+    when autoCompile do
+      compile bc) 750
 
   compile bc
-
-setupEditor
-  :: forall eff
-   . EffFn1 ( console :: CONSOLE
-            , confirm :: CONFIRM
-            , dom :: DOM
-            , timer :: TIMER
-            | eff
-            ) BackendConfig Unit
-setupEditor = mkEffFn1 \backend -> do
-  loadOptions backend
-  setupEditorWith backend
   cacheCurrentCode
 
 defaultBundleAndExecute
@@ -232,34 +231,55 @@ bundleAndExecuteThermite js bc@(BackendConfig backend) =
         in execute js (JS (intercalate "\n" [consoleScript, react, react_dom, replaced])) bc
   in runContT (runExceptT getAll) (unsafePartial onComplete)
 
-loadFromGist :: forall eff. EffFn2 (confirm :: CONFIRM, console :: CONSOLE, dom :: DOM, timer :: TIMER | eff) String BackendConfig Unit
-loadFromGist = mkEffFn2 \id_ backend -> do
-  runContT (runExceptT (getGistById id_ >>= \gi -> tryLoadFileFromGist gi "Main.purs")) $
-    case _ of
-      Left err -> do
-        error ("Unable to load gist metadata or contents: " <> err)
-        runEffFn1 setupEditor backend
-      Right code -> do
-        JQuery.select "#code_textarea" >>= JQuery.setValue code
-        runEffFn1 setupEditor backend
-
-withSession
+loadFromGist
   :: forall eff
    . String
+  -> BackendConfig
+  -> (BackendConfig -> Eff ( confirm :: CONFIRM
+                           , console :: CONSOLE
+                           , dom :: DOM
+                           , timer :: TIMER
+                           | eff
+                           ) Unit)
   -> Eff ( confirm :: CONFIRM
          , console :: CONSOLE
          , dom :: DOM
          , timer :: TIMER
          | eff
          ) Unit
-withSession sessionId = do
+loadFromGist id_ backend k = do
+  runContT (runExceptT (getGistById id_ >>= \gi -> tryLoadFileFromGist gi "Main.purs")) $
+    case _ of
+      Left err -> do
+        error ("Unable to load gist metadata or contents: " <> err)
+        k backend
+      Right code -> do
+        JQuery.select "#code_textarea" >>= JQuery.setValue code
+        k backend
+
+withSession
+  :: forall eff
+   . String
+  -> (BackendConfig -> Eff ( confirm :: CONFIRM
+                           , console :: CONSOLE
+                           , dom :: DOM
+                           , timer :: TIMER
+                           | eff
+                           ) Unit)
+  -> Eff ( confirm :: CONFIRM
+         , console :: CONSOLE
+         , dom :: DOM
+         , timer :: TIMER
+         | eff
+         ) Unit
+withSession sessionId k = do
   cachedBackend <- tryRestoreCachedCode sessionId
   case cachedBackend of
-    Just cachedBackend_ -> runEffFn1 setupEditor (getBackendFromString cachedBackend_)
+    Just cachedBackend_ -> k (getBackendFromString cachedBackend_)
     Nothing -> do
       bc@(BackendConfig backend) <- getBackendFromString <<< fromMaybe "core" <$> getQueryStringMaybe "backend"
       gist <- fromMaybe backend.mainGist <$> getQueryStringMaybe "gist"
-      runEffFn2 loadFromGist gist bc
+      loadFromGist gist bc k
 
 -- | Cache the current code in the session state
 cacheCurrentCode :: forall eff. Eff (console :: CONSOLE, dom :: DOM | eff) Unit
@@ -364,9 +384,7 @@ loadOptions
          , timer :: TIMER
          | eff
          ) Unit
-loadOptions bc@(BackendConfig backend) = do
-  JQuery.select ("#backend_" <> backend.backend) >>= JQuery.attr { checked: "checked" }
-
+loadOptions bc = do
   viewMode <- getQueryStringMaybe "view"
   case viewMode of
     Just viewMode_
@@ -391,6 +409,20 @@ loadOptions bc@(BackendConfig backend) = do
     Just gist_ -> JQuery.select "#view_gist" >>= JQuery.attr { href: "https://gist.github.com/" <> gist_ }
     Nothing -> JQuery.select "#view_gist_li" >>= JQuery.hide
 
+-- | Setup event listeners for the backend dropdown menu.
+setupBackendMenu
+  :: forall eff
+   . BackendConfig
+  -> Eff
+       ( dom :: DOM
+       , confirm :: CONFIRM
+       , console :: CONSOLE
+       , timer :: TIMER
+       | eff
+       )
+       Unit
+setupBackendMenu bc@(BackendConfig backend) = do
+  JQuery.select ("#backend_" <> backend.backend) >>= JQuery.attr { checked: "checked" }
   JQuery.select "input[name=backend_inputs]" >>= JQuery.on "change" \e jq -> do
     bc_@(BackendConfig newBackend) <- getBackendConfigFromView
 
@@ -493,4 +525,5 @@ main = JQuery.ready do
 
   JQuery.select "#editor_view" >>= JQuery.on "click" \e _ -> hideMenus
 
-  createSessionIdIfNecessary withSession
+  runContT (do sessionId <- ContT createSessionIdIfNecessary
+               ContT (withSession sessionId)) setupEditor

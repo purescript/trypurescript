@@ -2753,12 +2753,6 @@ var PS = {};
     };
   };
 
-  exports.mkEffFn2 = function mkEffFn2(fn) {
-    return function(a, b) {
-      return fn(a)(b)();
-    };
-  };
-
   exports.runEffFn1 = function runEffFn1(fn) {
     return function(a) {
       return function() {
@@ -2809,7 +2803,6 @@ var PS = {};
   var $foreign = PS["Control.Monad.Eff.Uncurried"];
   var Control_Monad_Eff = PS["Control.Monad.Eff"];
   exports["mkEffFn1"] = $foreign.mkEffFn1;
-  exports["mkEffFn2"] = $foreign.mkEffFn2;
   exports["runEffFn1"] = $foreign.runEffFn1;
   exports["runEffFn2"] = $foreign.runEffFn2;
   exports["runEffFn3"] = $foreign.runEffFn3;
@@ -4919,6 +4912,66 @@ var PS = {};
       return Data_Functor["void"](Control_Monad_Eff.functorEff)(Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Bind.bind(Control_Monad_Eff.bindEff)(DOM_HTML.window)(DOM_HTML_Window.location))(DOM_HTML_Location.setHref(uri)));
   };
 
+  // | Read query string options and update the state accordingly
+  var loadOptions = function (bc) {
+      return function __do() {
+          var v = Try_QueryString.getQueryStringMaybe("view")();
+          (function () {
+              if (v instanceof Data_Maybe.Just && Data_Foldable.elem(Data_Foldable.foldableArray)(Data_Eq.eqString)(v.value0)([ "sidebyside", "code", "output" ])) {
+                  return Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#view_" + v.value0))(Control_Monad_Eff_JQuery_Extras.click);
+              };
+              return Control_Applicative.pure(Control_Monad_Eff.applicativeEff)(Data_Unit.unit);
+          })()();
+          var v1 = Try_QueryString.getQueryStringMaybe("js")();
+          (function () {
+              if (v1 instanceof Data_Maybe.Just) {
+                  return Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("input:checkbox[name=showjs]"))(Control_Monad_Eff_JQuery.setProp("checked")(v1.value0 === "true"));
+              };
+              return Control_Applicative.pure(Control_Monad_Eff.applicativeEff)(Data_Unit.unit);
+          })()();
+          var v2 = Try_QueryString.getQueryStringMaybe("compile")();
+          (function () {
+              if (v2 instanceof Data_Maybe.Just) {
+                  return Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("input:checkbox[name=auto_compile]"))(Control_Monad_Eff_JQuery.setProp("checked")(v2.value0 === "true"));
+              };
+              return Control_Applicative.pure(Control_Monad_Eff.applicativeEff)(Data_Unit.unit);
+          })()();
+          var v3 = Try_QueryString.getQueryStringMaybe("gist")();
+          if (v3 instanceof Data_Maybe.Just) {
+              return Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#view_gist"))(Control_Monad_Eff_JQuery.attr({
+                  href: "https://gist.github.com/" + v3.value0
+              }))();
+          };
+          if (v3 instanceof Data_Maybe.Nothing) {
+              return Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#view_gist_li"))(Control_Monad_Eff_JQuery.hide)();
+          };
+          throw new Error("Failed pattern match at Main line 408, column 3 - line 410, column 61: " + [ v3.constructor.name ]);
+      };
+  };
+  var loadFromGist = function (id_) {
+      return function (backend) {
+          return function (k) {
+              return Control_Monad_Cont_Trans.runContT(Control_Monad_Except_Trans.runExceptT(Control_Bind.bind(Control_Monad_Except_Trans.bindExceptT(Control_Monad_Cont_Trans.monadContT(Control_Monad_Eff.monadEff)))(Try_Gist.getGistById(id_))(function (gi) {
+                  return Try_Gist.tryLoadFileFromGist(gi)("Main.purs");
+              })))(function (v) {
+                  if (v instanceof Data_Either.Left) {
+                      return function __do() {
+                          Control_Monad_Eff_Console.error("Unable to load gist metadata or contents: " + v.value0)();
+                          return k(backend)();
+                      };
+                  };
+                  if (v instanceof Data_Either.Right) {
+                      return function __do() {
+                          Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#code_textarea"))(Control_Monad_Eff_JQuery.setValue(v.value0))();
+                          return k(backend)();
+                      };
+                  };
+                  throw new Error("Failed pattern match at Main line 252, column 5 - line 258, column 18: " + [ v.constructor.name ]);
+              });
+          };
+      };
+  };
+
   // | Hide the drop down menus
   var hideMenus = function __do() {
       Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#menu"))(Control_Monad_Eff_JQuery.removeClass("show"))();
@@ -4951,7 +5004,7 @@ var PS = {};
                       return Try_QueryString.setQueryString("backend")(v3)();
                   };
               };
-              throw new Error("Failed pattern match at Main line 304, column 7 - line 311, column 43: " + [ v2.constructor.name ]);
+              throw new Error("Failed pattern match at Main line 324, column 7 - line 331, column 43: " + [ v2.constructor.name ]);
           })();
       })();
   };
@@ -4990,7 +5043,7 @@ var PS = {};
               if (v1 instanceof Data_Either.Right) {
                   return execute(js)(v1.value0)(v);
               };
-              throw new Error("Failed pattern match at Main line 203, column 5 - line 205, column 48: " + [ v1.constructor.name ]);
+              throw new Error("Failed pattern match at Main line 202, column 5 - line 204, column 48: " + [ v1.constructor.name ]);
           });
       };
   };
@@ -5065,8 +5118,8 @@ var PS = {};
                       };
                       if (res_.value0 instanceof Data_Either.Left) {
                           displayPlainText("Unable to parse the response from the server")();
-                          return Data_Foldable.traverse_(Control_Monad_Eff.applicativeEff)(Data_List_Types.foldableNonEmptyList)(function ($139) {
-                              return Control_Monad_Eff_Console.error(Data_Foreign.renderForeignError($139));
+                          return Data_Foldable.traverse_(Control_Monad_Eff.applicativeEff)(Data_List_Types.foldableNonEmptyList)(function ($141) {
+                              return Control_Monad_Eff_Console.error(Data_Foreign.renderForeignError($141));
                           })(res_.value0.value0)();
                       };
                       throw new Error("Failed pattern match at Main line 67, column 9 - line 99, column 58: " + [ res_.value0.constructor.name ]);
@@ -5114,37 +5167,15 @@ var PS = {};
       if (v instanceof Data_Maybe.Nothing) {
           return Control_Monad_Eff_Console.error("No session ID")();
       };
-      throw new Error("Failed pattern match at Main line 268, column 3 - line 275, column 1: " + [ v.constructor.name ]);
-  };
-
-  // | Set up the editor content, and registers a callback for any changes.
-  var setupEditorWith = function (bc) {
-      return function __do() {
-          (function __do() {
-              var $140 = Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#code_textarea"))(Control_Monad_Eff_JQuery_Extras.getValueMaybe)();
-              return Control_Monad_Eff_Uncurried.runEffFn1($foreign.setEditorContent)(Data_Foldable.fold(Data_Foldable.foldableMaybe)(Data_Monoid.monoidString)($140))();
-          })();
-          Control_Monad_Eff_Uncurried.runEffFn2($foreign.onEditorChanged)(Control_Monad_Eff_Uncurried.mkEffFn1(function (value) {
-              return function __do() {
-                  Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#code_textarea"))(Control_Monad_Eff_JQuery.setValue(value))();
-                  cacheCurrentCode();
-                  var v = (function __do() {
-                      var jq = Control_Monad_Eff_JQuery.select("#auto_compile")();
-                      return Control_Monad_Eff_JQuery_Extras.is(jq)(":checked")();
-                  })();
-                  return Control_Applicative.when(Control_Monad_Eff.applicativeEff)(v)(compile(bc))();
-              };
-          }))(750)();
-          return compile(bc)();
-      };
+      throw new Error("Failed pattern match at Main line 288, column 3 - line 295, column 1: " + [ v.constructor.name ]);
   };
   var bundleAndExecuteThermite = function (js) {
       return function (v) {
           var onComplete = function (dictPartial) {
               return function (v1) {
                   var __unused = function (dictPartial1) {
-                      return function ($dollar48) {
-                          return $dollar48;
+                      return function ($dollar49) {
+                          return $dollar49;
                       };
                   };
                   return __unused(dictPartial)((function () {
@@ -5155,7 +5186,7 @@ var PS = {};
                           var replaced = Data_String_Regex.replace(Data_String_Regex_Unsafe.unsafeRegex("require\\(\"react-dom\\/server\"\\)")(Data_String_Regex_Flags.global))("window.ReactDOM")(Data_String_Regex.replace(Data_String_Regex_Unsafe.unsafeRegex("require\\(\"react-dom\"\\)")(Data_String_Regex_Flags.global))("window.ReactDOM")(Data_String_Regex.replace(Data_String_Regex_Unsafe.unsafeRegex("require\\(\"react\"\\)")(Data_String_Regex_Flags.global))("window.React")(v1["value0"][3])));
                           return execute(js)(Data_Foldable.intercalate(Data_Foldable.foldableArray)(Data_Monoid.monoidString)("\x0a")([ v1["value0"][0], v1["value0"][1], v1["value0"][2], replaced ]))(v);
                       };
-                      throw new Error("Failed pattern match at Main line 220, column 7 - line 225, column 31: " + [ v1.constructor.name ]);
+                      throw new Error("Failed pattern match at Main line 219, column 7 - line 224, column 31: " + [ v1.constructor.name ]);
                   })());
               };
           };
@@ -5224,7 +5255,7 @@ var PS = {};
               bundleAndExecute: defaultBundleAndExecute
           };
       };
-      throw new Error("Failed pattern match at Main line 405, column 1 - line 405, column 39: " + [ v.constructor.name ]);
+      throw new Error("Failed pattern match at Main line 437, column 1 - line 437, column 39: " + [ v.constructor.name ]);
   };
   var getBackendFromString = function (s) {
       return getBackend(Try_Types.backendFromString()(s));
@@ -5233,56 +5264,23 @@ var PS = {};
   // | Get the backend configuration from whatever is selected in the menu.
   var getBackendConfigFromView = Data_Functor.map(Control_Monad_Eff.functorEff)(getBackendFromString)(getBackendNameFromView);
 
-  // | Read query string options and update the state accordingly
-  var loadOptions = function (v) {
+  // | Setup event listeners for the backend dropdown menu.
+  var setupBackendMenu = function (v) {
       return function __do() {
           Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#backend_" + v.backend))(Control_Monad_Eff_JQuery.attr({
               checked: "checked"
           }))();
-          var v1 = Try_QueryString.getQueryStringMaybe("view")();
-          (function () {
-              if (v1 instanceof Data_Maybe.Just && Data_Foldable.elem(Data_Foldable.foldableArray)(Data_Eq.eqString)(v1.value0)([ "sidebyside", "code", "output" ])) {
-                  return Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#view_" + v1.value0))(Control_Monad_Eff_JQuery_Extras.click);
-              };
-              return Control_Applicative.pure(Control_Monad_Eff.applicativeEff)(Data_Unit.unit);
-          })()();
-          var v2 = Try_QueryString.getQueryStringMaybe("js")();
-          (function () {
-              if (v2 instanceof Data_Maybe.Just) {
-                  return Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("input:checkbox[name=showjs]"))(Control_Monad_Eff_JQuery.setProp("checked")(v2.value0 === "true"));
-              };
-              return Control_Applicative.pure(Control_Monad_Eff.applicativeEff)(Data_Unit.unit);
-          })()();
-          var v3 = Try_QueryString.getQueryStringMaybe("compile")();
-          (function () {
-              if (v3 instanceof Data_Maybe.Just) {
-                  return Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("input:checkbox[name=auto_compile]"))(Control_Monad_Eff_JQuery.setProp("checked")(v3.value0 === "true"));
-              };
-              return Control_Applicative.pure(Control_Monad_Eff.applicativeEff)(Data_Unit.unit);
-          })()();
-          var v4 = Try_QueryString.getQueryStringMaybe("gist")();
-          (function () {
-              if (v4 instanceof Data_Maybe.Just) {
-                  return Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#view_gist"))(Control_Monad_Eff_JQuery.attr({
-                      href: "https://gist.github.com/" + v4.value0
-                  }));
-              };
-              if (v4 instanceof Data_Maybe.Nothing) {
-                  return Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#view_gist_li"))(Control_Monad_Eff_JQuery.hide);
-              };
-              throw new Error("Failed pattern match at Main line 390, column 3 - line 392, column 61: " + [ v4.constructor.name ]);
-          })()();
           return Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("input[name=backend_inputs]"))(Control_Monad_Eff_JQuery.on("change")(function (e) {
               return function (jq) {
                   return function __do() {
-                      var v5 = getBackendConfigFromView();
-                      var v6 = Control_Bind.bind(Control_Monad_Eff.bindEff)(DOM_HTML.window)(DOM_HTML_Window.confirm("Replace your current code with the " + (v5.backend + " backend sample code?")))();
+                      var v1 = getBackendConfigFromView();
+                      var v2 = Control_Bind.bind(Control_Monad_Eff.bindEff)(DOM_HTML.window)(DOM_HTML_Window.confirm("Replace your current code with the " + (v1.backend + " backend sample code?")))();
                       (function () {
-                          if (v6) {
-                              return navigateTo("?backend=" + v5.backend);
+                          if (v2) {
+                              return navigateTo("?backend=" + v1.backend);
                           };
                           return Data_Functor["void"](Control_Monad_Eff.functorEff)(Control_Monad_Eff_Timer.setTimeout(1000)(function __do() {
-                              compile(v5)();
+                              compile(v1)();
                               return cacheCurrentCode();
                           }));
                       })()();
@@ -5292,48 +5290,47 @@ var PS = {};
           }))();
       };
   };
-  var setupEditor = Control_Monad_Eff_Uncurried.mkEffFn1(function (backend) {
+
+  // | Setup the editor component and some event handlers.
+  var setupEditor = function (bc) {
       return function __do() {
-          loadOptions(backend)();
-          setupEditorWith(backend)();
+          loadOptions(bc)();
+          setupBackendMenu(bc)();
+          (function __do() {
+              var $142 = Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#code_textarea"))(Control_Monad_Eff_JQuery_Extras.getValueMaybe)();
+              return Control_Monad_Eff_Uncurried.runEffFn1($foreign.setEditorContent)(Data_Foldable.fold(Data_Foldable.foldableMaybe)(Data_Monoid.monoidString)($142))();
+          })();
+          Control_Monad_Eff_Uncurried.runEffFn2($foreign.onEditorChanged)(Control_Monad_Eff_Uncurried.mkEffFn1(function (value) {
+              return function __do() {
+                  Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#code_textarea"))(Control_Monad_Eff_JQuery.setValue(value))();
+                  cacheCurrentCode();
+                  var v = (function __do() {
+                      var jq = Control_Monad_Eff_JQuery.select("#auto_compile")();
+                      return Control_Monad_Eff_JQuery_Extras.is(jq)(":checked")();
+                  })();
+                  return Control_Applicative.when(Control_Monad_Eff.applicativeEff)(v)(compile(bc))();
+              };
+          }))(750)();
+          compile(bc)();
           return cacheCurrentCode();
       };
-  });
-  var loadFromGist = Control_Monad_Eff_Uncurried.mkEffFn2(function (id_) {
-      return function (backend) {
-          return Control_Monad_Cont_Trans.runContT(Control_Monad_Except_Trans.runExceptT(Control_Bind.bind(Control_Monad_Except_Trans.bindExceptT(Control_Monad_Cont_Trans.monadContT(Control_Monad_Eff.monadEff)))(Try_Gist.getGistById(id_))(function (gi) {
-              return Try_Gist.tryLoadFileFromGist(gi)("Main.purs");
-          })))(function (v) {
-              if (v instanceof Data_Either.Left) {
-                  return function __do() {
-                      Control_Monad_Eff_Console.error("Unable to load gist metadata or contents: " + v.value0)();
-                      return Control_Monad_Eff_Uncurried.runEffFn1(setupEditor)(backend)();
-                  };
-              };
-              if (v instanceof Data_Either.Right) {
-                  return function __do() {
-                      Control_Bind.bind(Control_Monad_Eff.bindEff)(Control_Monad_Eff_JQuery.select("#code_textarea"))(Control_Monad_Eff_JQuery.setValue(v.value0))();
-                      return Control_Monad_Eff_Uncurried.runEffFn1(setupEditor)(backend)();
-                  };
-              };
-              throw new Error("Failed pattern match at Main line 238, column 5 - line 244, column 38: " + [ v.constructor.name ]);
-          });
-      };
-  });
+  };
   var withSession = function (sessionId) {
-      return function __do() {
-          var v = tryRestoreCachedCode(sessionId)();
-          if (v instanceof Data_Maybe.Just) {
-              return Control_Monad_Eff_Uncurried.runEffFn1(setupEditor)(getBackendFromString(v.value0))();
+      return function (k) {
+          return function __do() {
+              var v = tryRestoreCachedCode(sessionId)();
+              if (v instanceof Data_Maybe.Just) {
+                  return k(getBackendFromString(v.value0))();
+              };
+              if (v instanceof Data_Maybe.Nothing) {
+                  var v1 = Data_Functor.map(Control_Monad_Eff.functorEff)(function ($143) {
+                      return getBackendFromString(Data_Maybe.fromMaybe("core")($143));
+                  })(Try_QueryString.getQueryStringMaybe("backend"))();
+                  var v2 = Data_Functor.map(Control_Monad_Eff.functorEff)(Data_Maybe.fromMaybe(v1.mainGist))(Try_QueryString.getQueryStringMaybe("gist"))();
+                  return loadFromGist(v2)(v1)(k)();
+              };
+              throw new Error("Failed pattern match at Main line 277, column 3 - line 282, column 29: " + [ v.constructor.name ]);
           };
-          if (v instanceof Data_Maybe.Nothing) {
-              var v1 = Data_Functor.map(Control_Monad_Eff.functorEff)(function ($141) {
-                  return getBackendFromString(Data_Maybe.fromMaybe("core")($141));
-              })(Try_QueryString.getQueryStringMaybe("backend"))();
-              var v2 = Data_Functor.map(Control_Monad_Eff.functorEff)(Data_Maybe.fromMaybe(v1.mainGist))(Try_QueryString.getQueryStringMaybe("gist"))();
-              return Control_Monad_Eff_Uncurried.runEffFn2(loadFromGist)(v2)(v1)();
-          };
-          throw new Error("Failed pattern match at Main line 257, column 3 - line 262, column 37: " + [ v.constructor.name ]);
       };
   };
   var main = Control_Monad_Eff_JQuery.ready(function __do() {
@@ -5383,11 +5380,12 @@ var PS = {};
               return hideMenus;
           };
       }))();
-      return Try_Session.createSessionIdIfNecessary(withSession)();
+      return Control_Monad_Cont_Trans.runContT(Control_Bind.bind(Control_Monad_Cont_Trans.bindContT(Control_Monad_Eff.bindEff))(Try_Session.createSessionIdIfNecessary)(function (v) {
+          return withSession(v);
+      }))(setupEditor)();
   });
   exports["compile"] = compile;
   exports["execute"] = execute;
-  exports["setupEditorWith"] = setupEditorWith;
   exports["setupEditor"] = setupEditor;
   exports["defaultBundleAndExecute"] = defaultBundleAndExecute;
   exports["bundleAndExecuteThermite"] = bundleAndExecuteThermite;
@@ -5402,6 +5400,7 @@ var PS = {};
   exports["getBackendNameFromView"] = getBackendNameFromView;
   exports["getBackendConfigFromView"] = getBackendConfigFromView;
   exports["loadOptions"] = loadOptions;
+  exports["setupBackendMenu"] = setupBackendMenu;
   exports["getBackend"] = getBackend;
   exports["getBackendFromString"] = getBackendFromString;
   exports["main"] = main;
