@@ -117,20 +117,20 @@ foreign import setupIFrame
 execute :: forall eff. JS -> JS -> BackendConfig -> Eff (dom :: DOM | eff) Unit
 execute js bundle bc@(BackendConfig backend) = do
   let html = joinWith "\n"
-        [ "<!DOCTYPE html>"
-        , "<html>"
-        , "  <head>"
-        , "    <meta content=\"text/html;charset=utf-8\" http-equiv=\"Content-Type\">"
-        , "    <meta content=\"utf-8\" http-equiv=\"encoding\">"
-        , "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-        , "    <title>Try PureScript!</title>"
-        , "    <link rel=\"stylesheet\" href=\"css/style.css\">"
+        [ """<!DOCTYPE html>"""
+        , """<html>"""
+        , """  <head>"""
+        , """    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">"""
+        , """    <meta content="utf-8" http-equiv="encoding">"""
+        , """    <meta name="viewport" content="width=device-width, initial-scale=1.0">"""
+        , """    <title>Try PureScript!</title>"""
+        , """    <link rel="stylesheet" href="css/style.css">"""
         , backend.extra_styling
-        , "  </head>"
-        , "  <body>"
+        , """  </head>"""
+        , """  <body>"""
         , backend.extra_body
-        , "  </body>"
-        , "</html>"
+        , """  </body>"""
+        , """</html>"""
         ]
 
       replaced = replace' (unsafeRegex """require\("[^"]*"\)""" global) (\s _ ->
@@ -229,9 +229,9 @@ bundleAndExecuteThermite js bc@(BackendConfig backend) =
       onComplete (Left err) = error ("Unable to load JS bundle: " <> err)
       onComplete (Right [consoleScript, react, react_dom, bundle]) =
         let replaced = bundle
-                         # replace (unsafeRegex "require\\(\"react\"\\)" global) "window.React"
-                         # replace (unsafeRegex "require\\(\"react-dom\"\\)" global) "window.ReactDOM"
-                         # replace (unsafeRegex "require\\(\"react-dom\\/server\"\\)" global) "window.ReactDOM"
+                         # replace (unsafeRegex """require\("react"\)""" global) "window.React"
+                         # replace (unsafeRegex """require\("react-dom"\)""" global) "window.ReactDOM"
+                         # replace (unsafeRegex """require\("react-dom\/server"\)""" global) "window.ReactDOM"
         in execute js (JS (intercalate "\n" [consoleScript, react, react_dom, replaced])) bc
   in runContT (runExceptT getAll) (unsafePartial onComplete)
 
@@ -455,16 +455,16 @@ getBackend Thermite  = BackendConfig
   { backend: "thermite"
   , endpoint: "https://compile.purescript.org/thermite"
   , mainGist: "85383bb058471109cfef379bbb6bc11c"
-  , extra_styling: "<link rel=\"stylesheet\" href=\"//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css\">"
-  , extra_body: "<div id=\"app\"></div>"
+  , extra_styling: """<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">"""
+  , extra_body: """<div id="app"></div>"""
   , bundleAndExecute: bundleAndExecuteThermite
   }
 getBackend Slides    = BackendConfig
   { backend: "slides"
   , endpoint: "https://compile.purescript.org/slides"
   , mainGist: "c62b5778a6a5f2bcd32dd97b294c068a"
-  , extra_styling: "<link rel=\"stylesheet\" href=\"css/slides.css\">"
-  , extra_body: "<div id=\"main\"></div>"
+  , extra_styling: """<link rel="stylesheet" href="css/slides.css">"""
+  , extra_body: """<div id="main"></div>"""
   , bundleAndExecute: defaultBundleAndExecute
   }
 getBackend Mathbox   = BackendConfig
@@ -472,8 +472,8 @@ getBackend Mathbox   = BackendConfig
   , endpoint: "https://compile.purescript.org/purescript-mathbox"
   , mainGist: "aeecffd458fa8a365b4af3b3cd9d7759"
   , extra_styling: fold
-      [ "<script src=\"js/mathbox-bundle.js\"></script>"
-      , "<link rel=\"stylesheet\" href=\"css/mathbox.css\">"
+      [ """<script src="js/mathbox-bundle.js"></script>"""
+      , """<link rel="stylesheet" href="css/mathbox.css">"""
       ]
   , extra_body: ""
   , bundleAndExecute: defaultBundleAndExecute
@@ -483,19 +483,19 @@ getBackend Behaviors = BackendConfig
   , endpoint: "https://compile.purescript.org/behaviors"
   , mainGist: "ff1e87f0872d2d891e77d209d8f7706d"
   , extra_styling: ""
-  , extra_body: "<canvas id=\"canvas\" width=\"800\" height=\"600\"></canvas>"
+  , extra_body: """<canvas id="canvas" width="800" height="600"></canvas>"""
   , bundleAndExecute: defaultBundleAndExecute
   }
 getBackend Flare     = BackendConfig
   { backend: "flare"
   , endpoint: "https://compile.purescript.org/flare"
   , mainGist: "4f54d6dd213caa54d736ead597e17fee"
-  , extra_styling: "<link rel=\"stylesheet\" href=\"css/flare.css\">"
+  , extra_styling: """<link rel="stylesheet" href="css/flare.css">"""
   , extra_body: fold
-      [ "<div id=\"controls\"></div>"
-      , "<div id=\"output\"></div>"
-      , "<div id=\"tests\"></div>"
-      , "<canvas id=\"canvas\" width=\"800\" height=\"600\"></canvas>"
+      [ """<div id="controls"></div>"""
+      , """<div id="output"></div>"""
+      , """<div id="tests"></div>"""
+      , """<canvas id="canvas" width="800" height="600"></canvas>"""
       ]
   , bundleAndExecute: defaultBundleAndExecute
   }
