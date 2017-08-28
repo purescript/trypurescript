@@ -2,6 +2,7 @@ module Try.QueryString
   ( getQueryParams
   , getQueryStringMaybe
   , setQueryString
+  , setQueryStrings
   ) where
 
 import Prelude
@@ -46,6 +47,9 @@ foreign import setQueryParameters :: forall eff. EffFn1 (dom :: DOM | eff) (StrM
 
 -- | Update the specified key in the URL's query parameters.
 setQueryString :: forall eff. String -> String -> Eff (dom :: DOM | eff) Unit
-setQueryString k v = do
+setQueryString k v = setQueryStrings (StrMap.singleton k v)
+
+setQueryStrings :: forall eff. StrMap.StrMap String -> Eff (dom :: DOM | eff) Unit
+setQueryStrings ss = do
   params <- getQueryParams
-  runEffFn1 setQueryParameters (StrMap.insert k v params)
+  runEffFn1 setQueryParameters (StrMap.union params ss)
