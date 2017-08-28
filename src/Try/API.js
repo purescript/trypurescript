@@ -6,9 +6,9 @@ exports.get_ = function(uri, done, fail) {
   });
 };
 
-exports.compile_ = function(backend, code, done, fail) {
+exports.compile_ = function(endpoint, code, done, fail) {
   $.ajax({
-    url: backend.endpoint + '/compile',
+    url: endpoint + '/compile',
     dataType: 'json',
     data: code,
     method: 'POST',

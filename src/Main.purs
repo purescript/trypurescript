@@ -11,7 +11,6 @@ import Control.Monad.Eff.Random (RANDOM)
 import Control.Monad.Eff.Timer (TIMER, setTimeout)
 import Control.Monad.Eff.Uncurried (EffFn1, EffFn2, EffFn4, mkEffFn1, runEffFn1, runEffFn2, runEffFn4)
 import Control.Monad.Except.Trans (runExceptT)
-import Control.Parallel (parTraverse)
 import DOM (DOM)
 import DOM.HTML (window)
 import DOM.HTML.Location (setHref)
@@ -26,16 +25,15 @@ import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Newtype (unwrap)
 import Data.String (joinWith)
 import Data.String as String
-import Data.String.Regex (replace, replace')
+import Data.String.Regex (replace')
 import Data.String.Regex.Flags (global)
 import Data.String.Regex.Unsafe (unsafeRegex)
-import Partial.Unsafe (unsafePartial)
-import Try.API (CompileError(..), CompileResult(..), CompilerError(..), ErrorPosition(..), FailedResult(..), SuccessResult(..), get)
 import Try.API as API
+import Try.API (BackendConfig(..), CompileError(..), CompileResult(..), CompilerError(..), ErrorPosition(..), FailedResult(..), SuccessResult(..))
 import Try.Gist (getGistById, tryLoadFileFromGist, uploadGist)
 import Try.QueryString (getQueryStringMaybe, setQueryString)
 import Try.Session (createSessionIdIfNecessary, storeSession, tryRetrieveSession)
-import Try.Types (Backend(..), BackendConfig(..), JS(..), backendFromString)
+import Try.Types (JS(..))
 
 -- | Display plain text in the right hand column.
 displayPlainText
@@ -63,7 +61,7 @@ compile bc@(BackendConfig backend) = do
 
   code <- fold <$> (JQuery.select "#code_textarea" >>= JQuery.getValueMaybe)
 
-  runContT (runExceptT (API.compile bc code)) \res_ ->
+  runContT (runExceptT (backend.compile code)) \res_ ->
     case res_ of
       Left err -> displayPlainText err
       Right res -> do
@@ -74,7 +72,10 @@ compile bc@(BackendConfig backend) = do
             showJs <- JQuery.select "#showjs" >>= \jq -> JQuery.is jq ":checked"
             if showJs
               then displayPlainText js
-              else backend.bundleAndExecute (JS js) bc
+              else runContT (runExceptT backend.getBundle)
+                     case _ of
+                       Left err -> error ("Unable to retrieve JS bundle: " <> err)
+                       Right bundle -> execute (JS js) bundle bc
           Right (CompileFailed (FailedResult { error })) ->
             case error of
               CompilerErrors errs -> do
@@ -196,45 +197,6 @@ setupEditor bc = do
   compile bc
   cacheCurrentCode
 
-defaultBundleAndExecute
-  :: forall eff
-   . JS
-  -> BackendConfig
-  -> Eff (console :: CONSOLE, dom :: DOM | eff) Unit
-defaultBundleAndExecute js bc@(BackendConfig backend) = do
-  runContT (runExceptT (get (backend.endpoint <> "/bundle")))
-    case _ of
-      Left err -> error ("Unable to load JS bundle: " <> err)
-      Right bundle -> execute js (JS bundle) bc
-
-bundleAndExecuteThermite
-  :: forall eff
-   . JS
-  -> BackendConfig
-  -> Eff (console :: CONSOLE, dom :: DOM | eff) Unit
-bundleAndExecuteThermite js bc@(BackendConfig backend) =
-  let getAll = parTraverse get
-        [ "js/console.js"
-        , "js/react.min.js"
-        , "js/react-dom.min.js"
-        , backend.endpoint <> "/bundle"
-        ]
-
-      onComplete :: Partial
-                 => Either String (Array String)
-                 -> Eff ( console :: CONSOLE
-                        , dom :: DOM
-                        | eff
-                        ) Unit
-      onComplete (Left err) = error ("Unable to load JS bundle: " <> err)
-      onComplete (Right [consoleScript, react, react_dom, bundle]) =
-        let replaced = bundle
-                         # replace (unsafeRegex """require\("react"\)""" global) "window.React"
-                         # replace (unsafeRegex """require\("react-dom"\)""" global) "window.ReactDOM"
-                         # replace (unsafeRegex """require\("react-dom\/server"\)""" global) "window.ReactDOM"
-        in execute js (JS (intercalate "\n" [consoleScript, react, react_dom, replaced])) bc
-  in runContT (runExceptT getAll) (unsafePartial onComplete)
-
 loadFromGist
   :: forall eff
    . String
@@ -279,9 +241,9 @@ withSession
 withSession sessionId k = do
   cachedBackend <- tryRestoreCachedCode sessionId
   case cachedBackend of
-    Just cachedBackend_ -> k (getBackendFromString cachedBackend_)
+    Just cachedBackend_ -> k (API.getBackendConfigFromString cachedBackend_)
     Nothing -> do
-      bc@(BackendConfig backend) <- getBackendFromString <<< fromMaybe "core" <$> getQueryStringMaybe "backend"
+      bc@(BackendConfig backend) <- API.getBackendConfigFromString <<< fromMaybe "core" <$> getQueryStringMaybe "backend"
       gist <- fromMaybe backend.mainGist <$> getQueryStringMaybe "gist"
       loadFromGist gist bc k
 
@@ -380,7 +342,7 @@ getBackendNameFromView =
 
 -- | Get the backend configuration from whatever is selected in the menu.
 getBackendConfigFromView :: forall eff. Eff (dom :: DOM | eff) BackendConfig
-getBackendConfigFromView = getBackendFromString <$> getBackendNameFromView
+getBackendConfigFromView = API.getBackendConfigFromString <$> getBackendNameFromView
 
 -- | Read query string options and update the state accordingly
 loadOptions
@@ -441,67 +403,6 @@ setupBackendMenu bc@(BackendConfig backend) = do
              compile bc_
              cacheCurrentCode
     hideMenus
-
-getBackend :: Backend -> BackendConfig
-getBackend Core      = BackendConfig
-  { backend: "core"
-  , endpoint: "https://compile.purescript.org/try"
-  , mainGist: "b57a766d417e109785540d584266fc33"
-  , extra_styling: ""
-  , extra_body: ""
-  , bundleAndExecute: defaultBundleAndExecute
-  }
-getBackend Thermite  = BackendConfig
-  { backend: "thermite"
-  , endpoint: "https://compile.purescript.org/thermite"
-  , mainGist: "85383bb058471109cfef379bbb6bc11c"
-  , extra_styling: """<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">"""
-  , extra_body: """<div id="app"></div>"""
-  , bundleAndExecute: bundleAndExecuteThermite
-  }
-getBackend Slides    = BackendConfig
-  { backend: "slides"
-  , endpoint: "https://compile.purescript.org/slides"
-  , mainGist: "c62b5778a6a5f2bcd32dd97b294c068a"
-  , extra_styling: """<link rel="stylesheet" href="css/slides.css">"""
-  , extra_body: """<div id="main"></div>"""
-  , bundleAndExecute: defaultBundleAndExecute
-  }
-getBackend Mathbox   = BackendConfig
-  { backend: "mathbox"
-  , endpoint: "https://compile.purescript.org/purescript-mathbox"
-  , mainGist: "aeecffd458fa8a365b4af3b3cd9d7759"
-  , extra_styling: fold
-      [ """<script src="js/mathbox-bundle.js"></script>"""
-      , """<link rel="stylesheet" href="css/mathbox.css">"""
-      ]
-  , extra_body: ""
-  , bundleAndExecute: defaultBundleAndExecute
-  }
-getBackend Behaviors = BackendConfig
-  { backend: "behaviors"
-  , endpoint: "https://compile.purescript.org/behaviors"
-  , mainGist: "ff1e87f0872d2d891e77d209d8f7706d"
-  , extra_styling: ""
-  , extra_body: """<canvas id="canvas" width="800" height="600"></canvas>"""
-  , bundleAndExecute: defaultBundleAndExecute
-  }
-getBackend Flare     = BackendConfig
-  { backend: "flare"
-  , endpoint: "https://compile.purescript.org/flare"
-  , mainGist: "4f54d6dd213caa54d736ead597e17fee"
-  , extra_styling: """<link rel="stylesheet" href="css/flare.css">"""
-  , extra_body: fold
-      [ """<div id="controls"></div>"""
-      , """<div id="output"></div>"""
-      , """<div id="tests"></div>"""
-      , """<canvas id="canvas" width="800" height="600"></canvas>"""
-      ]
-  , bundleAndExecute: defaultBundleAndExecute
-  }
-
-getBackendFromString :: String -> BackendConfig
-getBackendFromString s = getBackend (unsafePartial backendFromString s)
 
 main :: Eff ( alert :: ALERT
             , confirm :: CONFIRM
