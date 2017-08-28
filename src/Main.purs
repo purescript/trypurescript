@@ -37,26 +37,31 @@ import Try.QueryString (getQueryStringMaybe, setQueryString)
 import Try.Session (createSessionIdIfNecessary, storeSession, tryRetrieveSession)
 import Try.Types (Backend(..), BackendConfig(..), JS(..), backendFromString)
 
+-- | Display plain text in the right hand column.
+displayPlainText
+  :: forall eff
+   . String
+  -> Eff (dom :: DOM | eff) Unit
+displayPlainText s = do
+  column2 <- JQuery.select "#column2"
+  JQuery.empty column2
+  pre <- JQuery.create "<pre>"
+  code_ <- JQuery.create "<code>"
+  JQuery.append code_ pre
+  JQuery.appendText s code_
+  JQuery.append pre column2
+
 -- | Compile the current code and execute it.
 compile :: forall eff. BackendConfig -> Eff (console :: CONSOLE, dom :: DOM | eff) Unit
 compile bc@(BackendConfig backend) = do
-  JQuery.select "#column2" >>= \jq -> do
-    JQuery.empty jq
-    JQuery.create "<div>" >>= \div -> do
-      JQuery.addClass "loading" div
-      JQuery.appendText "Loading..." div
-      JQuery.append div jq
+  column2 <- JQuery.select "#column2"
+  JQuery.empty column2
+  div <- JQuery.create "<div>"
+  JQuery.addClass "loading" div
+  JQuery.appendText "Loading..." div
+  JQuery.append div column2
 
   code <- fold <$> (JQuery.select "#code_textarea" >>= JQuery.getValueMaybe)
-
-  let displayPlainText s =
-        JQuery.select "#column2" >>= \jq -> do
-          JQuery.empty jq
-          JQuery.create "<pre>" >>= \pre -> do
-            JQuery.create "<code>" >>= \code_ -> do
-              JQuery.append code_ pre
-              JQuery.appendText s code_
-              JQuery.append pre jq
 
   runContT (runExceptT (API.compile bc code)) \res_ ->
     case res_ of
@@ -73,20 +78,19 @@ compile bc@(BackendConfig backend) = do
           Right (CompileFailed (FailedResult { error })) ->
             case error of
               CompilerErrors errs -> do
-                JQuery.select "#column2" >>= JQuery.empty
+                JQuery.empty column2
                 forWithIndex_ errs \i (CompilerError{ message, position: ErrorPosition pos }) -> do
-                  JQuery.select "#column2" >>= \jq -> do
-                    h1 <- JQuery.create "<h1>"
-                    JQuery.addClass "error-banner" h1
-                    JQuery.appendText ("Error " <> show (i + 1) <> " of " <> show (Array.length errs)) h1
+                  h1 <- JQuery.create "<h1>"
+                  JQuery.addClass "error-banner" h1
+                  JQuery.appendText ("Error " <> show (i + 1) <> " of " <> show (Array.length errs)) h1
 
-                    pre <- JQuery.create "<pre>"
-                    code_ <- JQuery.create "<code>"
-                    JQuery.append code_ pre
-                    JQuery.appendText message code_
+                  pre <- JQuery.create "<pre>"
+                  code_ <- JQuery.create "<code>"
+                  JQuery.append code_ pre
+                  JQuery.appendText message code_
 
-                    JQuery.append h1 jq
-                    JQuery.append pre jq
+                  JQuery.append h1 column2
+                  JQuery.append pre column2
 
                   runEffFn4 addErrorMarker
                     pos.startLine
@@ -142,9 +146,9 @@ execute js bundle bc@(BackendConfig backend) = do
 
       scripts = joinWith "\n" [unwrap bundle, wrapped]
 
-  JQuery.select "#column2" >>= \ctr ->
-    runEffFn4 setupIFrame ctr html scripts $ mkEffFn1 \body ->
-      JQuery.on "click" (\_ _ -> hideMenus) body
+  column2 <- JQuery.select "#column2"
+  runEffFn4 setupIFrame column2 html scripts $ mkEffFn1 \body ->
+    JQuery.on "click" (\_ _ -> hideMenus) body
 
 -- | Set the editor content to the specified string.
 foreign import setEditorContent :: forall eff. EffFn1 (dom :: DOM | eff) String Unit
@@ -344,31 +348,35 @@ hideMenus = do
 -- | Update the view mode based on the menu selection
 changeViewMode :: forall eff. JQuery.JQuery -> Eff (dom :: DOM | eff) Unit
 changeViewMode jq = do
+  column1 <- JQuery.select "#column1"
+  column2 <- JQuery.select "#column2"
+  showjs <- JQuery.select "#showjs"
+  showjsLabel <- JQuery.select "#showjs_label"
   viewMode <- JQuery.filter jq ":checked" >>= JQuery.getValueMaybe
   case viewMode of
     Just "code" -> do
-      JQuery.select "#column1" >>= JQuery.display
-      JQuery.select "#column2" >>= JQuery.hide
-      JQuery.select "#showjs_label" >>= JQuery.hide
-      JQuery.select "#showjs" >>= JQuery.hide
+      JQuery.display column1
+      JQuery.hide column2
+      JQuery.hide showjs
+      JQuery.hide showjsLabel
     Just "output" -> do
-      JQuery.select "#column1" >>= JQuery.hide
-      JQuery.select "#column2" >>= JQuery.display
-      JQuery.select "#showjs_label" >>= JQuery.display
-      JQuery.select "#showjs" >>= JQuery.display
+      JQuery.hide column1
+      JQuery.display column2
+      JQuery.display showjs
+      JQuery.display showjsLabel
     _ -> do
-      JQuery.select "#column1" >>= JQuery.display
-      JQuery.select "#column2" >>= JQuery.display
-      JQuery.select "#showjs_label" >>= JQuery.display
-      JQuery.select "#showjs" >>= JQuery.display
+      JQuery.display column1
+      JQuery.display column2
+      JQuery.display showjs
+      JQuery.display showjsLabel
 
 -- | Get the backend name from whatever is selected in the menu.
 getBackendNameFromView :: forall eff. Eff (dom :: DOM | eff) String
 getBackendNameFromView =
-  fromMaybe "core" <$>
-    (JQuery.select "input[name=backend_inputs]"
-      >>= \jq -> JQuery.filter jq ":checked"
-      >>= JQuery.getValueMaybe)
+  fromMaybe "core" <$> do
+    backendInputs <- JQuery.select "input[name=backend_inputs]"
+    checked <- JQuery.filter backendInputs ":checked"
+    JQuery.getValueMaybe checked
 
 -- | Get the backend configuration from whatever is selected in the menu.
 getBackendConfigFromView :: forall eff. Eff (dom :: DOM | eff) BackendConfig
