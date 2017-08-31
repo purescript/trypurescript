@@ -58,7 +58,7 @@ instance A.ToJSON Error
 
 server :: TL.Text -> [P.ExternsFile] -> P.Environment -> Int -> IO ()
 server bundled externs initEnv port = do
-  let compile :: Text -> IO (Either Error JS)
+  let compile :: Text -> IO (Either Error ([P.JSONError], JS))
       compile input
         | T.length input > 20000 = return (Left (OtherError "Please limit your input to 20000 characters"))
         | otherwise = do
@@ -67,7 +67,7 @@ server bundled externs initEnv port = do
             Left parseError ->
               return . Left . CompilerErrors . pure . P.toJSONError False P.Error . P.toPositionedError $ parseError
             Right (_, m) | P.getModuleName m == P.ModuleName [P.ProperName "Main"] -> do
-              (resultMay, _) <- runLogger' . runExceptT . flip runReaderT P.defaultOptions $ do
+              (resultMay, ws) <- runLogger' . runExceptT . flip runReaderT P.defaultOptions $ do
                 ((P.Module ss coms moduleName elaborated exps, env), nextVar) <- P.runSupplyT 0 $ do
                   [desugared] <- P.desugar externs [P.importPrim m]
                   P.runCheck' (P.emptyCheckState initEnv) $ P.typeCheckModule desugared
@@ -79,7 +79,7 @@ server bundled externs initEnv port = do
                 P.evalSupplyT nextVar $ P.prettyPrintJS <$> J.moduleToJs renamed Nothing
               case resultMay of
                 Left errs -> (return . Left . CompilerErrors . P.toJSONErrors False P.Error) errs
-                Right js -> (return . Right) js
+                Right js -> (return . Right) (P.toJSONErrors False P.Error ws, js)
             Right _ -> (return . Left. OtherError) "The name of the main module should be Main."
 
   scotty port $ do
@@ -96,8 +96,8 @@ server bundled externs initEnv port = do
       case response of
         Left err ->
           Scotty.json $ A.object [ "error" .= err ]
-        Right comp ->
-          Scotty.json $ A.object [ "js" .= comp ]
+        Right (warnings, comp) ->
+          Scotty.json $ A.object [ "js" .= comp, "warnings" .= warnings ]
     get "/search" $ do
       query <- param "q"
       Scotty.setHeader "Access-Control-Allow-Origin" "*"
