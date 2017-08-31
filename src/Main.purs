@@ -9,13 +9,14 @@ import Control.Monad.Eff.JQuery (JQuery, addClass, append, appendText, attr, cre
 import Control.Monad.Eff.JQuery.Extras (empty, filter, getValueMaybe, is) as JQuery
 import Control.Monad.Eff.Random (RANDOM)
 import Control.Monad.Eff.Timer (TIMER, setTimeout)
-import Control.Monad.Eff.Uncurried (EffFn1, EffFn2, EffFn4, mkEffFn1, runEffFn1, runEffFn2, runEffFn4)
+import Control.Monad.Eff.Uncurried (EffFn1, EffFn2, EffFn4, EffFn5, mkEffFn1, runEffFn1, runEffFn2, runEffFn4, runEffFn5)
 import Control.Monad.Except.Trans (runExceptT)
 import DOM (DOM)
 import DOM.HTML (window)
 import DOM.HTML.Location (setHref)
 import DOM.HTML.Types (ALERT, CONFIRM)
 import DOM.HTML.Window (alert, confirm, location)
+import Data.Array (mapMaybe)
 import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Foldable (elem, fold, for_, intercalate, traverse_)
@@ -29,7 +30,7 @@ import Data.String.Regex (replace')
 import Data.String.Regex.Flags (global)
 import Data.String.Regex.Unsafe (unsafeRegex)
 import Data.StrMap as StrMap
-import Try.API (BackendConfig(..), CompileError(..), CompileResult(..), CompilerError(..), ErrorPosition(..), FailedResult(..), SuccessResult(..), getBackendConfigFromString)
+import Try.API (BackendConfig(..), CompileError(..), CompileResult(..), CompileWarning(..), CompilerError(..), ErrorPosition(..), FailedResult(..), SuccessResult(..), getBackendConfigFromString)
 import Try.API as API
 import Try.Gist (getGistById, tryLoadFileFromGist, uploadGist)
 import Try.QueryString (getQueryStringMaybe, setQueryStrings)
@@ -51,18 +52,19 @@ displayErrors :: forall eff. Array CompilerError -> Eff (dom :: DOM | eff) Unit
 displayErrors errs = do
   column2 <- JQuery.select "#column2"
   JQuery.empty column2
-  forWithIndex_ errs \i (CompilerError{ message, position: ErrorPosition pos }) -> do
-    h1 <- JQuery.create "<h1>"
-    JQuery.addClass "error-banner" h1
-    JQuery.appendText ("Error " <> show (i + 1) <> " of " <> show (Array.length errs)) h1
+  forWithIndex_ errs \i (CompilerError{ message, position }) ->
+    for_ (unwrap position) \(ErrorPosition pos) -> do
+      h1 <- JQuery.create "<h1>"
+      JQuery.addClass "error-banner" h1
+      JQuery.appendText ("Error " <> show (i + 1) <> " of " <> show (Array.length errs)) h1
 
-    pre <- JQuery.create "<pre>"
-    code_ <- JQuery.create "<code>"
-    JQuery.append code_ pre
-    JQuery.appendText message code_
+      pre <- JQuery.create "<pre>"
+      code_ <- JQuery.create "<code>"
+      JQuery.append code_ pre
+      JQuery.appendText message code_
 
-    JQuery.append h1 column2
-    JQuery.append pre column2
+      JQuery.append h1 column2
+      JQuery.append pre column2
 
 -- | Display plain text in the right hand column.
 displayPlainText
@@ -135,8 +137,21 @@ foreign import onEditorChanged
 -- | Clean up any global state associated with any visible error markers.
 foreign import cleanUpMarkers :: forall eff. Eff (dom :: DOM | eff) Unit
 
--- | Add a visible error marker at the specified location.
-foreign import addErrorMarker :: forall eff. EffFn4 (dom :: DOM | eff) Int Int Int Int Unit
+-- | Add a visible marker at the specified location.
+foreign import addMarker :: forall eff. EffFn5 (dom :: DOM | eff) String Int Int Int Int Unit
+
+type Annotation =
+  { row :: Int
+  , column :: Int
+  , type :: String
+  , text :: String
+  }
+
+-- | Set the gutter annotations
+foreign import setAnnotations :: forall eff. EffFn1 (dom :: DOM | eff) (Array Annotation) Unit
+
+clearAnnotations :: forall eff. Eff (dom :: DOM | eff) Unit
+clearAnnotations = runEffFn1 setAnnotations []
 
 -- | Set up a fresh iframe in the specified container, and use it
 -- | to execute the provided JavaScript code.
@@ -154,6 +169,8 @@ compile :: forall eff. BackendConfig -> Eff (console :: CONSOLE, dom :: DOM | ef
 compile bc@(BackendConfig backend) = do
   code <- getTextAreaContent
 
+  clearAnnotations
+
   runContT (runExceptT (backend.compile code)) \res_ ->
     case res_ of
       Left err -> displayPlainText err
@@ -161,25 +178,46 @@ compile bc@(BackendConfig backend) = do
         cleanUpMarkers
 
         case res of
-          Right (CompileSuccess (SuccessResult { js })) -> do
+          Right (CompileSuccess (SuccessResult { js, warnings })) -> do
             showJs <- isShowJsChecked
             if showJs
               then displayPlainText js
               else runContT (runExceptT backend.getBundle)
                      case _ of
                        Left err -> error ("Unable to retrieve JS bundle: " <> err)
-                       Right bundle -> execute (JS js) bundle bc
+                       Right bundle -> do
+                         for_ (unwrap warnings) \warnings_ -> do
+                           let toAnnotation (CompileWarning{ errorCode, position, message }) =
+                                 unwrap position <#> \(ErrorPosition pos) ->
+                                   { row: pos.startLine - 1
+                                   , column: pos.startColumn - 1
+                                   , type: "warning"
+                                   , text: message
+                                   }
+                           runEffFn1 setAnnotations (mapMaybe toAnnotation warnings_)
+                         execute (JS js) bundle bc
           Right (CompileFailed (FailedResult { error })) ->
             case error of
               CompilerErrors errs -> do
                 displayErrors errs
 
-                for_ errs \(CompilerError{ position: ErrorPosition pos }) -> do
-                  runEffFn4 addErrorMarker
-                    pos.startLine
-                    pos.startColumn
-                    pos.endLine
-                    pos.endColumn
+                let toAnnotation (CompilerError{ position, message }) =
+                      unwrap position <#> \(ErrorPosition pos) ->
+                        { row: pos.startLine - 1
+                        , column: pos.startColumn - 1
+                        , type: "error"
+                        , text: message
+                        }
+                runEffFn1 setAnnotations (mapMaybe toAnnotation errs)
+
+                for_ errs \(CompilerError{ position }) ->
+                  for_ (unwrap position) \(ErrorPosition pos) ->
+                    runEffFn5 addMarker
+                      "error"
+                      pos.startLine
+                      pos.startColumn
+                      pos.endLine
+                      pos.endColumn
               OtherError err -> displayPlainText err
           Left errs -> do
             displayPlainText "Unable to parse the response from the server"

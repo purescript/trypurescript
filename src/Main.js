@@ -3,5 +3,6 @@
 exports.setEditorContent = setEditorContent;
 exports.onEditorChanged = onEditorChanged;
 exports.cleanUpMarkers = cleanUpMarkers;
-exports.addErrorMarker = addErrorMarker;
+exports.addMarker = addMarker;
+exports.setAnnotations = setAnnotations;
 exports.setupIFrame = setupIFrame;
