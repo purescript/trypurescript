@@ -27,6 +27,7 @@ import Data.Foreign (Foreign, ForeignError)
 import Data.Foreign.Class (class Decode, decode)
 import Data.Foreign.Generic (defaultOptions, genericDecode)
 import Data.Foreign.Generic.Types (Options, SumEncoding(..))
+import Data.Foreign.NullOrUndefined (NullOrUndefined(..))
 import Data.Generic.Rep (class Generic)
 import Data.List.NonEmpty (NonEmptyList)
 import Data.String.Regex (replace)
@@ -53,7 +54,7 @@ instance decodeErrorPosition :: Decode ErrorPosition where
 
 newtype CompilerError = CompilerError
   { message :: String
-  , position :: ErrorPosition
+  , position :: NullOrUndefined ErrorPosition
   }
 
 derive instance genericCompilerError :: Generic CompilerError _
@@ -233,7 +234,7 @@ getBackendConfig Slides = BackendConfig
   , compile: compile "https://compile.purescript.org/slides"
   , getBundle: getDefaultBundle "https://compile.purescript.org/slides"
   }
-getBackendConfig Mathbox = BackendConfig 
+getBackendConfig Mathbox = BackendConfig
   { backend: "mathbox"
   , mainGist: "aeecffd458fa8a365b4af3b3cd9d7759"
   , extra_styling: fold

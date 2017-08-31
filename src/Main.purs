@@ -23,12 +23,12 @@ import Data.FoldableWithIndex (forWithIndex_)
 import Data.Foreign (renderForeignError)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Newtype (unwrap)
+import Data.StrMap as StrMap
 import Data.String (joinWith)
 import Data.String as String
 import Data.String.Regex (replace')
 import Data.String.Regex.Flags (global)
 import Data.String.Regex.Unsafe (unsafeRegex)
-import Data.StrMap as StrMap
 import Try.API (BackendConfig(..), CompileError(..), CompileResult(..), CompilerError(..), ErrorPosition(..), FailedResult(..), SuccessResult(..), getBackendConfigFromString)
 import Try.API as API
 import Try.Gist (getGistById, tryLoadFileFromGist, uploadGist)
@@ -51,7 +51,7 @@ displayErrors :: forall eff. Array CompilerError -> Eff (dom :: DOM | eff) Unit
 displayErrors errs = do
   column2 <- JQuery.select "#column2"
   JQuery.empty column2
-  forWithIndex_ errs \i (CompilerError{ message, position: ErrorPosition pos }) -> do
+  forWithIndex_ errs \i (CompilerError{ message }) -> do
     h1 <- JQuery.create "<h1>"
     JQuery.addClass "error-banner" h1
     JQuery.appendText ("Error " <> show (i + 1) <> " of " <> show (Array.length errs)) h1
@@ -174,12 +174,13 @@ compile bc@(BackendConfig backend) = do
               CompilerErrors errs -> do
                 displayErrors errs
 
-                for_ errs \(CompilerError{ position: ErrorPosition pos }) -> do
-                  runEffFn4 addErrorMarker
-                    pos.startLine
-                    pos.startColumn
-                    pos.endLine
-                    pos.endColumn
+                for_ errs \(CompilerError{ position }) ->
+                  for_ (unwrap position) \(ErrorPosition pos) ->
+                    runEffFn4 addErrorMarker
+                      pos.startLine
+                      pos.startColumn
+                      pos.endLine
+                      pos.endColumn
               OtherError err -> displayPlainText err
           Left errs -> do
             displayPlainText "Unable to parse the response from the server"
