@@ -24,12 +24,12 @@ import Data.FoldableWithIndex (forWithIndex_)
 import Data.Foreign (renderForeignError)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Newtype (unwrap)
+import Data.StrMap as StrMap
 import Data.String (joinWith)
 import Data.String as String
 import Data.String.Regex (replace')
 import Data.String.Regex.Flags (global)
 import Data.String.Regex.Unsafe (unsafeRegex)
-import Data.StrMap as StrMap
 import Try.API (BackendConfig(..), CompileError(..), CompileResult(..), CompileWarning(..), CompilerError(..), ErrorPosition(..), FailedResult(..), SuccessResult(..), getBackendConfigFromString)
 import Try.API as API
 import Try.Gist (getGistById, tryLoadFileFromGist, uploadGist)
@@ -52,7 +52,8 @@ displayErrors :: forall eff. Array CompilerError -> Eff (dom :: DOM | eff) Unit
 displayErrors errs = do
   column2 <- JQuery.select "#column2"
   JQuery.empty column2
-  forWithIndex_ errs \i (CompilerError{ message, position }) ->
+
+  forWithIndex_ errs \i (CompilerError{ position, message }) ->
     for_ (unwrap position) \(ErrorPosition pos) -> do
       h1 <- JQuery.create "<h1>"
       JQuery.addClass "error-banner" h1
