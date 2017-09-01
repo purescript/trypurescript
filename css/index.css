@@ -173,8 +173,14 @@ body {
   border-bottom: 2px dotted red;
 }
 
-.gutter-error {
-  background-color: red;
+.warning {
+  position: absolute;
+  z-index: 20;
+  border-bottom: 2px dotted #c4953a;
+}
+
+.ace_gutter-tooltip {
+  white-space: pre-wrap;
 }
 
 .error-banner {

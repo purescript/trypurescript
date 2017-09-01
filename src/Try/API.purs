@@ -2,6 +2,8 @@ module Try.API
   ( ErrorPosition(..)
   , CompilerError(..)
   , CompileError(..)
+  , CompileWarning(..)
+  , Suggestion(..)
   , SuccessResult(..)
   , FailedResult(..)
   , CompileResult(..)
@@ -80,8 +82,32 @@ instance decodeCompileError :: Decode CompileError where
             }
       })
 
+newtype Suggestion = Suggestion
+  { replacement :: String
+  , replaceRange :: NullOrUndefined ErrorPosition
+  }
+
+derive instance genericSuggestion :: Generic Suggestion _
+
+instance decodeSuggestion :: Decode Suggestion where
+  decode = genericDecode decodingOptions
+
+newtype CompileWarning = CompileWarning
+  { errorCode :: String
+  , message :: String
+  , position :: NullOrUndefined ErrorPosition
+  , suggestion :: NullOrUndefined Suggestion
+  }
+
+derive instance genericCompileWarning :: Generic CompileWarning _
+
+instance decodeCompileWarning :: Decode CompileWarning where
+  decode = genericDecode decodingOptions
+
 newtype SuccessResult = SuccessResult
-  { js :: String }
+  { js :: String
+  , warnings :: NullOrUndefined (Array CompileWarning)
+  }
 
 derive instance genericSuccessResult :: Generic SuccessResult _
 
