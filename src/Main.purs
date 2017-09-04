@@ -53,19 +53,18 @@ displayErrors errs = do
   column2 <- JQuery.select "#column2"
   JQuery.empty column2
 
-  forWithIndex_ errs \i (CompilerError{ position, message }) ->
-    for_ (unwrap position) \(ErrorPosition pos) -> do
-      h1 <- JQuery.create "<h1>"
-      JQuery.addClass "error-banner" h1
-      JQuery.appendText ("Error " <> show (i + 1) <> " of " <> show (Array.length errs)) h1
+  forWithIndex_ errs \i (CompilerError{ message }) -> do
+    h1 <- JQuery.create "<h1>"
+    JQuery.addClass "error-banner" h1
+    JQuery.appendText ("Error " <> show (i + 1) <> " of " <> show (Array.length errs)) h1
 
-      pre <- JQuery.create "<pre>"
-      code_ <- JQuery.create "<code>"
-      JQuery.append code_ pre
-      JQuery.appendText message code_
+    pre <- JQuery.create "<pre>"
+    code_ <- JQuery.create "<code>"
+    JQuery.append code_ pre
+    JQuery.appendText message code_
 
-      JQuery.append h1 column2
-      JQuery.append pre column2
+    JQuery.append h1 column2
+    JQuery.append pre column2
 
 -- | Display plain text in the right hand column.
 displayPlainText
