@@ -5,11 +5,12 @@ import Prelude
 import Control.Monad.Cont.Trans (ContT(..), runContT)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Console (CONSOLE, error)
-import Control.Monad.Eff.JQuery (JQuery, addClass, append, appendText, attr, create, display, hide, on, ready, removeClass, select, setProp, setValue, toggleClass) as JQuery
+import Control.Monad.Eff.JQuery (JQuery, addClass, append, appendText, attr, create, display, hide, on, ready, select, setProp, setValue) as JQuery
+import Control.Monad.Eff.JQuery (setAttr)
 import Control.Monad.Eff.JQuery.Extras (empty, filter, getValueMaybe, is) as JQuery
 import Control.Monad.Eff.Random (RANDOM)
 import Control.Monad.Eff.Timer (TIMER, setTimeout)
-import Control.Monad.Eff.Uncurried (EffFn1, EffFn2, EffFn4, EffFn5, mkEffFn1, runEffFn1, runEffFn2, runEffFn4, runEffFn5)
+import Control.Monad.Eff.Uncurried (EffFn1, EffFn2, EffFn3, EffFn5, mkEffFn1, runEffFn1, runEffFn2, runEffFn3, runEffFn5)
 import Control.Monad.Except.Trans (runExceptT)
 import DOM (DOM)
 import DOM.HTML (window)
@@ -86,36 +87,11 @@ isShowJsChecked = JQuery.select "#showjs" >>= \jq -> JQuery.is jq ":checked"
 isAutoCompileChecked :: forall eff. Eff (dom :: DOM | eff) Boolean
 isAutoCompileChecked = JQuery.select "#auto_compile" >>= \jq -> JQuery.is jq ":checked"
 
--- | Hide the drop down menus
-hideMenus :: forall eff. Eff (dom :: DOM | eff) Unit
-hideMenus = do
-  JQuery.select "#menu" >>= JQuery.removeClass "show"
-  JQuery.select "#view_mode" >>= JQuery.removeClass "show-sub-menu"
-  JQuery.select "#backend" >>= JQuery.removeClass "show-sub-menu"
-
 -- | Update the view mode based on the menu selection
 changeViewMode :: forall eff. Maybe String -> Eff (dom :: DOM | eff) Unit
-changeViewMode viewMode = do
-  column1 <- JQuery.select "#column1"
-  column2 <- JQuery.select "#column2"
-  showjs <- JQuery.select "#showjs"
-  showjsLabel <- JQuery.select "#showjs_label"
-  case viewMode of
-    Just "code" -> do
-      JQuery.display column1
-      JQuery.hide column2
-      JQuery.hide showjs
-      JQuery.hide showjsLabel
-    Just "output" -> do
-      JQuery.hide column1
-      JQuery.display column2
-      JQuery.display showjs
-      JQuery.display showjsLabel
-    _ -> do
-      JQuery.display column1
-      JQuery.display column2
-      JQuery.display showjs
-      JQuery.display showjsLabel
+changeViewMode viewMode =
+  for_ viewMode \viewMode_ ->
+    JQuery.select "#editor_view" >>= setAttr "data-view-mode" viewMode_
 
 getTextAreaContent :: forall eff. Eff (dom :: DOM | eff) String
 getTextAreaContent = fold <$> (JQuery.select "#code_textarea" >>= JQuery.getValueMaybe)
@@ -157,11 +133,10 @@ clearAnnotations = runEffFn1 setAnnotations []
 -- | to execute the provided JavaScript code.
 foreign import setupIFrame
   :: forall eff
-   . EffFn4 (dom :: DOM | eff)
+   . EffFn3 (dom :: DOM | eff)
             JQuery.JQuery
             String
             String
-            (EffFn1 (dom :: DOM | eff) JQuery.JQuery Unit)
             Unit
 
 -- | Compile the current code and execute it.
@@ -257,8 +232,7 @@ execute js bundle bc@(BackendConfig backend) = do
       scripts = joinWith "\n" [unwrap bundle, wrapped]
 
   column2 <- JQuery.select "#column2"
-  runEffFn4 setupIFrame column2 html scripts $ mkEffFn1 \body ->
-    JQuery.on "click" (\_ _ -> hideMenus) body
+  runEffFn3 setupIFrame column2 html scripts
 
 -- | Setup the editor component and some event handlers.
 setupEditor
@@ -424,8 +398,8 @@ loadOptions bc = do
 
   gist <- getQueryStringMaybe "gist"
   case gist of
-    Just gist_ -> JQuery.select "#view_gist" >>= JQuery.attr { href: "https://gist.github.com/" <> gist_ }
-    Nothing -> JQuery.select "#view_gist_li" >>= JQuery.hide
+    Just gist_ -> JQuery.select ".view_gist" >>= JQuery.attr { href: "https://gist.github.com/" <> gist_ }
+    Nothing -> JQuery.select ".view_gist_li" >>= JQuery.hide
 
 -- | Setup event listeners for the backend dropdown menu.
 setupBackendMenu
@@ -450,7 +424,6 @@ setupBackendMenu bc@(BackendConfig backend) = do
       else void $ setTimeout 1000 do
              compile bc_
              cacheCurrentCode bc_
-    hideMenus
 
 main :: Eff ( alert :: ALERT
             , confirm :: CONFIRM
@@ -463,17 +436,6 @@ main = JQuery.ready do
   JQuery.select "input[name=view_mode]" >>= JQuery.on "change" \_ jq -> do
     viewMode <- JQuery.filter jq ":checked" >>= JQuery.getValueMaybe
     changeViewMode viewMode
-
-  JQuery.select "#hamburger" >>= JQuery.on "click" \e _ -> do
-    JQuery.select "#menu" >>= JQuery.toggleClass "show"
-
-  JQuery.select "#view_mode_label" >>= JQuery.on "click" \e _ -> do
-    JQuery.select "#view_mode" >>= JQuery.toggleClass "show-sub-menu"
-
-  JQuery.select "#backend_label" >>= JQuery.on "click" \e _ -> do
-    JQuery.select "#backend" >>= JQuery.toggleClass "show-sub-menu"
-
-  JQuery.select "#editor_view" >>= JQuery.on "click" \e _ -> hideMenus
 
   runContT (do sessionId <- ContT createSessionIdIfNecessary
                ContT (withSession sessionId)) setupEditor
