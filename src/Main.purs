@@ -5,7 +5,7 @@ import Prelude
 import Control.Monad.Cont.Trans (ContT(..), runContT)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Console (CONSOLE, error)
-import Control.Monad.Eff.JQuery (JQuery, addClass, append, appendText, attr, create, display, hide, on, ready, select, setProp, setValue) as JQuery
+import Control.Monad.Eff.JQuery (JQuery, addClass, append, appendText, attr, create, hide, on, ready, select, setProp, setValue) as JQuery
 import Control.Monad.Eff.JQuery (setAttr)
 import Control.Monad.Eff.JQuery.Extras (empty, filter, getValueMaybe, is) as JQuery
 import Control.Monad.Eff.Random (RANDOM)
