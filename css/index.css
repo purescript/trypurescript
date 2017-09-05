@@ -39,6 +39,7 @@ body {
 #home_link {
   padding: 0px 10px;
   text-decoration: none;
+  text-align: center;
   font-weight: bold;
 }
 
@@ -50,6 +51,7 @@ body {
   list-style: none;
   display: inline-block;
   border-left: 1px solid #454648;
+  min-width: 90px;
 }
 
   .menu-item a {
