@@ -5,7 +5,7 @@ import Prelude
 import Control.Monad.Cont.Trans (ContT(..), runContT)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Console (CONSOLE, error)
-import Control.Monad.Eff.JQuery (JQuery, addClass, append, appendText, attr, create, hide, on, ready, select, setProp, setValue) as JQuery
+import Control.Monad.Eff.JQuery (JQuery, addClass, append, appendText, attr, create, display, hide, on, ready, select, setProp, setValue) as JQuery
 import Control.Monad.Eff.JQuery (setAttr)
 import Control.Monad.Eff.JQuery.Extras (empty, filter, getValueMaybe, is) as JQuery
 import Control.Monad.Eff.Random (RANDOM)
@@ -38,15 +38,11 @@ import Try.QueryString (getQueryStringMaybe, setQueryStrings)
 import Try.Session (createSessionIdIfNecessary, storeSession, tryRetrieveSession)
 import Try.Types (JS(..))
 
--- | Display a loading message in the right hand column.
 displayLoadingMessage :: forall eff. Eff (dom :: DOM | eff) Unit
-displayLoadingMessage = do
-  column2 <- JQuery.select "#column2"
-  JQuery.empty column2
-  div <- JQuery.create "<div>"
-  JQuery.addClass "loading" div
-  JQuery.appendText "Loading..." div
-  JQuery.append div column2
+displayLoadingMessage = JQuery.select "#loading" >>= JQuery.display
+
+hideLoadingMessage :: forall eff. Eff (dom :: DOM | eff) Unit
+hideLoadingMessage = JQuery.select "#loading" >>= JQuery.hide
 
 -- | Display a list of errors in the right hand column.
 displayErrors :: forall eff. Array CompilerError -> Eff (dom :: DOM | eff) Unit
@@ -144,6 +140,7 @@ compile :: forall eff. BackendConfig -> Eff (console :: CONSOLE, dom :: DOM | ef
 compile bc@(BackendConfig backend) = do
   code <- getTextAreaContent
 
+  displayLoadingMessage
   clearAnnotations
 
   runContT (runExceptT (backend.compile code)) \res_ ->
@@ -156,9 +153,11 @@ compile bc@(BackendConfig backend) = do
           Right (CompileSuccess (SuccessResult { js, warnings })) -> do
             showJs <- isShowJsChecked
             if showJs
-              then displayPlainText js
-              else runContT (runExceptT backend.getBundle)
-                     case _ of
+              then do hideLoadingMessage
+                      displayPlainText js
+              else runContT (runExceptT backend.getBundle) \bundleResult -> do
+                     hideLoadingMessage
+                     case bundleResult of
                        Left err -> error ("Unable to retrieve JS bundle: " <> err)
                        Right bundle -> do
                          for_ (unwrap warnings) \warnings_ -> do
@@ -171,7 +170,8 @@ compile bc@(BackendConfig backend) = do
                                    }
                            runEffFn1 setAnnotations (mapMaybe toAnnotation warnings_)
                          execute (JS js) bundle bc
-          Right (CompileFailed (FailedResult { error })) ->
+          Right (CompileFailed (FailedResult { error })) -> do
+            hideLoadingMessage
             case error of
               CompilerErrors errs -> do
                 displayErrors errs
@@ -195,6 +195,7 @@ compile bc@(BackendConfig backend) = do
                       pos.endColumn
               OtherError err -> displayPlainText err
           Left errs -> do
+            hideLoadingMessage
             displayPlainText "Unable to parse the response from the server"
             traverse_ (error <<< renderForeignError) errs
 
