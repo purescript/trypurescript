@@ -111,8 +111,8 @@ body {
   }
 
   .menu-dropdown > ul > li {
-    margin: 0px;
-    padding: 10px 8px;
+    margin: 0;
+    padding: 0;
   }
 
   .menu-dropdown:hover > ul {
@@ -122,6 +122,16 @@ body {
   .menu-dropdown input[type="radio"] {
     display:none;
   }
+
+    .menu-dropdown input[type="radio"] + label {
+      display: block;
+      padding: 10px 8px;
+      margin: 0;
+    }
+
+    .menu-dropdown input[type="radio"] + label:hover {
+      background-color: black;
+    }
 
     .menu-dropdown input[type="radio"]:checked + label {
       color: #c4953a;
