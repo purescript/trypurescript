@@ -1,6 +1,8 @@
 module Control.Monad.Eff.JQuery.Extras
   ( click
   , empty
+  , fadeIn
+  , fadeOut
   , filter
   , is
   , getValueMaybe
@@ -19,6 +21,12 @@ foreign import click :: forall eff. JQuery -> Eff (dom :: DOM | eff) Unit
 
 -- | Remove all elements from the specified container element.
 foreign import empty :: forall eff. JQuery -> Eff (dom :: DOM | eff) Unit
+
+-- | Fade in an element.
+foreign import fadeIn :: forall eff. JQuery -> Eff (dom :: DOM | eff) Unit
+
+-- | Fade out an element.
+foreign import fadeOut :: forall eff. JQuery -> Eff (dom :: DOM | eff) Unit
 
 -- | Filter elements based on an additional selector.
 foreign import filter :: forall eff. JQuery -> Selector -> Eff (dom :: DOM | eff) JQuery

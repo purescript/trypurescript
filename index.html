@@ -23,18 +23,15 @@
 <body>
   <div id="wrapper">
     <div id="body">
-      <div id="options">
-
-        <a id="home_link" href=""><label id="home_label">Try PureScript</label></a>
-
-        <label id="hamburger" title="Menu">☰</label>
-
-        <div id="menu">
-          <label id="view_mode_label" title="Select a view mode">View Mode</label>
+      <ul id="menu">
+        <a id="home_link" class="menu-item" href="/" title="Try PureScript!">
+          <img src="img/favicon-white.svg" width="40" height="40">
+        </a><li class="menu-item menu-dropdown no-mobile">
+          <label title="Select a view mode">View Mode</label>
           <ul id="view_mode">
             <li>
               <input type="radio" name="view_mode" value="sidebyside" id="view_sidebyside" checked="true">
-              <label for="view_sidebyside" title="Show the code and output side by side">Side by side</label>
+              <label for="view_sidebyside" title="Show the code and output side by side">Side-by-side</label>
             </li>
             <li>
               <input type="radio" name="view_mode" value="code" id="view_code">
@@ -44,14 +41,14 @@
               <input type="radio" name="view_mode" value="output" id="view_output">
               <label for="view_output" title="Show only the output">Output</label>
             </li>
-            <li id="view_gist_li">
-              <a id="view_gist" target="trypurs_gist">
+            <li class="view_gist_li">
+              <a class="view_gist" target="trypurs_gist">
                 <label title="Open the original gist in a new window">Gist</label>
               </a>
             </li>
           </ul>
-
-          <label id="backend_label" title="Select a Backend">Backend</label>
+        </li><li class="menu-item menu-dropdown no-mobile">
+          <label title="Select a Backend">Backend</label>
           <ul id="backend">
             <li>
               <input type="radio" name="backend_inputs" value="core" id="backend_core" checked="true">
@@ -78,31 +75,33 @@
               <label for="backend_behaviors" title="Use the try-behaviors backend">Behaviors</label>
             </li>
           </ul>
-
-          <ul id="gists">
-            <li>
-              <label id="gist_save" name="save_gist" title="Save file as a Gist">Share</label>
-            </li>
-          </ul>
-
-          <span class="nowrap">
-            <input id="auto_compile" name="auto_compile" title="Toggle auto-compliation of the file on code changes" value="auto_compile" type="checkbox" checked="true">
-            <label id="compile_label" title="Compile file">Compile</label>
-          </span>
-
-          <span class="nowrap">
-            <input id="showjs" name="showjs" title="Show resulting JavaScript code instead of output" value="showjs" type="checkbox">
-            <label id="showjs_label" for="showjs" title="Show resulting JavaScript code instead of output">Show JS</label>
-          </span>
-
+        </li><li class="menu-item view_gist_li mobile-only">
+          <a class="view_gist" target="trypurs_gist">
+            <label title="Open the original gist in a new window">View Gist</label>
+          </a>
+        </li><li class="menu-item no-mobile">
+          <label id="gist_save" name="save_gist" title="Save file as a Gist">Share</label>
+        </li><li class="menu-item no-mobile">
+          <label id="compile_label" name="compile_label" title="Compile Now">Compile</label>
+        </li><li class="menu-item nowrap no-mobile">
+          <input id="auto_compile" name="auto_compile" title="Toggle auto-compliation of the file on code changes" value="auto_compile" type="checkbox" checked="true">
+          <label id="auto_compile_label" for="auto_compile" title="Compile on code changes">Auto-Compile</label>
+        </li><li class="menu-item nowrap">
+          <input id="showjs" name="showjs" title="Show resulting JavaScript code instead of output" value="showjs" type="checkbox">
+          <label id="showjs_label" for="showjs" title="Show resulting JavaScript code instead of output">Show JS</label>
+        </li><li class="menu-item">
           <a id="helplink" href="https://github.com/purescript/trypurescript/tree/gh-pages/README.md" target="trypurs_readme">
             <label id="help" title="Learn more about Try PureScript">Help</label>
           </a>
-        </div>
+        </li>
+      </ul>
 
+      <div class="mobile-only mobile-banner">
+        Your screen size is too small. Code editing has been disabled.
       </div>
-      <div id="editor_view">
-        <div id="column1">
+
+      <div id="editor_view" data-view-mode="sidebyside">
+        <div id="column1" class="no-mobile">
 
           <div id="code">
           </div>
@@ -113,6 +112,9 @@
         </div>
 
         <div id="column2">
+        </div>
+
+        <div id="loading">
         </div>
       </div>
     </div>
@@ -184,7 +186,7 @@
       })(marker));
     }
 
-    function setupIFrame($ctr, html, js, onReady) {
+    function setupIFrame($ctr, html, js) {
       var $iframe = $('<iframe id="output-iframe">');
 
       $ctr
@@ -203,7 +205,6 @@
         var checkExists = setInterval(function() {
           var body = iframe.getElementsByTagName('body')[0];
           if (body) {
-            onReady($(body));
             body.appendChild(script);
             clearInterval(checkExists);
           }
