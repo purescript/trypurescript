@@ -5,9 +5,9 @@ import Prelude
 import Control.Monad.Cont.Trans (ContT(..), runContT)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Console (CONSOLE, error)
-import Control.Monad.Eff.JQuery (JQuery, addClass, append, appendText, attr, create, display, hide, on, ready, select, setProp, setValue) as JQuery
+import Control.Monad.Eff.JQuery (JQuery, addClass, append, appendText, attr, create, hide, on, ready, select, setProp, setValue) as JQuery
 import Control.Monad.Eff.JQuery (setAttr)
-import Control.Monad.Eff.JQuery.Extras (empty, filter, getValueMaybe, is) as JQuery
+import Control.Monad.Eff.JQuery.Extras (empty, fadeIn, fadeOut, filter, getValueMaybe, is) as JQuery
 import Control.Monad.Eff.Random (RANDOM)
 import Control.Monad.Eff.Timer (TIMER, setTimeout)
 import Control.Monad.Eff.Uncurried (EffFn1, EffFn2, EffFn3, EffFn5, mkEffFn1, runEffFn1, runEffFn2, runEffFn3, runEffFn5)
@@ -39,10 +39,10 @@ import Try.Session (createSessionIdIfNecessary, storeSession, tryRetrieveSession
 import Try.Types (JS(..))
 
 displayLoadingMessage :: forall eff. Eff (dom :: DOM | eff) Unit
-displayLoadingMessage = JQuery.select "#loading" >>= JQuery.display
+displayLoadingMessage = JQuery.select "#loading" >>= JQuery.fadeIn
 
 hideLoadingMessage :: forall eff. Eff (dom :: DOM | eff) Unit
-hideLoadingMessage = JQuery.select "#loading" >>= JQuery.hide
+hideLoadingMessage = JQuery.select "#loading" >>= JQuery.fadeOut
 
 -- | Display a list of errors in the right hand column.
 displayErrors :: forall eff. Array CompilerError -> Eff (dom :: DOM | eff) Unit

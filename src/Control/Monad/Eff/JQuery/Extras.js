@@ -12,6 +12,18 @@ exports.empty = function(jq) {
   };
 };
 
+exports.fadeIn = function(jq) {
+  return function() {
+    jq.fadeIn();
+  };
+};
+
+exports.fadeOut = function(jq) {
+  return function() {
+    jq.fadeOut();
+  };
+};
+
 exports.filter = function(jq) {
   return function(sel) {
     return function() {
