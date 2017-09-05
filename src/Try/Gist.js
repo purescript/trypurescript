@@ -5,7 +5,7 @@ exports.getGistById_ = function(id, done, fail) {
     url: 'https://api.github.com/gists/' + id,
     dataType: 'json'
   }).done(done).fail(function(err) {
-    fail(err.statusText);
+    fail("Unable to load Gist metadata");
   });
 }
 

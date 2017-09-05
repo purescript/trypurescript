@@ -277,13 +277,13 @@ loadFromGist
    . String
   -> BackendConfig
   -> ({ code :: String, backend :: BackendConfig }
-      -> Eff ( confirm :: CONFIRM
+      -> Eff ( alert :: ALERT
              , console :: CONSOLE
              , dom :: DOM
              , timer :: TIMER
              | eff
              ) Unit)
-  -> Eff ( confirm :: CONFIRM
+  -> Eff ( alert :: ALERT
          , console :: CONSOLE
          , dom :: DOM
          , timer :: TIMER
@@ -293,7 +293,7 @@ loadFromGist id_ backend k = do
   runContT (runExceptT (getGistById id_ >>= \gi -> tryLoadFileFromGist gi "Main.purs")) $
     case _ of
       Left err -> do
-        error ("Unable to load gist metadata or contents: " <> err)
+        window >>= alert err
         k { code: "", backend }
       Right code -> k { code, backend }
 
@@ -301,13 +301,15 @@ withSession
   :: forall eff
    . String
   -> ({ code :: String, backend :: BackendConfig }
-      -> Eff ( confirm :: CONFIRM
+      -> Eff ( alert :: ALERT
+             , confirm :: CONFIRM
              , console :: CONSOLE
              , dom :: DOM
              , timer :: TIMER
              | eff
              ) Unit)
-  -> Eff ( confirm :: CONFIRM
+  -> Eff ( alert :: ALERT
+         , confirm :: CONFIRM
          , console :: CONSOLE
          , dom :: DOM
          , timer :: TIMER
