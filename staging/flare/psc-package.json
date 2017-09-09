@@ -1,0 +1,8 @@
+{
+    "name": "flare",
+    "set": "add-flare",
+    "source": "https://github.com/joneshf/package-sets.git",
+    "depends": [
+        "flare"
+    ]
+}
