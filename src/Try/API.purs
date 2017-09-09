@@ -262,7 +262,7 @@ getBackendConfig Slides = BackendConfig
   }
 getBackendConfig Mathbox = BackendConfig
   { backend: "mathbox"
-  , mainGist: "aeecffd458fa8a365b4af3b3cd9d7759"
+  , mainGist: "81f8bb3261b9c819d677de2ea54a4d2e"
   , extra_styling: fold
       [ """<script src="js/mathbox-bundle.js"></script>"""
       , """<link rel="stylesheet" href="css/mathbox.css">"""
