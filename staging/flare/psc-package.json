@@ -1,7 +1,7 @@
 {
     "name": "flare",
-    "set": "add-flare",
-    "source": "https://github.com/joneshf/package-sets.git",
+    "set": "psc-0.11.6-09092017",
+    "source": "https://github.com/purescript/package-sets.git",
     "depends": [
         "flare"
     ]
