@@ -67,15 +67,17 @@ code {
     padding-right: 3px;
 }
 
-.flarecheck-test pre,
-.flarecheck-test code,
-.flarecheck-test input,
-.flarecheck-test label,
-.flarecheck-test legend {
-    font-family: 'Source Code Pro', courier;
+.sparkle-test pre,
+.sparkle-test code,
+.sparkle-test input,
+.sparkle-test label,
+.sparkle-test legend,
+.sparkle-test select,
+.sparkle-test textarea {
+    font-family: 'Source Code Pro', monospace;
 }
 
-fieldset.flarecheck-test {
+fieldset.sparkle-test {
     margin-top: 15px;
     margin-bottom: 40px;
     max-width: 800px;
@@ -84,7 +86,7 @@ fieldset.flarecheck-test {
     padding: .35em .625em .75em;
 }
 
-fieldset.flarecheck-test > legend {
+fieldset.sparkle-test > legend {
     background-color: #f0f0f0;
     border: 1px solid #666;
     border-radius: 3px;
@@ -92,7 +94,7 @@ fieldset.flarecheck-test > legend {
     width: initial;
 }
 
-.flarecheck-test pre {
+.sparkle-test pre {
     background-color: #f0f0f0;
     padding: 10px;
     max-width: 780px;
@@ -105,89 +107,101 @@ fieldset.flarecheck-test > legend {
     word-wrap: break-word;       /* Internet Explorer 5.5+ */
 }
 
-.flarecheck-test .flare-input {
+.sparkle-test .flare-input {
     margin-bottom: 5px;
 }
 
-.flarecheck-test input {
+.sparkle-test input:not([type="range"]) {
     padding: 3px;
     border-radius: 3px;
     border: 1px solid #888;
 }
 
-.flarecheck-test input:invalid {
+.sparkle-test input:invalid {
     background-color: #DEAFB4;
 }
 
-.flarecheck-test .flare-input-number,
-.flarecheck-test .flare-input-int-number {
+.sparkle-test .flare-input-number,
+.sparkle-test .flare-input-int-number {
     width: 80px;
 }
 
-.flarecheck-test fieldset {
+.sparkle-test fieldset {
     border-radius: 3px;
     margin-top: 5px;
     margin-bottom: 20px;
 }
 
-.flarecheck-test label {
-    width: 150px;
+.sparkle-test label {
+    width: 160px;
     display: inline-block;
 }
 
-.flarecheck-test legend {
+.sparkle-test legend {
     padding: 2px 6px;
     font-weight: 700;
 }
 
-.flarecheck-test .flarecheck-okay {
+.sparkle-test .flare-input-list button {
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+.sparkle-test .sparkle-okay {
     background-color: #B4DEAF;
 }
 
-.flarecheck-test .flarecheck-warn {
+.sparkle-test .sparkle-warn {
     background-color: #DEAFB4;
 }
 
-.flarecheck-string {
+.sparkle-string {
     color: #E91E63;
 }
 
-.flarecheck-number {
+.sparkle-number {
     color: #1339E8;
 }
 
-.flarecheck-boolean {
+.sparkle-boolean {
     font-weight: bold;
 }
 
-.flarecheck-constructor {
+.sparkle-constructor {
     font-weight: bold;
 }
 
-.flarecheck-record-field {
+.sparkle-record-field {
     font-style: italic;
 }
 
-.flarecheck-tooltip {
+.sparkle-color {
+    width: 1em;
+    height: 1em;
+    margin-right: 0.5em;
+    display: inline-block;
+}
+
+.sparkle-tooltip {
     cursor: default;
 }
 
-.flarecheck-tooltip:hover {
+.sparkle-tooltip:hover {
     background-color: #f2e7a6;
 }
 
-.flarecheck-tooltip > .flarecheck-tooltip:hover {
+.sparkle-tooltip > .sparkle-tooltip:hover {
     background-color: #e9d563;
 }
 
-.flarecheck-tooltip > .flarecheck-tooltip > .flarecheck-tooltip:hover {
+.sparkle-tooltip > .sparkle-tooltip > .sparkle-tooltip:hover {
     background-color: #dfc220;
 }
 
-.flarecheck-tooltip > .flarecheck-tooltip > .flarecheck-tooltip > .flarecheck-tooltip:hover {
+.sparkle-tooltip > .sparkle-tooltip > .sparkle-tooltip > .sparkle-tooltip:hover {
     background-color: #938015;
 }
 
-.flarecheck-tooltip > .flarecheck-tooltip > .flarecheck-tooltip > .flarecheck-tooltip > .flarecheck-tooltip:hover {
+.sparkle-tooltip > .sparkle-tooltip > .sparkle-tooltip > .sparkle-tooltip > .sparkle-tooltip:hover {
     background-color: #62560e;
 }
