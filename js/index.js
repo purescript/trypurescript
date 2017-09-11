@@ -5000,7 +5000,7 @@ var PS = {};
   var setQueryStrings = function (ss) {
       return function __do() {
           var v = getQueryParams();
-          return Control_Monad_Eff_Uncurried.runEffFn1($foreign.setQueryParameters)(Data_StrMap.union(v)(ss))();
+          return Control_Monad_Eff_Uncurried.runEffFn1($foreign.setQueryParameters)(Data_StrMap.union(ss)(v))();
       };
   };
   var setQueryString = function (k) {
