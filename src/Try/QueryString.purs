@@ -52,4 +52,4 @@ setQueryString k v = setQueryStrings (StrMap.singleton k v)
 setQueryStrings :: forall eff. StrMap.StrMap String -> Eff (dom :: DOM | eff) Unit
 setQueryStrings ss = do
   params <- getQueryParams
-  runEffFn1 setQueryParameters (StrMap.union params ss)
+  runEffFn1 setQueryParameters (StrMap.union ss params)
