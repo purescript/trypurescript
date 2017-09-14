@@ -5,8 +5,7 @@ import Prelude
 import Control.Monad.Cont.Trans (ContT(..), runContT)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Console (CONSOLE, error)
-import Control.Monad.Eff.JQuery (JQuery, addClass, append, appendText, attr, create, hide, on, ready, select, setProp, setValue) as JQuery
-import Control.Monad.Eff.JQuery (setAttr)
+import Control.Monad.Eff.JQuery (JQuery, addClass, append, setText, setAttr, attr, create, hide, on, ready, select, setProp, setValue) as JQuery
 import Control.Monad.Eff.JQuery.Extras (empty, fadeIn, fadeOut, filter, getValueMaybe, is) as JQuery
 import Control.Monad.Eff.Random (RANDOM)
 import Control.Monad.Eff.Timer (TIMER, setTimeout)
@@ -53,12 +52,12 @@ displayErrors errs = do
   forWithIndex_ errs \i (CompilerError{ message }) -> do
     h1 <- JQuery.create "<h1>"
     JQuery.addClass "error-banner" h1
-    JQuery.appendText ("Error " <> show (i + 1) <> " of " <> show (Array.length errs)) h1
+    JQuery.setText ("Error " <> show (i + 1) <> " of " <> show (Array.length errs)) h1
 
     pre <- JQuery.create "<pre>"
     code_ <- JQuery.create "<code>"
     JQuery.append code_ pre
-    JQuery.appendText message code_
+    JQuery.setText message code_
 
     JQuery.append h1 column2
     JQuery.append pre column2
@@ -74,7 +73,7 @@ displayPlainText s = do
   pre <- JQuery.create "<pre>"
   code_ <- JQuery.create "<code>"
   JQuery.append code_ pre
-  JQuery.appendText s code_
+  JQuery.setText s code_
   JQuery.append pre column2
 
 isShowJsChecked :: forall eff. Eff (dom :: DOM | eff) Boolean
@@ -87,7 +86,7 @@ isAutoCompileChecked = JQuery.select "#auto_compile" >>= \jq -> JQuery.is jq ":c
 changeViewMode :: forall eff. Maybe String -> Eff (dom :: DOM | eff) Unit
 changeViewMode viewMode =
   for_ viewMode \viewMode_ ->
-    JQuery.select "#editor_view" >>= setAttr "data-view-mode" viewMode_
+    JQuery.select "#editor_view" >>= JQuery.setAttr "data-view-mode" viewMode_
 
 getTextAreaContent :: forall eff. Eff (dom :: DOM | eff) String
 getTextAreaContent = fold <$> (JQuery.select "#code_textarea" >>= JQuery.getValueMaybe)
