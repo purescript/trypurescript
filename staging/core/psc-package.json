@@ -37,6 +37,7 @@
         "proxy",
         "quickcheck",
         "random",
+        "record",
         "refs",
         "semirings",
         "sets",
