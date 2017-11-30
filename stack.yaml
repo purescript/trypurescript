@@ -3,5 +3,5 @@ flags: {}
 packages:
 - '.'
 extra-deps:
-- purescript-0.11.6
+- purescript-0.11.7
 - pipes-http-1.0.5
