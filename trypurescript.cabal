@@ -13,21 +13,21 @@ author: Phil Freeman
 data-dir: ""
 
 executable trypurescript
-    build-depends: base ==4.*,
-                   aeson -any,
-                   bytestring >=0.10.0.2 && <0.11,
-                   directory -any,
-                   filepath -any,
-                   Glob -any,
-                   scotty -any,
-                   purescript ==0.11.7,
-                   containers -any,
-                   http-types >= 0.8.5,
-                   transformers ==0.5.*,
-                   mtl ==2.2.1,
+    build-depends: base,
+                   aeson,
+                   bytestring,
+                   directory,
+                   filepath,
+                   Glob,
+                   scotty,
+                   purescript,
+                   containers,
+                   http-types,
+                   transformers,
+                   mtl,
                    parsec,
-                   text -any,
-                   time -any
+                   text,
+                   time
     hs-source-dirs: server
     main-is: Main.hs
     buildable: True
