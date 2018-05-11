@@ -11,6 +11,7 @@ import Control.Monad.Eff.Random (RANDOM)
 import Control.Monad.Eff.Timer (TIMER, setTimeout)
 import Control.Monad.Eff.Uncurried (EffFn1, EffFn2, EffFn3, EffFn5, mkEffFn1, runEffFn1, runEffFn2, runEffFn3, runEffFn5)
 import Control.Monad.Except.Trans (runExceptT)
+import Data.Tuple (Tuple(Tuple))
 import DOM (DOM)
 import DOM.HTML (window)
 import DOM.HTML.Location (setHref)
@@ -33,6 +34,7 @@ import Data.String.Regex.Unsafe (unsafeRegex)
 import Try.API (BackendConfig(..), CompileError(..), CompileResult(..), CompileWarning(..), CompilerError(..), ErrorPosition(..), FailedResult(..), SuccessResult(..), getBackendConfigFromString)
 import Try.API as API
 import Try.Gist (getGistById, tryLoadFileFromGist, uploadGist)
+import Try.Plaste (getPlasteById, uploadPlaste)
 import Try.QueryString (getQueryStringMaybe, setQueryStrings)
 import Try.Session (createSessionIdIfNecessary, storeSession, tryRetrieveSession)
 import Try.Types (JS(..))
@@ -268,6 +270,9 @@ setupEditor { code, backend } = do
   JQuery.select "#gist_save" >>= JQuery.on "click" \e _ ->
     publishNewGist backend
 
+  JQuery.select "#plaste_save" >>= JQuery.on "click" \e _ ->
+    publishNewPlaste backend
+
   compile backend
   cacheCurrentCode backend
 
@@ -296,6 +301,32 @@ loadFromGist id_ backend k = do
         k { code: "", backend }
       Right code -> k { code, backend }
 
+loadFromPlaste
+  :: forall eff
+   . String
+  -> BackendConfig
+  -> ({ code :: String, backend :: BackendConfig }
+      -> Eff ( alert :: ALERT
+             , console :: CONSOLE
+             , dom :: DOM
+             , timer :: TIMER
+             | eff
+             ) Unit)
+  -> Eff ( alert :: ALERT
+         , console :: CONSOLE
+         , dom :: DOM
+         , timer :: TIMER
+         | eff
+         ) Unit
+loadFromPlaste id_ backend k = do
+  runContT (runExceptT (getPlasteById id_)) $
+    case _ of
+      Left err -> do
+        window >>= alert err
+        k { code: "", backend }
+      Right code -> k { code, backend }
+
+
 withSession
   :: forall eff
    . String
@@ -321,8 +352,13 @@ withSession sessionId k = do
       k { code, backend: API.getBackendConfigFromString backend }
     Nothing -> do
       bc@(BackendConfig backend) <- API.getBackendConfigFromString <<< fromMaybe "core" <$> getQueryStringMaybe "backend"
-      gist <- fromMaybe backend.mainGist <$> getQueryStringMaybe "gist"
-      loadFromGist gist bc k
+      maybePlaste <- getQueryStringMaybe "plaste"
+      case maybePlaste of
+        Just plaste -> do
+          loadFromPlaste plaste bc k
+        Nothing -> do
+          gist <- fromMaybe backend.mainGist <$> getQueryStringMaybe "gist"
+          loadFromGist gist bc k
 
 -- | Cache the current code in the session state
 cacheCurrentCode
@@ -364,6 +400,36 @@ publishNewGist bc@(BackendConfig backend) = do
           setQueryStrings (StrMap.singleton "gist" gistId <>
                            StrMap.singleton "backend" backend.backend)
 
+-- | Create a new Plaste using the current content
+publishNewPlaste
+  :: forall eff
+   . BackendConfig
+  -> Eff ( alert :: ALERT
+         , confirm :: CONFIRM
+         , console :: CONSOLE
+         , dom :: DOM
+         | eff
+         ) Unit
+publishNewPlaste bc@(BackendConfig backend) = do
+  ok <- window >>= confirm (intercalate "\n"
+          [ "Do you really want to publish this code at Plaste?"
+          , ""
+          , "Note: this code will be available to anyone."
+          ])
+  when ok do
+    content <- getTextAreaContent
+    runContT (runExceptT (uploadPlaste content)) $
+      case _ of
+        Left err -> do
+          window >>= alert "Failed to create plaste"
+          error ("Failed to create plaste: " <> err)
+        Right plasteId -> do
+          setQueryStrings $
+            StrMap.fromFoldable
+              [ Tuple "plaste" plasteId
+              , Tuple "backend" backend.backend
+              ]
+
 -- | Navigate to the specified URL.
 navigateTo :: forall eff. String -> Eff (dom :: DOM | eff) Unit
 navigateTo uri = void (window >>= location >>= setHref uri)
@@ -399,9 +465,20 @@ loadOptions bc = do
     _ -> pure unit
 
   gist <- getQueryStringMaybe "gist"
-  case gist of
-    Just gist_ -> JQuery.select ".view_gist" >>= JQuery.attr { href: "https://gist.github.com/" <> gist_ }
-    Nothing -> JQuery.select ".view_gist_li" >>= JQuery.hide
+  plaste <- getQueryStringMaybe "plaste"
+  case Tuple gist plaste of
+    Tuple (Just gist_) _ -> do
+      JQuery.select ".view_gist" >>= JQuery.attr { href: "https://gist.github.com/" <> gist_ }
+      JQuery.select ".view_plaste_li" >>= JQuery.hide
+
+    Tuple _ (Just plaste_) -> do
+      JQuery.select ".view_plaste" >>= JQuery.attr { href: "https://gathering.purescript.org:7777/" <> plaste_ }
+      JQuery.select ".view_gist_li" >>= JQuery.hide
+
+    _ -> do
+      JQuery.select ".view_plaste_li" >>= JQuery.hide
+      JQuery.select ".view_gist_li" >>= JQuery.hide
+
 
 -- | Setup event listeners for the backend dropdown menu.
 setupBackendMenu
