@@ -27,7 +27,10 @@ executable trypurescript
                    mtl ==2.2.1,
                    parsec,
                    text -any,
-                   time -any
+                   time -any,
+                   http-client -any,
+                   lens -any,
+                   wreq -any
     hs-source-dirs: server
     main-is: Main.hs
     buildable: True

@@ -18,6 +18,7 @@ import           Control.Monad.Trans.Except (ExceptT(..), runExceptT)
 import           Control.Monad.Trans.Reader (runReaderT)
 import qualified Data.Aeson as A
 import           Data.Aeson ((.=))
+import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy as BL
 import           Data.Function (on)
 import           Data.List (foldl', nubBy)
@@ -41,11 +42,15 @@ import           System.Environment (getArgs)
 import           System.Exit (exitFailure)
 import           System.FilePath ((</>))
 import           System.FilePath.Glob (glob)
+import Control.Exception (SomeException(SomeException), catch)
 import qualified System.IO as IO
 import           System.IO.UTF8 (readUTF8File)
 import qualified Text.Parsec.Combinator as Parsec
 import           Web.Scotty
 import qualified Web.Scotty as Scotty
+import qualified Network.Wreq as Wreq
+import Network.HTTP.Client (HttpExceptionContent(..), HttpException(..), responseStatus, responseBody)
+import Control.Lens ((^.))
 
 type JS = Text
 
@@ -98,6 +103,37 @@ server bundled externs initEnv port = do
           Scotty.json $ A.object [ "error" .= err ]
         Right (warnings, comp) ->
           Scotty.json $ A.object [ "js" .= comp, "warnings" .= warnings ]
+
+    post "/plaste" $ do
+      token <- liftIO . fmap (concat . lines) $ readFile "token.txt" `catch` \(SomeException _) -> pure ""
+      code <- body
+      response <- liftIO $
+          fmap pure (Wreq.post ("http://gathering.purescript.org:7777/" ++ token) code)
+          `catch`
+            (\case
+               HttpExceptionRequest _ (StatusCodeException s e) ->
+                 pure (Left $ (responseStatus s ^. Wreq.statusCode, e))
+               HttpExceptionRequest _ r -> pure (Left $ (0, BS.pack $ show r))
+               InvalidUrlException s r -> pure (Left $ (1, BS.pack $ s ++ ": " ++ r))
+            )
+          `catch` (\(SomeException s) -> pure (Left $ (-1, BS.pack $ show s)))
+
+      Scotty.setHeader "Access-Control-Allow-Origin" "*"
+      case response of
+        Right r
+          | r ^. Wreq.responseStatus . Wreq.statusCode == 200 ->
+            Scotty.json $ A.object [ "plaste_id" .= T.decodeUtf8 (BL.toStrict $ r ^. Wreq.responseBody) ]
+        Right r ->
+          Scotty.json $ A.object
+            [ "error_id" .= (r ^. Wreq.responseStatus . Wreq.statusCode)
+            , "error" .= T.decodeUtf8 (BL.toStrict $ r ^. Wreq.responseBody)
+            ]
+        Left (errid, err) ->
+          Scotty.json $ A.object
+            [ "error_id" .= errid
+            , "error" .= T.decodeUtf8 err
+            ]
+
     get "/search" $ do
       query <- param "q"
       Scotty.setHeader "Access-Control-Allow-Origin" "*"
