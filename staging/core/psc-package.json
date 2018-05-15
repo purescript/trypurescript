@@ -39,6 +39,7 @@
         "random",
         "record",
         "refs",
+        "run",
         "semirings",
         "sets",
         "st",
@@ -48,6 +49,7 @@
         "tuples",
         "typelevel-prelude",
         "unfoldable",
-        "validation"
+        "validation",
+        "variant"
     ]
 }
