@@ -17,24 +17,23 @@ import Prelude
 
 import Control.Alt ((<|>))
 import Control.Monad.Cont.Trans (ContT(ContT))
-import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Uncurried (EffFn1, EffFn3, EffFn4, mkEffFn1, runEffFn3, runEffFn4)
 import Control.Monad.Except (runExcept)
 import Control.Monad.Except.Trans (ExceptT(ExceptT))
 import Control.Parallel (parTraverse)
-import DOM (DOM)
 import Data.Array (fold, intercalate)
 import Data.Either (Either(..))
-import Data.Foreign (Foreign, ForeignError)
-import Data.Foreign.Class (class Decode, decode)
-import Data.Foreign.Generic (defaultOptions, genericDecode)
-import Data.Foreign.Generic.Types (Options, SumEncoding(..))
-import Data.Foreign.NullOrUndefined (NullOrUndefined)
 import Data.Generic.Rep (class Generic)
 import Data.List.NonEmpty (NonEmptyList)
+import Data.Maybe (Maybe)
 import Data.String.Regex (replace)
 import Data.String.Regex.Flags (global)
 import Data.String.Regex.Unsafe (unsafeRegex)
+import Effect (Effect)
+import Effect.Uncurried (EffectFn1, EffectFn3, EffectFn4, mkEffectFn1, runEffectFn3, runEffectFn4)
+import Foreign (Foreign, ForeignError)
+import Foreign.Class (class Decode, decode)
+import Foreign.Generic (defaultOptions, genericDecode)
+import Foreign.Generic.Types (Options, SumEncoding(..))
 import Partial.Unsafe (unsafePartial)
 import Try.Types (JS(JS))
 
@@ -56,7 +55,7 @@ instance decodeErrorPosition :: Decode ErrorPosition where
 
 newtype CompilerError = CompilerError
   { message :: String
-  , position :: NullOrUndefined ErrorPosition
+  , position :: Maybe ErrorPosition
   }
 
 derive instance genericCompilerError :: Generic CompilerError _
@@ -78,13 +77,13 @@ instance decodeCompileError :: Decode CompileError where
           TaggedObject
             { tagFieldName: "tag"
             , contentsFieldName: "contents"
-            , constructorTagTransform: id
+            , constructorTagTransform: identity
             }
       })
 
 newtype Suggestion = Suggestion
   { replacement :: String
-  , replaceRange :: NullOrUndefined ErrorPosition
+  , replaceRange :: Maybe ErrorPosition
   }
 
 derive instance genericSuggestion :: Generic Suggestion _
@@ -95,8 +94,8 @@ instance decodeSuggestion :: Decode Suggestion where
 newtype CompileWarning = CompileWarning
   { errorCode :: String
   , message :: String
-  , position :: NullOrUndefined ErrorPosition
-  , suggestion :: NullOrUndefined Suggestion
+  , position :: Maybe ErrorPosition
+  , suggestion :: Maybe Suggestion
   }
 
 derive instance genericCompileWarning :: Generic CompileWarning _
@@ -106,7 +105,7 @@ instance decodeCompileWarning :: Decode CompileWarning where
 
 newtype SuccessResult = SuccessResult
   { js :: String
-  , warnings :: NullOrUndefined (Array CompileWarning)
+  , warnings :: Maybe (Array CompileWarning)
   }
 
 derive instance genericSuccessResult :: Generic SuccessResult _
@@ -134,29 +133,26 @@ instance decodeCompileResult :: Decode CompileResult where
     <|> CompileFailed <$> genericDecode decodingOptions f
 
 foreign import get_
-  :: forall eff
-   . EffFn3 (dom :: DOM | eff)
+  :: EffectFn3
             String
-            (EffFn1 (dom :: DOM | eff) String Unit)
-            (EffFn1 (dom :: DOM | eff) String Unit)
+            (EffectFn1 String Unit)
+            (EffectFn1 String Unit)
             Unit
 
 -- | A wrapper for `get` which uses `ContT`.
-get :: forall eff. String -> ExceptT String (ContT Unit (Eff (dom :: DOM | eff))) String
-get uri = ExceptT (ContT \k -> runEffFn3 get_ uri (mkEffFn1 (k <<< Right)) (mkEffFn1 (k <<< Left)))
+get :: String -> ExceptT String (ContT Unit Effect) String
+get uri = ExceptT (ContT \k -> runEffectFn3 get_ uri (mkEffectFn1 (k <<< Right)) (mkEffectFn1 (k <<< Left)))
 
 -- | Get the default bundle
 getDefaultBundle
-  :: forall eff
-   . String
-  -> ExceptT String (ContT Unit (Eff (dom :: DOM | eff))) JS
+  :: String
+  -> ExceptT String (ContT Unit Effect) JS
 getDefaultBundle endpoint = JS <$> get (endpoint <> "/bundle")
 
 -- | Get the JS bundle for the Thermite backend, which includes additional dependencies
 getThermiteBundle
-  :: forall eff
-   . String
-  -> ExceptT String (ContT Unit (Eff (dom :: DOM | eff))) JS
+  :: String
+  -> ExceptT String (ContT Unit Effect) JS
 getThermiteBundle endpoint =
   let getAll = parTraverse get
         [ "js/console.js"
@@ -179,33 +175,30 @@ getThermiteBundle endpoint =
 -- | POST the specified code to the Try PureScript API, and wait for
 -- | a response.
 foreign import compile_
-  :: forall eff
-   . EffFn4 (dom :: DOM | eff)
+  :: EffectFn4
             String
             String
-            (EffFn1 (dom :: DOM | eff) Foreign Unit)
-            (EffFn1 (dom :: DOM | eff) String Unit)
+            (EffectFn1 Foreign Unit)
+            (EffectFn1 String Unit)
             Unit
 
 -- | A wrapper for `compileApi` which uses `ContT`.
 compile
-  :: forall eff
-   . String
+  :: String
   -> String
-  -> ExceptT String (ContT Unit (Eff (dom :: DOM | eff)))
+  -> ExceptT String (ContT Unit Effect)
        (Either (NonEmptyList ForeignError) CompileResult)
-compile endpoint code = ExceptT (ContT \k -> runEffFn4 compile_ endpoint code (mkEffFn1 (k <<< Right <<< runExcept <<< decode)) (mkEffFn1 (k <<< Left)))
+compile endpoint code = ExceptT (ContT \k -> runEffectFn4 compile_ endpoint code (mkEffectFn1 (k <<< Right <<< runExcept <<< decode)) (mkEffectFn1 (k <<< Left)))
 
 newtype BackendConfig = BackendConfig
   { backend       :: String
   , mainGist      :: String
   , extra_styling :: String
   , extra_body    :: String
-  , compile       :: forall eff
-                   . String
-                  -> ExceptT String (ContT Unit (Eff (dom :: DOM | eff)))
+  , compile       :: String
+                  -> ExceptT String (ContT Unit Effect)
                        (Either (NonEmptyList ForeignError) CompileResult)
-  , getBundle     :: forall eff. ExceptT String (ContT Unit (Eff (dom :: DOM | eff))) JS
+  , getBundle     :: ExceptT String (ContT Unit Effect) JS
   }
 
 data Backend

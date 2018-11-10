@@ -6,19 +6,18 @@ module Try.Session
 
 import Prelude
 
-import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Random (RANDOM, randomInt)
-import Control.Monad.Eff.Uncurried (EffFn1, EffFn2, runEffFn1, runEffFn2)
-import DOM (DOM)
 import Data.Functor.App (App(..))
 import Data.Int (hexadecimal, toStringAs)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.Nullable (Nullable, toMaybe)
 import Data.String as String
+import Effect (Effect)
+import Effect.Random (randomInt)
+import Effect.Uncurried (EffectFn1, EffectFn2, runEffectFn1, runEffectFn2)
 import Try.QueryString (getQueryStringMaybe, setQueryString)
 
-randomGuid :: forall eff. Eff (random :: RANDOM | eff) String
+randomGuid :: Effect String
 randomGuid =
     unwrap (App s4 <> App s4 <> pure "-" <>
             App s4 <> pure "-" <>
@@ -30,35 +29,29 @@ randomGuid =
     padLeft s = String.drop (String.length s - 1) ("000" <> s)
 
 foreign import storeSession_
-  :: forall eff
-   . EffFn2 (dom :: DOM | eff)
-            String
-            { code :: String, backend :: String }
-            Unit
+  :: EffectFn2 String
+               { code :: String, backend :: String }
+               Unit
 
 -- | Store the current session state in local storage
 storeSession
-  :: forall eff
-   . String
+  :: String
   -> { code :: String, backend :: String }
-  -> Eff (dom :: DOM | eff) Unit
-storeSession sessionId values = runEffFn2 storeSession_ sessionId values
+  -> Effect Unit
+storeSession sessionId values = runEffectFn2 storeSession_ sessionId values
 
 foreign import tryRetrieveSession_
-  :: forall eff
-   . EffFn1 (dom :: DOM | eff)
-            String
-            (Nullable { code :: String, backend :: String })
+  :: EffectFn1 String
+               (Nullable { code :: String, backend :: String })
 
 -- | Retrieve the session state from local storage
-tryRetrieveSession :: forall eff. String -> Eff (dom :: DOM | eff) (Maybe { code :: String, backend :: String })
-tryRetrieveSession sessionId = toMaybe <$> runEffFn1 tryRetrieveSession_ sessionId
+tryRetrieveSession :: String -> Effect (Maybe { code :: String, backend :: String })
+tryRetrieveSession sessionId = toMaybe <$> runEffectFn1 tryRetrieveSession_ sessionId
 
 -- | Look up the session by ID, or create a new session ID.
 createSessionIdIfNecessary
-  :: forall eff
-   . (String -> Eff (dom :: DOM, random :: RANDOM | eff) Unit)
-  -> Eff (dom :: DOM, random :: RANDOM | eff) Unit
+  :: (String -> Effect Unit)
+  -> Effect Unit
 createSessionIdIfNecessary k = do
   sessionId <- getQueryStringMaybe "session"
   case sessionId of
