@@ -211,7 +211,7 @@ execute js bundle bc@(BackendConfig backend) = do
         ]
 
       replaced = replace' (unsafeRegex """require\("[^"]*"\)""" global) (\s _ ->
-        "PS['" <> String.drop 12 (String.take (String.length s - 2) s) <> "']") (unwrap js)
+        "PS['" <> String.drop 12 (String.take (String.length s - 11) s) <> "']") (unwrap js)
 
       wrapped = joinWith "\n"
         [ "var module = {};"
