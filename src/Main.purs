@@ -10,7 +10,6 @@ import Data.Either (Either(..))
 import Data.Foldable (elem, fold, for_, intercalate, traverse_)
 import Data.FoldableWithIndex (forWithIndex_)
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Newtype (unwrap)
 import Data.String (joinWith)
 import Effect (Effect)
 import Effect.Console (error)
@@ -21,9 +20,10 @@ import Foreign.Generic (encodeJSON)
 import Foreign.Object as Object
 import JQuery as JQuery
 import JQuery.Extras as JQueryExtras
-import Try.API (BackendConfig(..), CompileError(..), CompileResult(..), CompileWarning(..), CompilerError(..), ErrorPosition(..), FailedResult(..), SuccessResult(..), getBackendConfigFromString)
-import Try.API as API
+import Try.API (CompileError(..), CompileResult(..), CompileWarning(..), CompilerError(..), ErrorPosition(..), FailedResult(..), SuccessResult(..))
+import Try.Backend (BackendConfig(..), getBackendConfigFromString)
 import Try.Gist (getGistById, tryLoadFileFromGist, uploadGist)
+import Try.Loader (runLoader)
 import Try.QueryString (getQueryStringMaybe, setQueryStrings)
 import Try.Session (createSessionIdIfNecessary, storeSession, tryRetrieveSession)
 import Try.Types (JS(..))
@@ -143,7 +143,7 @@ compile bc@(BackendConfig backend) = do
             if showJs
               then do hideLoadingMessage
                       displayPlainText js
-              else runContT (backend.resolve js) \sources -> do
+              else runContT (runExceptT $ runLoader backend.loader (JS js)) \sources -> do
                      hideLoadingMessage
                      for_ warnings \warnings_ -> do
                        let toAnnotation (CompileWarning{ errorCode, position, message }) =
@@ -154,7 +154,8 @@ compile bc@(BackendConfig backend) = do
                                , text: message
                                }
                        runEffectFn1 setAnnotations (mapMaybe toAnnotation warnings_)
-                     execute (JS js) sources bc
+                     for_ sources \sources' ->
+                       execute (JS js) sources' bc
           Right (CompileFailed (FailedResult { error })) -> do
             hideLoadingMessage
             case error of
@@ -185,7 +186,7 @@ compile bc@(BackendConfig backend) = do
             traverse_ (error <<< renderForeignError) errs
 
 -- | Execute the compiled code in a new iframe.
-execute :: JS -> Object.Object String -> BackendConfig -> Effect Unit
+execute :: JS -> Object.Object JS -> BackendConfig -> Effect Unit
 execute js sources bc@(BackendConfig backend) = do
   let html = joinWith "\n"
         [ """<!DOCTYPE html>"""
@@ -195,7 +196,7 @@ execute js sources bc@(BackendConfig backend) = do
         , """    <meta content="utf-8" http-equiv="encoding">"""
         , """    <meta name="viewport" content="width=device-width, initial-scale=1.0">"""
         , """    <title>Try PureScript!</title>"""
-        , """    <script src="js/ps-loader.js"></script>"""
+        , """    <script src="js/ps-require-shim.js"></script>"""
         , """    <link rel="stylesheet" href="css/style.css">"""
         , backend.extra_styling
         , """  </head>"""
@@ -205,10 +206,10 @@ execute js sources bc@(BackendConfig backend) = do
         , """</html>"""
         ]
 
-      json = encodeJSON (Object.insert "<file>" (unwrap js) sources)
+      json = encodeJSON (Object.insert "<file>" js sources)
 
       scripts = joinWith "\n"
-        [ "var load = PSLoader(" <> json <> ");"
+        [ "var load = PSRequireShim(" <> json <> ");"
         , """load("<file>").main();"""
         ]
 
@@ -264,9 +265,9 @@ withSession sessionId k = do
   state <- tryRetrieveSession sessionId
   case state of
     Just { code, backend } -> do
-      k { code, backend: API.getBackendConfigFromString backend }
+      k { code, backend: getBackendConfigFromString backend }
     Nothing -> do
-      bc@(BackendConfig backend) <- API.getBackendConfigFromString <<< fromMaybe "core" <$> getQueryStringMaybe "backend"
+      bc@(BackendConfig backend) <- getBackendConfigFromString <<< fromMaybe "core" <$> getQueryStringMaybe "backend"
       gist <- fromMaybe backend.mainGist <$> getQueryStringMaybe "gist"
       loadFromGist gist bc k
 
