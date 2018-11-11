@@ -73,9 +73,7 @@ runLoader :: Loader -> JS -> ExceptT String (ContT Unit Effect) (Object JS)
 runLoader (Loader k) = k
 
 makeLoader :: (Module -> Module) -> String -> Loader
-makeLoader modFn rootPath = Loader \js -> do
-  let initDeps = parseDeps "<file>" js
-  go initDeps Object.empty
+makeLoader modFn rootPath = Loader (go Object.empty <<< parseDeps "<file>")
   where
   moduleCache :: Ref (Object Module)
   moduleCache = unsafePerformEffect (Ref.new Object.empty)
@@ -97,8 +95,9 @@ makeLoader modFn rootPath = Loader \js -> do
         liftEffect $ putModule name mod
         pure mod
 
-  go :: Array Dependency -> Object JS -> ExceptT String (ContT Unit Effect) (Object JS)
-  go deps accum = do
+  go :: Object JS -> Array Dependency -> ExceptT String (ContT Unit Effect) (Object JS)
+  go accum []   = pure accum
+  go accum deps = do
     modules <- parTraverse load deps
     let
       accum' =
@@ -106,10 +105,7 @@ makeLoader modFn rootPath = Loader \js -> do
           # map (\{ name, src } -> Tuple name src)
           # Object.fromFoldable
           # Object.union accum
-      more =
-        modules
-          # bindFlipped _.deps
-          # Array.nubBy (comparing _.name)
-    case more of
-      [] -> pure accum'
-      _  -> go more accum'
+    modules
+      # bindFlipped _.deps
+      # Array.nubBy (comparing _.name)
+      # go accum'
