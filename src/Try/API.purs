@@ -34,6 +34,7 @@ import Foreign (Foreign, ForeignError)
 import Foreign.Class (class Decode, decode)
 import Foreign.Generic (defaultOptions, genericDecode)
 import Foreign.Generic.Types (Options, SumEncoding(..))
+import Foreign.Object (Object)
 import Partial.Unsafe (unsafePartial)
 import Try.Types (JS(JS))
 
@@ -182,6 +183,20 @@ foreign import compile_
             (EffectFn1 String Unit)
             Unit
 
+foreign import resolver_
+  :: String
+  -> String
+  -> (Object String -> Effect Unit)
+  -> Effect Unit
+
+resolver
+  :: String
+  -> String
+  -> ContT Unit Effect (Object String)
+resolver output = \src -> ContT \k -> go src k
+  where
+  go = resolver_ output
+
 -- | A wrapper for `compileApi` which uses `ContT`.
 compile
   :: String
@@ -195,6 +210,8 @@ newtype BackendConfig = BackendConfig
   , mainGist      :: String
   , extra_styling :: String
   , extra_body    :: String
+  , resolve       :: String
+                  -> ContT Unit Effect (Object String)
   , compile       :: String
                   -> ExceptT String (ContT Unit Effect)
                        (Either (NonEmptyList ForeignError) CompileResult)
@@ -228,20 +245,23 @@ backendToString Flare     = "flare"
 derive instance eqBackend :: Eq Backend
 derive instance ordBackend :: Ord Backend
 
+-- TODO: Fix paths
 getBackendConfig :: Backend -> BackendConfig
 getBackendConfig Core = BackendConfig
   { backend: "core"
   , mainGist: "b57a766d417e109785540d584266fc33"
   , extra_styling: ""
   , extra_body: ""
-  , compile: compile "https://compile.purescript.org/try"
-  , getBundle: getDefaultBundle "https://compile.purescript.org/try"
+  , resolve: resolver "staging/core/.psci_modules/node_modules"
+  , compile: compile "http://localhost:8081"
+  , getBundle: getDefaultBundle "http://localhost:8081"
   }
 getBackendConfig Thermite = BackendConfig
   { backend: "thermite"
   , mainGist: "85383bb058471109cfef379bbb6bc11c"
   , extra_styling: """<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">"""
   , extra_body: """<div id="app"></div>"""
+  , resolve: resolver "staging/thermite/.psci-modules/node_modules"
   , compile: compile "https://compile.purescript.org/thermite"
   , getBundle: getThermiteBundle "https://compile.purescript.org/thermite"
   }
@@ -250,6 +270,7 @@ getBackendConfig Slides = BackendConfig
   , mainGist: "c62b5778a6a5f2bcd32dd97b294c068a"
   , extra_styling: """<link rel="stylesheet" href="css/slides.css">"""
   , extra_body: """<div id="main"></div>"""
+  , resolve: resolver "staging/slides/.psci-modules/node_modules"
   , compile: compile "https://compile.purescript.org/slides"
   , getBundle: getDefaultBundle "https://compile.purescript.org/slides"
   }
@@ -261,6 +282,7 @@ getBackendConfig Mathbox = BackendConfig
       , """<link rel="stylesheet" href="css/mathbox.css">"""
       ]
   , extra_body: ""
+  , resolve: resolver "staging/mathbox/.psci-modules/node_modules"
   , compile: compile "https://compile.purescript.org/purescript-mathbox"
   , getBundle: getDefaultBundle "https://compile.purescript.org/purescript-mathbox"
   }
@@ -269,6 +291,7 @@ getBackendConfig Behaviors = BackendConfig
   , mainGist: "ff1e87f0872d2d891e77d209d8f7706d"
   , extra_styling: ""
   , extra_body: """<canvas id="canvas" width="800" height="600"></canvas>"""
+  , resolve: resolver "staging/behaviors/.psci-modules/node_modules"
   , compile: compile "https://compile.purescript.org/behaviors"
   , getBundle: getDefaultBundle "https://compile.purescript.org/behaviors"
   }
@@ -282,6 +305,7 @@ getBackendConfig Flare = BackendConfig
       , """<div id="tests"></div>"""
       , """<canvas id="canvas" width="800" height="600"></canvas>"""
       ]
+  , resolve: resolver "staging/flare/.psci-modules/node_modules"
   , compile: compile "https://compile.purescript.org/flare"
   , getBundle: getDefaultBundle "https://compile.purescript.org/flare"
   }

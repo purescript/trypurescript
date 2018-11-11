@@ -1,5 +1,7 @@
 "use strict";
 
+exports.resolver_ = PSResolver;
+
 exports.get_ = function(uri, done, fail) {
   $.get(uri).done(done).fail(function(err) {
     fail(err.statusText);

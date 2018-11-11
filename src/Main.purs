@@ -12,15 +12,12 @@ import Data.FoldableWithIndex (forWithIndex_)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Newtype (unwrap)
 import Data.String (joinWith)
-import Data.String as String
-import Data.String.Regex (replace')
-import Data.String.Regex.Flags (global)
-import Data.String.Regex.Unsafe (unsafeRegex)
 import Effect (Effect)
 import Effect.Console (error)
 import Effect.Timer (setTimeout)
 import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn3, EffectFn5, mkEffectFn1, runEffectFn1, runEffectFn2, runEffectFn3, runEffectFn5)
 import Foreign (renderForeignError)
+import Foreign.Generic (encodeJSON)
 import Foreign.Object as Object
 import JQuery as JQuery
 import JQuery.Extras as JQueryExtras
@@ -146,21 +143,18 @@ compile bc@(BackendConfig backend) = do
             if showJs
               then do hideLoadingMessage
                       displayPlainText js
-              else runContT (runExceptT backend.getBundle) \bundleResult -> do
+              else runContT (backend.resolve js) \sources -> do
                      hideLoadingMessage
-                     case bundleResult of
-                       Left err -> error ("Unable to retrieve JS bundle: " <> err)
-                       Right bundle -> do
-                         for_ warnings \warnings_ -> do
-                           let toAnnotation (CompileWarning{ errorCode, position, message }) =
-                                 position <#> \(ErrorPosition pos) ->
-                                   { row: pos.startLine - 1
-                                   , column: pos.startColumn - 1
-                                   , type: "warning"
-                                   , text: message
-                                   }
-                           runEffectFn1 setAnnotations (mapMaybe toAnnotation warnings_)
-                         execute (JS js) bundle bc
+                     for_ warnings \warnings_ -> do
+                       let toAnnotation (CompileWarning{ errorCode, position, message }) =
+                             position <#> \(ErrorPosition pos) ->
+                               { row: pos.startLine - 1
+                               , column: pos.startColumn - 1
+                               , type: "warning"
+                               , text: message
+                               }
+                       runEffectFn1 setAnnotations (mapMaybe toAnnotation warnings_)
+                     execute (JS js) sources bc
           Right (CompileFailed (FailedResult { error })) -> do
             hideLoadingMessage
             case error of
@@ -191,8 +185,8 @@ compile bc@(BackendConfig backend) = do
             traverse_ (error <<< renderForeignError) errs
 
 -- | Execute the compiled code in a new iframe.
-execute :: JS -> JS -> BackendConfig -> Effect Unit
-execute js bundle bc@(BackendConfig backend) = do
+execute :: JS -> Object.Object String -> BackendConfig -> Effect Unit
+execute js sources bc@(BackendConfig backend) = do
   let html = joinWith "\n"
         [ """<!DOCTYPE html>"""
         , """<html>"""
@@ -201,6 +195,7 @@ execute js bundle bc@(BackendConfig backend) = do
         , """    <meta content="utf-8" http-equiv="encoding">"""
         , """    <meta name="viewport" content="width=device-width, initial-scale=1.0">"""
         , """    <title>Try PureScript!</title>"""
+        , """    <script src="js/ps-loader.js"></script>"""
         , """    <link rel="stylesheet" href="css/style.css">"""
         , backend.extra_styling
         , """  </head>"""
@@ -210,18 +205,12 @@ execute js bundle bc@(BackendConfig backend) = do
         , """</html>"""
         ]
 
-      replaced = replace' (unsafeRegex """require\("[^"]*"\)""" global) (\s _ ->
-        "PS['" <> String.drop 12 (String.take (String.length s - 11) s) <> "']") (unwrap js)
+      json = encodeJSON (Object.insert "<file>" (unwrap js) sources)
 
-      wrapped = joinWith "\n"
-        [ "var module = {};"
-        , "(function(module) {"
-        , replaced
-        , "})(module);"
-        , "module.exports.main && module.exports.main();"
+      scripts = joinWith "\n"
+        [ "var load = PSLoader(" <> json <> ");"
+        , """load("<file>").main();"""
         ]
-
-      scripts = joinWith "\n" [unwrap bundle, wrapped]
 
   column2 <- JQuery.select "#column2"
   runEffectFn3 setupIFrame column2 html scripts
