@@ -75,8 +75,7 @@ runLoader (Loader k) = k
 makeLoader :: (Module -> Module) -> String -> Loader
 makeLoader modFn rootPath = Loader \js -> do
   let initDeps = parseDeps "<file>" js
-  result <- go initDeps Object.empty
-  pure result
+  go initDeps Object.empty
   where
   moduleCache :: Ref (Object Module)
   moduleCache = unsafePerformEffect (Ref.new Object.empty)

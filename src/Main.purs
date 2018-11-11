@@ -209,8 +209,10 @@ execute js sources bc@(BackendConfig backend) = do
       json = encodeJSON (Object.insert "<file>" js sources)
 
       scripts = joinWith "\n"
-        [ "var load = PSRequireShim(" <> json <> ");"
-        , """load("<file>").main();"""
+        [ "(function() {"
+        , "  var module = PSRequireShim(" <> json <> ")('<file>');"
+        , "  module.main && module.main();"
+        , "})();"
         ]
 
   column2 <- JQuery.select "#column2"
