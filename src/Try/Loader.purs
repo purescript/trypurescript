@@ -29,18 +29,19 @@ import Effect.Unsafe (unsafePerformEffect)
 import Foreign.Object (Object)
 import Foreign.Object as Object
 import Try.API as API
+import Try.Shim (resolveShims, shims)
 import Try.Types (JS(..))
 
 type Module =
   { name :: String
-  , path :: String
+  , path :: Maybe String
   , deps :: Array Dependency
   , src :: JS
   }
 
 type Dependency =
   { name :: String
-  , path :: String
+  , path :: Maybe String
   }
 
 requireRegex :: Regex
@@ -53,27 +54,32 @@ parseDeps current = Array.mapMaybe go <<< String.split (Pattern "\n") <<< unwrap
   go line = do
     match <- Regex.match requireRegex line
     requirePath <- join $ NonEmpty.index match 1
-    case String.split (Pattern "/") requirePath of
+    pure $ case String.split (Pattern "/") requirePath of
       [ ".", "foreign.js" ] ->
-        Just
-          { name: current <> "$Foreign"
-          , path: current <> "/foreign.js"
-          }
+        { name: current <> "$Foreign"
+        , path: Just $ current <> "/foreign.js"
+        }
       [ "..", name, "index.js" ] ->
-        Just
-          { name
-          , path: name <> "/index.js"
-          }
+        { name
+        , path: Just $ name <> "/index.js"
+        }
       _ ->
-        Nothing
+        { name: requirePath
+        , path: Nothing
+        }
 
-newtype Loader = Loader (JS -> ExceptT String (ContT Unit Effect) (Object JS))
+type LoaderResult =
+  { ffiDeps :: Array String
+  , modules :: Object JS
+  }
 
-runLoader :: Loader -> JS -> ExceptT String (ContT Unit Effect) (Object JS)
+newtype Loader = Loader (JS -> ExceptT String (ContT Unit Effect) LoaderResult)
+
+runLoader :: Loader -> JS -> ExceptT String (ContT Unit Effect) LoaderResult
 runLoader (Loader k) = k
 
-makeLoader :: (Module -> Module) -> String -> Loader
-makeLoader modFn rootPath = Loader (go Object.empty <<< parseDeps "<file>")
+makeLoader :: String -> Loader
+makeLoader rootPath = Loader (go Object.empty [] <<< parseDeps "<file>")
   where
   moduleCache :: Ref (Object Module)
   moduleCache = unsafePerformEffect (Ref.new Object.empty)
@@ -90,22 +96,39 @@ makeLoader modFn rootPath = Loader (go Object.empty <<< parseDeps "<file>")
     case cached of
       Just mod -> pure mod
       Nothing -> do
-        src <- JS <$> API.get (rootPath <> "/" <> path)
-        let mod = modFn { name, path, deps: parseDeps name src, src }
+        mod <-
+          case path of
+            Just path' -> do
+              src <- JS <$> API.get (rootPath <> "/" <> path')
+              pure { name, path, deps: parseDeps name src, src }
+            Nothing ->
+              pure { name, path, deps: [], src: ffiDep name }
         liftEffect $ putModule name mod
         pure mod
 
-  go :: Object JS -> Array Dependency -> ExceptT String (ContT Unit Effect) (Object JS)
-  go accum []   = pure accum
-  go accum deps = do
+  go :: Object JS -> Array String -> Array Dependency -> ExceptT String (ContT Unit Effect) LoaderResult
+  go ms ffi []   = pure { modules: ms, ffiDeps: resolveShims ffi }
+  go ms ffi deps = do
     modules <- parTraverse load deps
     let
-      accum' =
+      ms' =
         modules
           # map (\{ name, src } -> Tuple name src)
           # Object.fromFoldable
-          # Object.union accum
+          # Object.union ms
+      ffi' =
+        modules
+          # Array.mapMaybe case _ of
+              { name, path: Nothing } -> Just name
+              _ -> Nothing
+          # append ffi
     modules
       # bindFlipped _.deps
       # Array.nubBy (comparing _.name)
-      # go accum'
+      # go ms' ffi'
+
+ffiDep :: String -> JS
+ffiDep name =
+  case Object.lookup name shims of
+    Just { shim } -> shim
+    Nothing -> JS $ "throw new Error('FFI dependency not provided: " <> name <> "');"

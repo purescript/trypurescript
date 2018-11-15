@@ -10,13 +10,12 @@ import Data.Either (Either(..))
 import Data.Foldable (elem, fold, for_, intercalate, traverse_)
 import Data.FoldableWithIndex (forWithIndex_)
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.String (joinWith)
 import Effect (Effect)
 import Effect.Console (error)
 import Effect.Timer (setTimeout)
-import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn3, EffectFn5, mkEffectFn1, runEffectFn1, runEffectFn2, runEffectFn3, runEffectFn5)
+import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn5, mkEffectFn1, runEffectFn1, runEffectFn2, runEffectFn5)
 import Foreign (renderForeignError)
-import Foreign.Generic (encodeJSON)
+import Foreign.Object (Object)
 import Foreign.Object as Object
 import JQuery as JQuery
 import JQuery.Extras as JQueryExtras
@@ -118,9 +117,8 @@ clearAnnotations = runEffectFn1 setAnnotations []
 -- | Set up a fresh iframe in the specified container, and use it
 -- | to execute the provided JavaScript code.
 foreign import setupIFrame
-  :: EffectFn3 JQuery.JQuery
-               String
-               String
+  :: EffectFn2 JQuery.JQuery
+               { scripts :: Array String, sources :: Object JS }
                Unit
 
 -- | Compile the current code and execute it.
@@ -154,8 +152,8 @@ compile bc@(BackendConfig backend) = do
                                , text: message
                                }
                        runEffectFn1 setAnnotations (mapMaybe toAnnotation warnings_)
-                     for_ sources \sources' ->
-                       execute (JS js) sources' bc
+                     for_ sources \{ modules, ffiDeps } ->
+                       execute (JS js) modules ffiDeps bc
           Right (CompileFailed (FailedResult { error })) -> do
             hideLoadingMessage
             case error of
@@ -186,37 +184,15 @@ compile bc@(BackendConfig backend) = do
             traverse_ (error <<< renderForeignError) errs
 
 -- | Execute the compiled code in a new iframe.
-execute :: JS -> Object.Object JS -> BackendConfig -> Effect Unit
-execute js sources bc@(BackendConfig backend) = do
-  let html = joinWith "\n"
-        [ """<!DOCTYPE html>"""
-        , """<html>"""
-        , """  <head>"""
-        , """    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">"""
-        , """    <meta content="utf-8" http-equiv="encoding">"""
-        , """    <meta name="viewport" content="width=device-width, initial-scale=1.0">"""
-        , """    <title>Try PureScript!</title>"""
-        , """    <script src="js/ps-require-shim.js"></script>"""
-        , """    <link rel="stylesheet" href="css/style.css">"""
-        , backend.extra_styling
-        , """  </head>"""
-        , """  <body>"""
-        , backend.extra_body
-        , """  </body>"""
-        , """</html>"""
-        ]
-
-      json = encodeJSON (Object.insert "<file>" js sources)
-
-      scripts = joinWith "\n"
-        [ "(function() {"
-        , "  var module = PSRequireShim(" <> json <> ")('<file>');"
-        , "  module.main && module.main();"
-        , "})();"
-        ]
-
+execute :: JS -> Object JS -> Array String -> BackendConfig -> Effect Unit
+execute js modules ffiDeps bc@(BackendConfig backend) = do
+  let
+    eventData =
+      { scripts: ffiDeps
+      , sources: Object.insert "<file>" js modules
+      }
   column2 <- JQuery.select "#column2"
-  runEffectFn3 setupIFrame column2 html scripts
+  runEffectFn2 setupIFrame column2 eventData
 
 -- | Setup the editor component and some event handlers.
 setupEditor :: { code :: String, backend :: BackendConfig } -> Effect Unit

@@ -98,7 +98,7 @@ getBackendConfig Core = BackendConfig
   , mainGist: "b57a766d417e109785540d584266fc33"
   , extra_styling: ""
   , extra_body: ""
-  , loader: makeLoader identity "staging/core/.psci_modules/node_modules"
+  , loader: makeLoader "staging/core/.psci_modules/node_modules"
   , compile: compile "http://localhost:8081"
   , getBundle: getDefaultBundle "http://localhost:8081"
   }
@@ -107,7 +107,7 @@ getBackendConfig Thermite = BackendConfig
   , mainGist: "85383bb058471109cfef379bbb6bc11c"
   , extra_styling: """<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">"""
   , extra_body: """<div id="app"></div>"""
-  , loader: makeLoader identity "staging/core/.psci_modules/node_modules"
+  , loader: makeLoader "staging/core/.psci_modules/node_modules"
   , compile: compile "https://compile.purescript.org/thermite"
   , getBundle: getThermiteBundle "https://compile.purescript.org/thermite"
   }
@@ -116,7 +116,7 @@ getBackendConfig Slides = BackendConfig
   , mainGist: "c62b5778a6a5f2bcd32dd97b294c068a"
   , extra_styling: """<link rel="stylesheet" href="css/slides.css">"""
   , extra_body: """<div id="main"></div>"""
-  , loader: makeLoader identity "staging/core/.psci_modules/node_modules"
+  , loader: makeLoader "staging/core/.psci_modules/node_modules"
   , compile: compile "https://compile.purescript.org/slides"
   , getBundle: getDefaultBundle "https://compile.purescript.org/slides"
   }
@@ -128,7 +128,7 @@ getBackendConfig Mathbox = BackendConfig
       , """<link rel="stylesheet" href="css/mathbox.css">"""
       ]
   , extra_body: ""
-  , loader: makeLoader identity "staging/core/.psci_modules/node_modules"
+  , loader: makeLoader "staging/core/.psci_modules/node_modules"
   , compile: compile "https://compile.purescript.org/purescript-mathbox"
   , getBundle: getDefaultBundle "https://compile.purescript.org/purescript-mathbox"
   }
@@ -137,7 +137,7 @@ getBackendConfig Behaviors = BackendConfig
   , mainGist: "ff1e87f0872d2d891e77d209d8f7706d"
   , extra_styling: ""
   , extra_body: """<canvas id="canvas" width="800" height="600"></canvas>"""
-  , loader: makeLoader identity "staging/core/.psci_modules/node_modules"
+  , loader: makeLoader "staging/core/.psci_modules/node_modules"
   , compile: compile "https://compile.purescript.org/behaviors"
   , getBundle: getDefaultBundle "https://compile.purescript.org/behaviors"
   }
@@ -151,7 +151,7 @@ getBackendConfig Flare = BackendConfig
       , """<div id="tests"></div>"""
       , """<canvas id="canvas" width="800" height="600"></canvas>"""
       ]
-  , loader: makeLoader identity "staging/core/.psci_modules/node_modules"
+  , loader: makeLoader "staging/core/.psci_modules/node_modules"
   , compile: compile "https://compile.purescript.org/flare"
   , getBundle: getDefaultBundle "https://compile.purescript.org/flare"
   }

@@ -188,30 +188,20 @@
       })(marker));
     }
 
-    function setupIFrame($ctr, html, js) {
-      var $iframe = $('<iframe id="output-iframe">');
+    function setupIFrame($ctr, data) {
+      var $iframe = $('<iframe sandbox="allow-scripts" id="output-iframe" src="frame.html">');
 
       $ctr
         .empty()
         .append($iframe);
 
-      var iframe = $iframe.get(0).contentWindow.document;
-      iframe.open();
-      iframe.write(html);
-      iframe.close();
+      var sendSources = setInterval(function() {
+        $iframe.get(0).contentWindow.postMessage(data, "*");
+      }, 100);
 
-      var script = iframe.createElement('script');
-      script.appendChild(iframe.createTextNode(js));
-
-      $iframe.ready(function() {
-        var checkExists = setInterval(function() {
-          var body = iframe.getElementsByTagName('body')[0];
-          if (body) {
-            body.appendChild(script);
-            clearInterval(checkExists);
-          }
-        }, 100);
-      });
+      window.addEventListener("message", function() {
+        clearInterval(sendSources);
+      }, { once: true });
 
       return $iframe;
     }
