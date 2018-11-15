@@ -12,7 +12,6 @@ import Data.FoldableWithIndex (forWithIndex_)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Effect (Effect)
 import Effect.Console (error)
-import Effect.Timer (setTimeout)
 import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn5, mkEffectFn1, runEffectFn1, runEffectFn2, runEffectFn5)
 import Foreign (renderForeignError)
 import Foreign.Object (Object)
@@ -20,9 +19,10 @@ import Foreign.Object as Object
 import JQuery as JQuery
 import JQuery.Extras as JQueryExtras
 import Try.API (CompileError(..), CompileResult(..), CompileWarning(..), CompilerError(..), ErrorPosition(..), FailedResult(..), SuccessResult(..))
-import Try.Backend (BackendConfig(..), getBackendConfigFromString)
+import Try.API as API
+import Try.Config as Config
 import Try.Gist (getGistById, tryLoadFileFromGist, uploadGist)
-import Try.Loader (runLoader)
+import Try.Loader (Loader, makeLoader, runLoader)
 import Try.QueryString (getQueryStringMaybe, setQueryStrings)
 import Try.Session (createSessionIdIfNecessary, storeSession, tryRetrieveSession)
 import Try.Types (JS(..))
@@ -121,15 +121,18 @@ foreign import setupIFrame
                { scripts :: Array String, sources :: Object JS }
                Unit
 
+loader :: Loader
+loader = makeLoader Config.loaderUrl
+
 -- | Compile the current code and execute it.
-compile :: BackendConfig -> Effect Unit
-compile bc@(BackendConfig backend) = do
+compile :: Effect Unit
+compile = do
   code <- getTextAreaContent
 
   displayLoadingMessage
   clearAnnotations
 
-  runContT (runExceptT (backend.compile code)) \res_ ->
+  runContT (runExceptT (API.compile Config.compileUrl code)) \res_ ->
     case res_ of
       Left err -> displayPlainText err
       Right res -> do
@@ -141,7 +144,7 @@ compile bc@(BackendConfig backend) = do
             if showJs
               then do hideLoadingMessage
                       displayPlainText js
-              else runContT (runExceptT $ runLoader backend.loader (JS js)) \sources -> do
+              else runContT (runExceptT $ runLoader loader (JS js)) \sources -> do
                      hideLoadingMessage
                      for_ warnings \warnings_ -> do
                        let toAnnotation (CompileWarning{ errorCode, position, message }) =
@@ -153,7 +156,7 @@ compile bc@(BackendConfig backend) = do
                                }
                        runEffectFn1 setAnnotations (mapMaybe toAnnotation warnings_)
                      for_ sources \{ modules, ffiDeps } ->
-                       execute (JS js) modules ffiDeps bc
+                       execute (JS js) modules ffiDeps
           Right (CompileFailed (FailedResult { error })) -> do
             hideLoadingMessage
             case error of
@@ -184,8 +187,8 @@ compile bc@(BackendConfig backend) = do
             traverse_ (error <<< renderForeignError) errs
 
 -- | Execute the compiled code in a new iframe.
-execute :: JS -> Object JS -> Array String -> BackendConfig -> Effect Unit
-execute js modules ffiDeps bc@(BackendConfig backend) = do
+execute :: JS -> Object JS -> Array String-> Effect Unit
+execute js modules ffiDeps  = do
   let
     eventData =
       { scripts: ffiDeps
@@ -195,73 +198,69 @@ execute js modules ffiDeps bc@(BackendConfig backend) = do
   runEffectFn2 setupIFrame column2 eventData
 
 -- | Setup the editor component and some event handlers.
-setupEditor :: { code :: String, backend :: BackendConfig } -> Effect Unit
-setupEditor { code, backend } = do
-  loadOptions backend
-  setupBackendMenu backend
+setupEditor :: forall r. { code :: String | r } -> Effect Unit
+setupEditor { code } = do
+  loadOptions
 
   setTextAreaContent code
   runEffectFn1 setEditorContent code
 
   runEffectFn2 onEditorChanged (mkEffectFn1 \value -> do
     setTextAreaContent value
-    cacheCurrentCode backend
+    cacheCurrentCode
     autoCompile <- isAutoCompileChecked
     when autoCompile do
-      compile backend) 750
+      compile) 750
 
   JQuery.select "#showjs" >>= JQuery.on "change" \e _ ->
-    compile backend
+    compile
 
   JQuery.select "#compile_label" >>= JQuery.on "click" \e _ ->
-    compile backend
+    compile
 
   JQuery.select "#gist_save" >>= JQuery.on "click" \e _ ->
-    publishNewGist backend
+    publishNewGist
 
-  compile backend
-  cacheCurrentCode backend
+  compile
+  cacheCurrentCode
 
 loadFromGist
   :: String
-  -> BackendConfig
-  -> ({ code :: String, backend :: BackendConfig } -> Effect Unit)
+  -> ({ code :: String } -> Effect Unit)
   -> Effect Unit
-loadFromGist id_ backend k = do
+loadFromGist id_ k = do
   runContT (runExceptT (getGistById id_ >>= \gi -> tryLoadFileFromGist gi "Main.purs")) $
     case _ of
       Left err -> do
         window >>= alert err
-        k { code: "", backend }
-      Right code -> k { code, backend }
+        k { code: "" }
+      Right code -> k { code }
 
 withSession
   :: String
-  -> ({ code :: String, backend :: BackendConfig } -> Effect Unit)
+  -> ({ code :: String } -> Effect Unit)
   -> Effect Unit
 withSession sessionId k = do
   state <- tryRetrieveSession sessionId
   case state of
-    Just { code, backend } -> do
-      k { code, backend: getBackendConfigFromString backend }
+    Just state' -> k state'
     Nothing -> do
-      bc@(BackendConfig backend) <- getBackendConfigFromString <<< fromMaybe "core" <$> getQueryStringMaybe "backend"
-      gist <- fromMaybe backend.mainGist <$> getQueryStringMaybe "gist"
-      loadFromGist gist bc k
+      gist <- fromMaybe Config.mainGist <$> getQueryStringMaybe "gist"
+      loadFromGist gist k
 
 -- | Cache the current code in the session state
-cacheCurrentCode :: BackendConfig -> Effect Unit
-cacheCurrentCode bc@(BackendConfig backend) = do
+cacheCurrentCode :: Effect Unit
+cacheCurrentCode  = do
   sessionId <- getQueryStringMaybe "session"
   case sessionId of
     Just sessionId_ -> do
       code <- getTextAreaContent
-      storeSession sessionId_ { code, backend: backend.backend }
+      storeSession sessionId_ { code }
     Nothing -> error "No session ID"
 
 -- | Create a new Gist using the current content
-publishNewGist :: BackendConfig -> Effect Unit
-publishNewGist bc@(BackendConfig backend) = do
+publishNewGist :: Effect Unit
+publishNewGist = do
   ok <- window >>= confirm (intercalate "\n"
           [ "Do you really want to publish this code as an anonymous Gist?"
           , ""
@@ -275,16 +274,15 @@ publishNewGist bc@(BackendConfig backend) = do
           window >>= alert "Failed to create gist"
           error ("Failed to create gist: " <> err)
         Right gistId -> do
-          setQueryStrings (Object.singleton "gist" gistId <>
-                           Object.singleton "backend" backend.backend)
+          setQueryStrings (Object.singleton "gist" gistId)
 
 -- | Navigate to the specified URL.
 navigateTo :: String -> Effect Unit
 navigateTo uri = void (window >>= location >>= setHref uri)
 
 -- | Read query string options and update the state accordingly
-loadOptions :: BackendConfig -> Effect Unit
-loadOptions bc = do
+loadOptions :: Effect Unit
+loadOptions = do
   viewMode <- getQueryStringMaybe "view"
   case viewMode of
     Just viewMode_
@@ -308,20 +306,6 @@ loadOptions bc = do
   case gist of
     Just gist_ -> JQuery.select ".view_gist" >>= JQuery.attr { href: "https://gist.github.com/" <> gist_ }
     Nothing -> JQuery.select ".view_gist_li" >>= JQuery.hide
-
--- | Setup event listeners for the backend dropdown menu.
-setupBackendMenu :: BackendConfig -> Effect Unit
-setupBackendMenu bc@(BackendConfig backend) = do
-  JQuery.select ("#backend_" <> backend.backend) >>= JQuery.attr { checked: "checked" }
-  JQuery.select "input[name=backend_inputs]" >>= JQuery.on "change" \e jq -> do
-    bc_@(BackendConfig newBackend) <- getBackendConfigFromString <<< fromMaybe "core" <$> JQueryExtras.getValueMaybe jq
-
-    ok <- window >>= confirm ("Replace your current code with the " <> newBackend.backend <> " backend sample code?")
-    if ok
-      then navigateTo ("?backend=" <> newBackend.backend)
-      else void $ setTimeout 1000 do
-             compile bc_
-             cacheCurrentCode bc_
 
 main :: Effect Unit
 main = JQuery.ready do
