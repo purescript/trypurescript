@@ -12,7 +12,7 @@ import Control.Monad.Except (ExceptT)
 import Control.Parallel (parTraverse)
 import Data.Array as Array
 import Data.Array.NonEmpty as NonEmpty
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Newtype (unwrap)
 import Data.String (Pattern(..))
 import Data.String as String
@@ -45,7 +45,18 @@ type Dependency =
   }
 
 requireRegex :: Regex
-requireRegex = unsafeRegex """^var\s+\S+\s*=\s*require\(["']([^"']*)["']\);""" noFlags
+requireRegex = unsafeRegex """^var\s+\S+\s*=\s*require\(["']([^"']*)["']\)""" noFlags
+
+dirname :: String -> String
+dirname path = fromMaybe "" do
+  ix <- String.lastIndexOf (Pattern "/") path
+  pure $ String.take ix path
+
+resolvePath :: String -> String -> Maybe String
+resolvePath a b
+  | String.take 2 b == "./"  = Just $ dirname a <> String.drop 1 b
+  | String.take 3 b == "../" = Just $ dirname (dirname a) <> String.drop 2 b
+  | otherwise = Nothing
 
 parseDeps :: String -> JS -> Array Dependency
 parseDeps current = Array.mapMaybe go <<< String.split (Pattern "\n") <<< unwrap
@@ -54,14 +65,10 @@ parseDeps current = Array.mapMaybe go <<< String.split (Pattern "\n") <<< unwrap
   go line = do
     match <- Regex.match requireRegex line
     requirePath <- join $ NonEmpty.index match 1
-    pure $ case String.split (Pattern "/") requirePath of
-      [ ".", "foreign.js" ] ->
-        { name: current <> "$Foreign"
-        , path: Just $ current <> "/foreign.js"
-        }
-      [ "..", name, "index.js" ] ->
-        { name
-        , path: Just $ name <> "/index.js"
+    pure $ case resolvePath current requirePath of
+      Just path ->
+        { name: path
+        , path: String.stripPrefix (Pattern "/") path
         }
       _ ->
         { name: requirePath
