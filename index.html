@@ -165,8 +165,19 @@
         .empty()
         .append($iframe);
 
+      var tries = 0;
       var sendSources = setInterval(function() {
-        $iframe.get(0).contentWindow.postMessage(data, "*");
+        // Stop after 10 seconds
+        if (tries >= 100) {
+          return clearInterval(sendSources);
+        }
+        tries++;
+        var iframe = $iframe.get(0).contentWindow;
+        if (iframe) {
+          iframe.postMessage(data, "*");
+        } else {
+          console.warn("Frame is not available");
+        }
       }, 100);
 
       window.addEventListener("message", function() {
