@@ -106,7 +106,8 @@ makeLoader rootPath = Loader (go Object.empty [] <<< parseDeps "<file>")
         mod <-
           case path of
             Just path' -> do
-              src <- JS <$> API.get (rootPath <> "/" <> path')
+              srcStr <- API.get (rootPath <> "/" <> path')
+              let src = JS $ srcStr <> "\n//@ sourceURL=" <> path'
               pure { name, path, deps: parseDeps name src, src }
             Nothing ->
               pure { name, path, deps: [], src: ffiDep name }
