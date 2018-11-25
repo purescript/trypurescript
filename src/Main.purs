@@ -118,7 +118,7 @@ clearAnnotations = runEffectFn1 setAnnotations []
 -- | to execute the provided JavaScript code.
 foreign import setupIFrame
   :: EffectFn2 JQuery.JQuery
-               { scripts :: Array String, sources :: Object JS }
+               (Object JS)
                Unit
 
 loader :: Loader
@@ -155,8 +155,7 @@ compile = do
                                , text: message
                                }
                        runEffectFn1 setAnnotations (mapMaybe toAnnotation warnings_)
-                     for_ sources \{ modules, ffiDeps } ->
-                       execute (JS js) modules ffiDeps
+                     for_ sources (execute (JS js))
           Right (CompileFailed (FailedResult { error })) -> do
             hideLoadingMessage
             case error of
@@ -187,13 +186,9 @@ compile = do
             traverse_ (error <<< renderForeignError) errs
 
 -- | Execute the compiled code in a new iframe.
-execute :: JS -> Object JS -> Array String-> Effect Unit
-execute js modules ffiDeps  = do
-  let
-    eventData =
-      { scripts: ffiDeps
-      , sources: Object.insert "<file>" js modules
-      }
+execute :: JS -> Object JS -> Effect Unit
+execute js modules = do
+  let eventData = Object.insert "<file>" js modules
   column2 <- JQuery.select "#column2"
   runEffectFn2 setupIFrame column2 eventData
 

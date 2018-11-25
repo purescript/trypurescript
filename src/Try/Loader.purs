@@ -29,7 +29,7 @@ import Effect.Unsafe (unsafePerformEffect)
 import Foreign.Object (Object)
 import Foreign.Object as Object
 import Try.API as API
-import Try.Shim (resolveShims, shims)
+import Try.Shim (shims)
 import Try.Types (JS(..))
 
 type Module =
@@ -75,18 +75,13 @@ parseDeps current = Array.mapMaybe go <<< String.split (Pattern "\n") <<< unwrap
         , path: Nothing
         }
 
-type LoaderResult =
-  { ffiDeps :: Array String
-  , modules :: Object JS
-  }
+newtype Loader = Loader (JS -> ExceptT String (ContT Unit Effect) (Object JS))
 
-newtype Loader = Loader (JS -> ExceptT String (ContT Unit Effect) LoaderResult)
-
-runLoader :: Loader -> JS -> ExceptT String (ContT Unit Effect) LoaderResult
+runLoader :: Loader -> JS -> ExceptT String (ContT Unit Effect) (Object JS)
 runLoader (Loader k) = k
 
 makeLoader :: String -> Loader
-makeLoader rootPath = Loader (go Object.empty [] <<< parseDeps "<file>")
+makeLoader rootPath = Loader (go Object.empty <<< parseDeps "<file>")
   where
   moduleCache :: Ref (Object Module)
   moduleCache = unsafePerformEffect (Ref.new Object.empty)
@@ -109,14 +104,21 @@ makeLoader rootPath = Loader (go Object.empty [] <<< parseDeps "<file>")
               srcStr <- API.get (rootPath <> "/" <> path')
               let src = JS $ srcStr <> "\n//@ sourceURL=" <> path'
               pure { name, path, deps: parseDeps name src, src }
-            Nothing ->
-              pure { name, path, deps: [], src: ffiDep name }
+            Nothing -> case Object.lookup name shims of
+              Just shim -> do
+                srcStr <- API.get shim.url
+                let
+                  src = JS $ srcStr <> "\n//@ sourceURL=" <> shim.url
+                  deps = { name: _, path: Nothing } <$> shim.deps
+                pure { name, path, deps, src }
+              Nothing ->
+                pure { name, path, deps: [], src: ffiDep name }
         liftEffect $ putModule name mod
         pure mod
 
-  go :: Object JS -> Array String -> Array Dependency -> ExceptT String (ContT Unit Effect) LoaderResult
-  go ms ffi []   = pure { modules: ms, ffiDeps: resolveShims ffi }
-  go ms ffi deps = do
+  go :: Object JS -> Array Dependency -> ExceptT String (ContT Unit Effect) (Object JS)
+  go ms []   = pure ms
+  go ms deps = do
     modules <- parTraverse load deps
     let
       ms' =
@@ -124,19 +126,10 @@ makeLoader rootPath = Loader (go Object.empty [] <<< parseDeps "<file>")
           # map (\{ name, src } -> Tuple name src)
           # Object.fromFoldable
           # Object.union ms
-      ffi' =
-        modules
-          # Array.mapMaybe case _ of
-              { name, path: Nothing } -> Just name
-              _ -> Nothing
-          # append ffi
     modules
       # bindFlipped _.deps
       # Array.nubBy (comparing _.name)
-      # go ms' ffi'
+      # go ms'
 
 ffiDep :: String -> JS
-ffiDep name =
-  case Object.lookup name shims of
-    Just { shim } -> shim
-    Nothing -> JS $ "throw new Error('FFI dependency not provided: " <> name <> "');"
+ffiDep name = JS $ "throw new Error('FFI dependency not provided: " <> name <> "');"

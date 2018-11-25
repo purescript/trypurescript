@@ -1,7 +1,7 @@
 module Try.Config where
 
 loaderUrl :: String
-loaderUrl = "staging/core/.psci_modules/node_modules"
+loaderUrl = "js/output"
 
 compileUrl :: String
 compileUrl = "http://localhost:8081"
