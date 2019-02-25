@@ -1,7 +1,6 @@
 module TryPureScript
   ( Inline
   , Doc
-  , DOM
   , text
   , p
   , link
@@ -19,29 +18,23 @@ module TryPureScript
   ) where
 
 import Prelude
-import Control.Monad.Eff (kind Effect, Eff)
 import Data.Foldable (class Foldable, foldMap)
 import Data.String (joinWith)
-import Data.Monoid (class Monoid)
+import Effect (Effect)
 
-foreign import data DOM :: Effect
-
-foreign import setInnerHTML
-  :: forall eff
-   . String
-  -> Eff (dom :: DOM | eff) Unit
+foreign import setInnerHTML :: String -> Effect Unit
 
 foreign import encode :: String -> String
 
 foreign import withConsoleImpl
-  :: forall eff a
-   . Eff eff a
-  -> Eff eff (Array String)
+  :: forall a
+   . Effect a
+  -> Effect (Array String)
 
 withConsole
-  :: forall eff a
-   . Eff eff a
-  -> Eff eff Doc
+  :: forall a
+   . Effect a
+  -> Effect Doc
 withConsole f = map toDoc (withConsoleImpl f) where
   toDoc = Doc <<< tag' "pre" <<< tag' "code" <<< joinWith "\n"
 
@@ -73,7 +66,7 @@ newtype Doc = Doc String
 unDoc :: Doc -> String
 unDoc (Doc html) = html
 
-render :: forall eff. Doc -> Eff (dom :: DOM | eff) Unit
+render :: Doc -> Effect Unit
 render (Doc html) = setInnerHTML html
 
 derive newtype instance semigroupDoc :: Semigroup Doc

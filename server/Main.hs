@@ -109,17 +109,17 @@ server bundled externs initEnv port = do
               search = fst . TS.typeSearch (Just []) initEnv (P.emptyCheckState initEnv)
               results = nubBy ((==) `on` fst) $ do
                 elab <- elabs
-                let strictMatches = search (replaceTypeVariablesAndDesugar (\nm s -> P.Skolem nm s (P.SkolemScope 0) Nothing) elab)
-                    flexMatches = search (replaceTypeVariablesAndDesugar (const P.TUnknown) elab)
+                let strictMatches = search (replaceTypeVariablesAndDesugar (\nm s -> P.Skolem P.NullSourceAnn nm s (P.SkolemScope 0)) elab)
+                    flexMatches = search (replaceTypeVariablesAndDesugar (const (P.TUnknown P.NullSourceAnn)) elab)
                 take 50 (strictMatches ++ flexMatches)
           Scotty.json $ A.object [ "results" .= [ P.showQualified id k
                                                 | (k, _) <- take 50 results
                                                 ]
                                  ]
 
-lookupAllConstructors :: P.Environment -> P.Type -> [P.Type]
+lookupAllConstructors :: P.Environment -> P.SourceType -> [P.SourceType]
 lookupAllConstructors env = P.everywhereOnTypesM $ \case
-    P.TypeConstructor (P.Qualified Nothing tyCon) -> P.TypeConstructor <$> lookupConstructor env tyCon
+    P.TypeConstructor ann (P.Qualified Nothing tyCon) -> P.TypeConstructor ann <$> lookupConstructor env tyCon
     other -> pure other
   where
     lookupConstructor :: P.Environment -> P.ProperName 'P.TypeName -> [P.Qualified (P.ProperName 'P.TypeName)]
@@ -132,11 +132,11 @@ lookupAllConstructors env = P.everywhereOnTypesM $ \case
 -- | (Consistently) replace unqualified type constructors and type variables with unknowns.
 --
 -- Also remove the @ParensInType@ Constructor (we need to deal with type operators later at some point).
-replaceTypeVariablesAndDesugar :: (Text -> Int -> P.Type) -> P.Type -> P.Type
+replaceTypeVariablesAndDesugar :: (Text -> Int -> P.SourceType) -> P.SourceType -> P.SourceType
 replaceTypeVariablesAndDesugar f ty = State.evalState (P.everywhereOnTypesM go ty) (0, M.empty) where
   go = \case
-    P.ParensInType ty -> pure ty
-    P.TypeVar s -> do
+    P.ParensInType _ ty -> pure ty
+    P.TypeVar _ s -> do
       (next, m) <- State.get
       case M.lookup s m of
         Nothing -> do
@@ -146,7 +146,7 @@ replaceTypeVariablesAndDesugar f ty = State.evalState (P.everywhereOnTypesM go t
         Just ty -> pure ty
     other -> pure other
 
-tryParseType :: Text -> Maybe P.Type
+tryParseType :: Text -> Maybe P.SourceType
 tryParseType = hush (P.lex "") >=> hush (P.runTokenParser "" (P.parsePolyType <* Parsec.eof))
   where
     hush f = either (const Nothing) Just . f
