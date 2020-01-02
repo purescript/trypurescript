@@ -18,9 +18,11 @@ import           Control.Monad.Trans.Except (ExceptT(..), runExceptT)
 import           Control.Monad.Trans.Reader (runReaderT)
 import qualified Data.Aeson as A
 import           Data.Aeson ((.=))
+import           Data.Bifunctor (first, second)
 import qualified Data.ByteString.Lazy as BL
 import           Data.Function (on)
 import           Data.List (foldl', nubBy)
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import           Data.String (fromString)
 import           Data.Text (Text)
@@ -30,6 +32,8 @@ import qualified Data.Text.Lazy as TL
 import           Data.Traversable (for)
 import           GHC.Generics (Generic)
 import qualified Language.PureScript as P
+import qualified Language.PureScript.CST as CST
+import qualified Language.PureScript.CST.Monad as CSTM
 import qualified Language.PureScript.Bundle as Bundle
 import qualified Language.PureScript.CodeGen.JS as J
 import qualified Language.PureScript.CodeGen.JS.Printer as P
@@ -63,13 +67,15 @@ server bundled externs initEnv port = do
         | T.length input > 20000 = return (Left (OtherError "Please limit your input to 20000 characters"))
         | otherwise = do
           let printErrors = P.prettyPrintMultipleErrors (P.defaultPPEOptions { P.ppeCodeColor = Nothing })
-          case P.parseModuleFromFile (const "<file>") (undefined, input) of
+          case CST.parseModuleFromFile "<file>" input >>= CST.resFull of
             Left parseError ->
-              return . Left . CompilerErrors . pure . P.toJSONError False P.Error . P.toPositionedError $ parseError
-            Right (_, m) | P.getModuleName m == P.ModuleName [P.ProperName "Main"] -> do
+              return . Left . CompilerErrors . P.toJSONErrors False P.Error $ CST.toMultipleErrors "<file>" parseError
+            Right m | P.getModuleName m == P.ModuleName [P.ProperName "Main"] -> do
               (resultMay, ws) <- runLogger' . runExceptT . flip runReaderT P.defaultOptions $ do
                 ((P.Module ss coms moduleName elaborated exps, env), nextVar) <- P.runSupplyT 0 $ do
-                  [desugared] <- P.desugar externs [P.importPrim m]
+                  desugared <- P.desugar externs [P.importPrim m] >>= \case
+                    [d] -> pure d
+                    _ -> error "desugaring did not produce one module"
                   P.runCheck' (P.emptyCheckState initEnv) $ P.typeCheckModule desugared
                 regrouped <- P.createBindingGroups moduleName . P.collapseBindingGroups $ elaborated
                 let mod' = P.Module ss coms moduleName regrouped exps
@@ -80,7 +86,8 @@ server bundled externs initEnv port = do
               case resultMay of
                 Left errs -> (return . Left . CompilerErrors . P.toJSONErrors False P.Error) errs
                 Right js -> (return . Right) (P.toJSONErrors False P.Error ws, js)
-            Right _ -> (return . Left. OtherError) "The name of the main module should be Main."
+            Right _ ->
+              (return . Left . OtherError) "The name of the main module should be Main."
 
   scotty port $ do
     get "/" $
@@ -147,9 +154,15 @@ replaceTypeVariablesAndDesugar f ty = State.evalState (P.everywhereOnTypesM go t
     other -> pure other
 
 tryParseType :: Text -> Maybe P.SourceType
-tryParseType = hush (P.lex "") >=> hush (P.runTokenParser "" (P.parsePolyType <* Parsec.eof))
+tryParseType = hush . fmap (CST.convertType "<file>") . runParser CST.parseTypeP
   where
-    hush f = either (const Nothing) Just . f
+    hush = either (const Nothing) Just
+
+    runParser :: CST.Parser a -> Text -> Either String a
+    runParser p =
+       first (CST.prettyPrintError . NE.head)
+        . CST.runTokenParser (p <* CSTM.token CST.TokEof)
+        . CST.lexTopLevel
 
 bundle :: IO (Either Bundle.ErrorMessage String)
 bundle = runExceptT $ do
@@ -168,7 +181,7 @@ main = do
   let onError f = either (Left . f) Right
   e <- runExceptT $ do
     modules <- ExceptT (fmap (onError Right) (I.loadAllModules inputFiles))
-    (exts, env) <- ExceptT . fmap (onError Right) . I.runMake . I.make $ modules
+    (exts, env) <- ExceptT . fmap (onError Right) . I.runMake . I.make . map (second CST.pureResult) $ modules
     js <- ExceptT (fmap (onError Left) bundle)
     return (fromString js, exts, env)
   case e of

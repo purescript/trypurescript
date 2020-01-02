@@ -1,7 +1,16 @@
-resolver: lts-12.0
-flags: {}
+resolver: lts-13.26
+flags:
+  aeson-pretty:
+    lib-only: true
+  these:
+    assoc: false
+    quickcheck: false
 packages:
 - '.'
 extra-deps:
-- purescript-0.12.3
-- pipes-http-1.0.5
+- purescript-0.13.5
+- happy-1.19.9
+- language-javascript-0.7.0.0
+- network-3.0.1.1
+- these-1.0.1
+- semialign-1
