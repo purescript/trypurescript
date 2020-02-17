@@ -8,13 +8,13 @@
   ],
   "dependencies": {
     "purescript-console": "^4.1.0",
-    "purescript-foreign-generic": "^7.0.0",
+    "purescript-foreign-generic": "^10.0.0",
     "purescript-jquery": "^5.0.0",
     "purescript-js-timers": "^4.0.1",
     "purescript-parallel": "^4.0.0",
     "purescript-prelude": "^4.1.0",
     "purescript-random": "^4.0.0",
-    "purescript-web-html": "^1.2.0"
+    "purescript-web-html": "^2.3.0"
   },
   "devDependencies": {
     "ace": "^1.2.8",
@@ -36,7 +36,7 @@
     "purescript-exists": "^4.0.0",
     "purescript-foldable-traversable": "^4.1.0",
     "purescript-foreign": "^5.0.0",
-    "purescript-foreign-object": "^1.0.0",
+    "purescript-foreign-object": "^2.0.0",
     "purescript-free": "^5.1.0",
     "purescript-functions": "^4.0.0",
     "purescript-functors": "^3.1.0",
@@ -51,7 +51,7 @@
     "purescript-prelude": "^4.1.0",
     "purescript-profunctor": "^4.0.0",
     "purescript-proxy": "^3.0.0",
-    "purescript-quickcheck": "^5.0.0",
+    "purescript-quickcheck": "^6.1.0",
     "purescript-random": "^4.0.0",
     "purescript-refs": "^4.1.0",
     "purescript-semirings": "^5.0.0",
@@ -60,7 +60,7 @@
     "purescript-tailrec": "^4.0.0",
     "purescript-transformers": "^4.1.0",
     "purescript-tuples": "^5.1.0",
-    "purescript-typelevel-prelude": "^3.0.0",
+    "purescript-typelevel-prelude": "^5.0.2",
     "purescript-unfoldable": "^4.0.0",
     "purescript-validation": "^4.0.0"
   }

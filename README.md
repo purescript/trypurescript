@@ -62,7 +62,7 @@ cd staging/core
 psc-package update
 
 # note: globs like **/src/** do not work
-stack exec trypurescript 8081 ".psc-package/psc-0.11.6/*/*/src/**/*.purs" "src/*.purs"
+stack exec trypurescript 8081 ".psc-package/psc-0.13.6/*/*/src/**/*.purs" "src/*.purs"
 # should output that is is compiling the sources (first time)
 # then: Setting phasers to stun... (port 8081) (ctrl-c to quit)
 ```

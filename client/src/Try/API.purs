@@ -33,7 +33,7 @@ import Effect.Uncurried (EffectFn1, EffectFn3, EffectFn4, mkEffectFn1, runEffect
 import Foreign (Foreign, ForeignError)
 import Foreign.Class (class Decode, decode)
 import Foreign.Generic (defaultOptions, genericDecode)
-import Foreign.Generic.Types (Options, SumEncoding(..))
+import Foreign.Generic.Class (Options, SumEncoding(..))
 import Partial.Unsafe (unsafePartial)
 import Try.Types (JS(JS))
 
