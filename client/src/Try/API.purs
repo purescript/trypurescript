@@ -231,7 +231,7 @@ derive instance ordBackend :: Ord Backend
 getBackendConfig :: Backend -> BackendConfig
 getBackendConfig Core = BackendConfig
   { backend: "core"
-  , mainGist: "b57a766d417e109785540d584266fc33"
+  , mainGist: "e1d317102aad40207309d8873e301273"
   , extra_styling: ""
   , extra_body: ""
   , compile: compile "https://compile.purescript.org/try"
