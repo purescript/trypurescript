@@ -41,6 +41,7 @@ cd trypurescript
 git co gh-pages
 
 bower install
+npm install
 npm run build
 npm run bundle
 
@@ -59,7 +60,7 @@ stack build
 # use one of the backends
 cd staging/core
 # get the sources of the deps
-psc-package update
+psc-package install
 
 # note: globs like **/src/** do not work
 stack exec trypurescript 8081 ".psc-package/psc-0.13.6/*/*/src/**/*.purs" "src/*.purs"
