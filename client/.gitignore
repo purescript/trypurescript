@@ -1,6 +1,7 @@
 /bower_components/
 /node_modules/
 /.pulp-cache/
+/package-lock.json
 /output/
 /generated-docs/
 /.psc-package/
@@ -9,3 +10,4 @@
 /.psa*
 /.stack*
 /js/index.js
+
