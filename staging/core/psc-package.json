@@ -1,6 +1,6 @@
 {
     "name": "core",
-    "set": "psc-0.12.2",
+    "set": "psc-0.13.6-20200127",
     "source": "https://github.com/purescript/package-sets.git",
     "depends": [
         "arrays",
