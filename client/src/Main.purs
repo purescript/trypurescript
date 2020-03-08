@@ -10,23 +10,19 @@ import Data.Either (Either(..))
 import Data.Foldable (elem, fold, for_, intercalate, traverse_)
 import Data.FoldableWithIndex (forWithIndex_)
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Newtype (unwrap)
-import Data.String (joinWith)
-import Data.String as String
-import Data.String.Regex (replace')
-import Data.String.Regex.Flags (global)
-import Data.String.Regex.Unsafe (unsafeRegex)
 import Effect (Effect)
 import Effect.Console (error)
-import Effect.Timer (setTimeout)
-import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn3, EffectFn5, mkEffectFn1, runEffectFn1, runEffectFn2, runEffectFn3, runEffectFn5)
+import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn5, mkEffectFn1, runEffectFn1, runEffectFn2, runEffectFn5)
 import Foreign (renderForeignError)
+import Foreign.Object (Object)
 import Foreign.Object as Object
 import JQuery as JQuery
 import JQuery.Extras as JQueryExtras
-import Try.API (BackendConfig(..), CompileError(..), CompileResult(..), CompileWarning(..), CompilerError(..), ErrorPosition(..), FailedResult(..), SuccessResult(..), getBackendConfigFromString)
+import Try.API (CompileError(..), CompileResult(..), CompileWarning(..), CompilerError(..), ErrorPosition(..), FailedResult(..), SuccessResult(..))
 import Try.API as API
+import Try.Config as Config
 import Try.Gist (getGistById, tryLoadFileFromGist, uploadGist)
+import Try.Loader (Loader, makeLoader, runLoader)
 import Try.QueryString (getQueryStringMaybe, setQueryStrings)
 import Try.Session (createSessionIdIfNecessary, storeSession, tryRetrieveSession)
 import Try.Types (JS(..))
@@ -121,20 +117,22 @@ clearAnnotations = runEffectFn1 setAnnotations []
 -- | Set up a fresh iframe in the specified container, and use it
 -- | to execute the provided JavaScript code.
 foreign import setupIFrame
-  :: EffectFn3 JQuery.JQuery
-               String
-               String
+  :: EffectFn2 JQuery.JQuery
+               (Object JS)
                Unit
 
+loader :: Loader
+loader = makeLoader Config.loaderUrl
+
 -- | Compile the current code and execute it.
-compile :: BackendConfig -> Effect Unit
-compile bc@(BackendConfig backend) = do
+compile :: Effect Unit
+compile = do
   code <- getTextAreaContent
 
   displayLoadingMessage
   clearAnnotations
 
-  runContT (runExceptT (backend.compile code)) \res_ ->
+  runContT (runExceptT (API.compile Config.compileUrl code)) \res_ ->
     case res_ of
       Left err -> displayPlainText err
       Right res -> do
@@ -146,21 +144,18 @@ compile bc@(BackendConfig backend) = do
             if showJs
               then do hideLoadingMessage
                       displayPlainText js
-              else runContT (runExceptT backend.getBundle) \bundleResult -> do
+              else runContT (runExceptT $ runLoader loader (JS js)) \sources -> do
                      hideLoadingMessage
-                     case bundleResult of
-                       Left err -> error ("Unable to retrieve JS bundle: " <> err)
-                       Right bundle -> do
-                         for_ warnings \warnings_ -> do
-                           let toAnnotation (CompileWarning{ errorCode, position, message }) =
-                                 position <#> \(ErrorPosition pos) ->
-                                   { row: pos.startLine - 1
-                                   , column: pos.startColumn - 1
-                                   , type: "warning"
-                                   , text: message
-                                   }
-                           runEffectFn1 setAnnotations (mapMaybe toAnnotation warnings_)
-                         execute (JS js) bundle bc
+                     for_ warnings \warnings_ -> do
+                       let toAnnotation (CompileWarning{ errorCode, position, message }) =
+                             position <#> \(ErrorPosition pos) ->
+                               { row: pos.startLine - 1
+                               , column: pos.startColumn - 1
+                               , type: "warning"
+                               , text: message
+                               }
+                       runEffectFn1 setAnnotations (mapMaybe toAnnotation warnings_)
+                     for_ sources (execute (JS js))
           Right (CompileFailed (FailedResult { error })) -> do
             hideLoadingMessage
             case error of
@@ -191,109 +186,76 @@ compile bc@(BackendConfig backend) = do
             traverse_ (error <<< renderForeignError) errs
 
 -- | Execute the compiled code in a new iframe.
-execute :: JS -> JS -> BackendConfig -> Effect Unit
-execute js bundle bc@(BackendConfig backend) = do
-  let html = joinWith "\n"
-        [ """<!DOCTYPE html>"""
-        , """<html>"""
-        , """  <head>"""
-        , """    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">"""
-        , """    <meta content="utf-8" http-equiv="encoding">"""
-        , """    <meta name="viewport" content="width=device-width, initial-scale=1.0">"""
-        , """    <title>Try PureScript!</title>"""
-        , """    <link rel="stylesheet" href="css/style.css">"""
-        , backend.extra_styling
-        , """  </head>"""
-        , """  <body>"""
-        , backend.extra_body
-        , """  </body>"""
-        , """</html>"""
-        ]
-
-      replaced = replace' (unsafeRegex """require\("[^"]*"\)""" global) (\s _ ->
-        "PS['" <> String.drop 12 (String.take (String.length s - 11) s) <> "']") (unwrap js)
-
-      wrapped = joinWith "\n"
-        [ "var module = {};"
-        , "(function(module) {"
-        , replaced
-        , "})(module);"
-        , "module.exports.main && module.exports.main();"
-        ]
-
-      scripts = joinWith "\n" [unwrap bundle, wrapped]
-
+execute :: JS -> Object JS -> Effect Unit
+execute js modules = do
+  let eventData = Object.insert "<file>" js modules
   column2 <- JQuery.select "#column2"
-  runEffectFn3 setupIFrame column2 html scripts
+  runEffectFn2 setupIFrame column2 eventData
 
 -- | Setup the editor component and some event handlers.
-setupEditor :: { code :: String, backend :: BackendConfig } -> Effect Unit
-setupEditor { code, backend } = do
-  loadOptions backend
-  setupBackendMenu backend
+setupEditor :: forall r. { code :: String | r } -> Effect Unit
+setupEditor { code } = do
+  loadOptions
 
   setTextAreaContent code
   runEffectFn1 setEditorContent code
 
   runEffectFn2 onEditorChanged (mkEffectFn1 \value -> do
     setTextAreaContent value
-    cacheCurrentCode backend
+    cacheCurrentCode
     autoCompile <- isAutoCompileChecked
     when autoCompile do
-      compile backend) 750
+      compile) 750
 
   JQuery.select "#showjs" >>= JQuery.on "change" \e _ ->
-    compile backend
+    compile
 
   JQuery.select "#compile_label" >>= JQuery.on "click" \e _ ->
-    compile backend
+    compile
 
   JQuery.select "#gist_save" >>= JQuery.on "click" \e _ ->
-    publishNewGist backend
+    publishNewGist
 
-  compile backend
-  cacheCurrentCode backend
+  compile
+  cacheCurrentCode
 
 loadFromGist
   :: String
-  -> BackendConfig
-  -> ({ code :: String, backend :: BackendConfig } -> Effect Unit)
+  -> ({ code :: String } -> Effect Unit)
   -> Effect Unit
-loadFromGist id_ backend k = do
+loadFromGist id_ k = do
   runContT (runExceptT (getGistById id_ >>= \gi -> tryLoadFileFromGist gi "Main.purs")) $
     case _ of
       Left err -> do
         window >>= alert err
-        k { code: "", backend }
-      Right code -> k { code, backend }
+        k { code: "" }
+      Right code -> k { code }
 
 withSession
   :: String
-  -> ({ code :: String, backend :: BackendConfig } -> Effect Unit)
+  -> ({ code :: String } -> Effect Unit)
   -> Effect Unit
 withSession sessionId k = do
   state <- tryRetrieveSession sessionId
   case state of
-    Just { code, backend } -> do
-      k { code, backend: API.getBackendConfigFromString backend }
+    Just state' -> k state'
     Nothing -> do
-      bc@(BackendConfig backend) <- API.getBackendConfigFromString <<< fromMaybe "core" <$> getQueryStringMaybe "backend"
-      gist <- fromMaybe backend.mainGist <$> getQueryStringMaybe "gist"
-      loadFromGist gist bc k
+      gist <- fromMaybe Config.mainGist <$> getQueryStringMaybe "gist"
+      loadFromGist gist k
 
 -- | Cache the current code in the session state
-cacheCurrentCode :: BackendConfig -> Effect Unit
-cacheCurrentCode bc@(BackendConfig backend) = do
+cacheCurrentCode :: Effect Unit
+cacheCurrentCode  = do
   sessionId <- getQueryStringMaybe "session"
   case sessionId of
     Just sessionId_ -> do
       code <- getTextAreaContent
-      storeSession sessionId_ { code, backend: backend.backend }
+      storeSession sessionId_ { code }
     Nothing -> error "No session ID"
 
 -- | Create a new Gist using the current content
-publishNewGist :: BackendConfig -> Effect Unit
-publishNewGist bc@(BackendConfig backend) = do
+publishNewGist :: Effect Unit
+publishNewGist = do
   ok <- window >>= confirm (intercalate "\n"
           [ "Do you really want to publish this code as an anonymous Gist?"
           , ""
@@ -307,16 +269,15 @@ publishNewGist bc@(BackendConfig backend) = do
           window >>= alert "Failed to create gist"
           error ("Failed to create gist: " <> err)
         Right gistId -> do
-          setQueryStrings (Object.singleton "gist" gistId <>
-                           Object.singleton "backend" backend.backend)
+          setQueryStrings (Object.singleton "gist" gistId)
 
 -- | Navigate to the specified URL.
 navigateTo :: String -> Effect Unit
 navigateTo uri = void (window >>= location >>= setHref uri)
 
 -- | Read query string options and update the state accordingly
-loadOptions :: BackendConfig -> Effect Unit
-loadOptions bc = do
+loadOptions :: Effect Unit
+loadOptions = do
   viewMode <- getQueryStringMaybe "view"
   case viewMode of
     Just viewMode_
@@ -340,20 +301,6 @@ loadOptions bc = do
   case gist of
     Just gist_ -> JQuery.select ".view_gist" >>= JQuery.attr { href: "https://gist.github.com/" <> gist_ }
     Nothing -> JQuery.select ".view_gist_li" >>= JQuery.hide
-
--- | Setup event listeners for the backend dropdown menu.
-setupBackendMenu :: BackendConfig -> Effect Unit
-setupBackendMenu bc@(BackendConfig backend) = do
-  JQuery.select ("#backend_" <> backend.backend) >>= JQuery.attr { checked: "checked" }
-  JQuery.select "input[name=backend_inputs]" >>= JQuery.on "change" \e jq -> do
-    bc_@(BackendConfig newBackend) <- getBackendConfigFromString <<< fromMaybe "core" <$> JQueryExtras.getValueMaybe jq
-
-    ok <- window >>= confirm ("Replace your current code with the " <> newBackend.backend <> " backend sample code?")
-    if ok
-      then navigateTo ("?backend=" <> newBackend.backend)
-      else void $ setTimeout 1000 do
-             compile bc_
-             cacheCurrentCode bc_
 
 main :: Effect Unit
 main = JQuery.ready do

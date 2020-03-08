@@ -47,36 +47,6 @@
               </a>
             </li>
           </ul>
-        </li><li class="menu-item menu-dropdown no-mobile">
-          <label title="Select a Backend">Backend</label>
-          <ul id="backend">
-            <li>
-              <input type="radio" name="backend_inputs" value="core" id="backend_core" checked="true">
-              <label for="backend_core" title="Use the core libraries backend">Core</label>
-            </li>
-            <!--
-            <li>
-              <input type="radio" name="backend_inputs" value="thermite" id="backend_thermite">
-              <label for="backend_thermite" title="Use the try-thermite backend">Thermite</label>
-            </li>
-            <li>
-              <input type="radio" name="backend_inputs" value="slides" id="backend_slides">
-              <label for="backend_slides" title="Use the try-slides backend">Slides</label>
-            </li>
-            <li>
-              <input type="radio" name="backend_inputs" value="flare" id="backend_flare">
-              <label for="backend_flare" title="Use the try-flare backend">Flare</label>
-            </li>
-            <li>
-              <input type="radio" name="backend_inputs" value="mathbox" id="backend_mathbox">
-              <label for="backend_mathbox" title="Use the try-mathbox backend">Mathbox</label>
-            </li>
-            <li>
-              <input type="radio" name="backend_inputs" value="behaviors" id="backend_behaviors">
-              <label for="backend_behaviors" title="Use the try-behaviors backend">Behaviors</label>
-            </li>
-            -->
-          </ul>
         </li><li class="menu-item view_gist_li mobile-only">
           <a class="view_gist" target="trypurs_gist">
             <label title="Open the original gist in a new window">View Gist</label>
@@ -188,30 +158,31 @@
       })(marker));
     }
 
-    function setupIFrame($ctr, html, js) {
-      var $iframe = $('<iframe id="output-iframe">');
+    function setupIFrame($ctr, data) {
+      var $iframe = $('<iframe sandbox="allow-scripts" id="output-iframe" src="frame.html">');
 
       $ctr
         .empty()
         .append($iframe);
 
-      var iframe = $iframe.get(0).contentWindow.document;
-      iframe.open();
-      iframe.write(html);
-      iframe.close();
+      var tries = 0;
+      var sendSources = setInterval(function() {
+        // Stop after 10 seconds
+        if (tries >= 100) {
+          return clearInterval(sendSources);
+        }
+        tries++;
+        var iframe = $iframe.get(0).contentWindow;
+        if (iframe) {
+          iframe.postMessage(data, "*");
+        } else {
+          console.warn("Frame is not available");
+        }
+      }, 100);
 
-      var script = iframe.createElement('script');
-      script.appendChild(iframe.createTextNode(js));
-
-      $iframe.ready(function() {
-        var checkExists = setInterval(function() {
-          var body = iframe.getElementsByTagName('body')[0];
-          if (body) {
-            body.appendChild(script);
-            clearInterval(checkExists);
-          }
-        }, 100);
-      });
+      window.addEventListener("message", function() {
+        clearInterval(sendSources);
+      }, { once: true });
 
       return $iframe;
     }

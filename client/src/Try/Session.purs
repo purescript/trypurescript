@@ -30,22 +30,22 @@ randomGuid =
 
 foreign import storeSession_
   :: EffectFn2 String
-               { code :: String, backend :: String }
+               { code :: String }
                Unit
 
 -- | Store the current session state in local storage
 storeSession
   :: String
-  -> { code :: String, backend :: String }
+  -> { code :: String }
   -> Effect Unit
 storeSession sessionId values = runEffectFn2 storeSession_ sessionId values
 
 foreign import tryRetrieveSession_
   :: EffectFn1 String
-               (Nullable { code :: String, backend :: String })
+               (Nullable { code :: String })
 
 -- | Retrieve the session state from local storage
-tryRetrieveSession :: String -> Effect (Maybe { code :: String, backend :: String })
+tryRetrieveSession :: String -> Effect (Maybe { code :: String })
 tryRetrieveSession sessionId = toMaybe <$> runEffectFn1 tryRetrieveSession_ sessionId
 
 -- | Look up the session by ID, or create a new session ID.
