@@ -34,6 +34,8 @@
         "proxy",
         "quickcheck",
         "random",
+        "react",
+        "react-dom",
         "record",
         "refs",
         "semirings",
@@ -44,6 +46,8 @@
         "tuples",
         "typelevel-prelude",
         "unfoldable",
-        "validation"
+        "validation",
+        "web-dom",
+        "web-html"
     ]
 }
