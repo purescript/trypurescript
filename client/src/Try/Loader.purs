@@ -102,13 +102,13 @@ makeLoader rootPath = Loader (go Object.empty <<< parseDeps "<file>")
           case path of
             Just path' -> do
               srcStr <- API.get (rootPath <> "/" <> path')
-              let src = JS $ srcStr <> "\n//@ sourceURL=" <> path'
+              let src = JS $ srcStr <> "\n//# sourceURL=" <> path'
               pure { name, path, deps: parseDeps name src, src }
             Nothing -> case Object.lookup name shims of
               Just shim -> do
                 srcStr <- API.get shim.url
                 let
-                  src = JS $ srcStr <> "\n//@ sourceURL=" <> shim.url
+                  src = JS $ srcStr <> "\n//# sourceURL=" <> shim.url
                   deps = { name: _, path: Nothing } <$> shim.deps
                 pure { name, path, deps, src }
               Nothing ->
