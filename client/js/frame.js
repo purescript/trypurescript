@@ -27,13 +27,25 @@
     };
   }
 
+  var parent;
+
   document.addEventListener("DOMContentLoaded", function() {
     window.addEventListener("message", function(event) {
-      event.source.postMessage("trypurescript", "*");
+      parent = event.source;
+      parent.postMessage("trypurescript", "*");
       var file = evalSources(event.data)("<file>");
       if (file.main && typeof file.main === "function") {
         file.main();
       }
     }, { once: true });
   }, { once: true });
+
+  document.addEventListener("click", function(event) {
+    if (parent && event.target.nodeName === "A" && event.target.hostname === "gist.github.com") {
+      event.preventDefault();
+      parent.postMessage({
+        gistId: event.target.pathname.split("/").slice(-1)[0]
+      }, "*");
+    }
+  }, false);
 })();

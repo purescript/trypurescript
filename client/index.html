@@ -184,6 +184,12 @@
         clearInterval(sendSources);
       }, { once: true });
 
+      window.addEventListener("message", function(event) {
+        if (event.data && event.data.gistId && /^[0-9a-f]+$/.test(event.data.gistId)) {
+          window.location.search = "gist=" + event.data.gistId;
+        }
+      });
+
       return $iframe;
     }
   </script>
