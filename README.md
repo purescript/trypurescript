@@ -91,13 +91,13 @@ The output code will contain references to preloaded modules using `require` cal
 To run these files in the browser, it is necessary to either use a `require` shim (such as require1k), or replace these calls and deploy a bundle of precompiled modules.
 The Try PureScript client uses the second approach.
 
-## Configuration
+### Configuration
 
-The application takes the following arguments on the command line:
+The server application takes the following arguments on the command line:
 
 - port number
 - a list of input source files
 
-### Example
+#### Example
 
     dist/build/trypurescript/trypurescript 8081 'bower_components/purescript-*/src/**/*.purs'
