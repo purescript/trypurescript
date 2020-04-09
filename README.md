@@ -83,9 +83,10 @@ The server is a very basic web service which wraps the PureScript compiler, allo
 
 - Request body: PureScript code
 - Response body: Either `{ js: "..." }` or `{ error: "..." }`
-- Status code: 200 (success), even if compilation failed
+- Status code: 200 (success)
 
-The response does not use error codes, to make it easier to use the API from another domain using CORS.
+Note that if the code in the request body fails to compile, this is considered a success from the perspective of the API, so compilation failures will be returned with 2xx status codes.
+Among other things, this makes it easier to use the API from another domain using CORS.
 
 The output code will contain references to preloaded modules using `require` calls.
 To run these files in the browser, it is necessary to either use a `require` shim (such as require1k), or replace these calls and deploy a bundle of precompiled modules.
