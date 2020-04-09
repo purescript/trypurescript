@@ -57,7 +57,7 @@ open http://localhost:8080
 
 ### 2. Local compile server setup
 
-```
+```sh
 git clone git@github.com:purescript/trypurescript.git
 cd trypurescript
 
