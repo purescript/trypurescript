@@ -42,7 +42,7 @@ Most of these features can be controlled not only from the toolbar, but also usi
 
 ### 1. Client setup
 
-```
+```sh
 git clone git@github.com:purescript/trypurescript.git
 cd trypurescript/client
 
