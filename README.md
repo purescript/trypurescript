@@ -46,7 +46,6 @@ Most of these features can be controlled not only from the toolbar, but also usi
 git clone git@github.com:purescript/trypurescript.git
 cd trypurescript/client
 
-bower install
 npm install
 npm run build
 npm run bundle
