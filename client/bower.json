@@ -17,11 +17,6 @@
     "purescript-web-html": "^2.3.0"
   },
   "devDependencies": {
-    "ace": "^1.2.8",
-    "jquery": "^3.2.1",
-    "underscore": "^1.8.3",
-    "react": "^16.1.0",
-    "mathbox": "^0.0.5",
     "purescript-arrays": "^5.1.0",
     "purescript-bifunctors": "^4.0.0",
     "purescript-console": "^4.1.0",
