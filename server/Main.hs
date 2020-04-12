@@ -34,7 +34,6 @@ import           GHC.Generics (Generic)
 import qualified Language.PureScript as P
 import qualified Language.PureScript.CST as CST
 import qualified Language.PureScript.CST.Monad as CSTM
-import qualified Language.PureScript.Bundle as Bundle
 import qualified Language.PureScript.CodeGen.JS as J
 import qualified Language.PureScript.CodeGen.JS.Printer as P
 import qualified Language.PureScript.CoreFn as CF
@@ -60,8 +59,8 @@ data Error
 
 instance A.ToJSON Error
 
-server :: TL.Text -> [P.ExternsFile] -> P.Environment -> Int -> IO ()
-server bundled externs initEnv port = do
+server :: [P.ExternsFile] -> P.Environment -> Int -> IO ()
+server externs initEnv port = do
   let compile :: Text -> IO (Either Error ([P.JSONError], JS))
       compile input
         | T.length input > 20000 = return (Left (OtherError "Please limit your input to 20000 characters"))
@@ -92,10 +91,6 @@ server bundled externs initEnv port = do
   scotty port $ do
     get "/" $
       Scotty.text "POST api.purescript.org/compile"
-    get "/bundle" $ do
-      Scotty.setHeader "Access-Control-Allow-Origin" "*"
-      Scotty.setHeader "Content-Type" "text/javascript"
-      Scotty.text bundled
     post "/compile" $ do
       code <- T.decodeUtf8 . BL.toStrict <$> body
       response <- lift $ compile code
@@ -164,15 +159,6 @@ tryParseType = hush . fmap (CST.convertType "<file>") . runParser CST.parseTypeP
         . CST.runTokenParser (p <* CSTM.token CST.TokEof)
         . CST.lexTopLevel
 
-bundle :: IO (Either Bundle.ErrorMessage String)
-bundle = runExceptT $ do
-  inputFiles <- liftIO (glob (".psci_modules" </> "node_modules" </> "*" </> "*.js"))
-  input <- for inputFiles $ \filename -> do
-    js <- liftIO (readUTF8File filename)
-    mid <- Bundle.guessModuleIdentifier filename
-    length js `seq` return (mid, js)
-  Bundle.bundle input [] Nothing "PS"
-
 main :: IO ()
 main = do
   (portString : inputGlobs) <- getArgs
@@ -180,10 +166,8 @@ main = do
   inputFiles <- concat <$> traverse glob inputGlobs
   let onError f = either (Left . f) Right
   e <- runExceptT $ do
-    modules <- ExceptT (fmap (onError Right) (I.loadAllModules inputFiles))
-    (exts, env) <- ExceptT . fmap (onError Right) . I.runMake . I.make . map (second CST.pureResult) $ modules
-    js <- ExceptT (fmap (onError Left) bundle)
-    return (fromString js, exts, env)
+    modules <- ExceptT $ I.loadAllModules inputFiles
+    ExceptT . I.runMake . I.make $ map (second CST.pureResult) modules
   case e of
     Left err -> print err >> exitFailure
-    Right (js, exts, env) -> server js exts env port
+    Right (exts, env) -> server exts env port
