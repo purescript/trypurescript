@@ -14,16 +14,17 @@ addons:
     packages:
       - libgmp-dev
 
+env:
+  - COMPONENT=client
+  - COMPONENT=server
+
 before_install:
   - mkdir -p ~/.local/bin
   - export PATH=$HOME/.local/bin:$PATH
   - curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
 
 script:
-  # Set a timeout of 35 minutes. We could use travis_wait here, but travis_wait
-  # doesn't produce any output until the command finishes, and also doesn't
-  # always show all of the command's output.
-  - timeout 35m stack --no-terminal -j1 --install-ghc build
+  ./ci/build.sh
 
 notifications:
   email: true
