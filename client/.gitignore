@@ -6,5 +6,5 @@
 /.purs*
 /.psa*
 /.stack*
-/js/index.js
+/public/js/index.js
 .spago/
