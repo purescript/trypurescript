@@ -1,0 +1,3 @@
+#! /usr/bin/env/bash
+
+exec trypurescript +RTS -N1 -A128m -M750M -RTS 8081 $(spago sources)

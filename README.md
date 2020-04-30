@@ -50,6 +50,7 @@ npm install
 npm run build
 npm run bundle
 
+cd public
 httpserver 8080 #eg with: alias httpserver='python -m SimpleHTTPServer'
 open http://localhost:8080
 ```

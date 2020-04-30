@@ -3,7 +3,7 @@
   "scripts": {
     "clean": "rimraf output",
     "build": "spago build --purs-args '--censor-lib --strict'",
-    "bundle": "spago bundle-app --to js/index.js"
+    "bundle": "spago bundle-app --to public/js/index.js"
   },
   "devDependencies": {
     "purescript": "^0.13.6",

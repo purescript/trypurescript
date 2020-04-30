@@ -30,15 +30,12 @@ notifications:
   email: true
 
 before_deploy:
-  - mkdir bundle
-  - cp `stack path --dist-dir`/build/trypurescript/trypurescript bundle/
-  - cp LICENSE bundle/
-  - tar czf trypurescript.tar.gz -C bundle/ .
+  ./ci/before_deploy.sh
 
 deploy:
   provider: releases
   api_key: $RELEASE_KEY
-  file: trypurescript.tar.gz
+  file: trypurescript-$COMPONENT.tar.gz
   skip_cleanup: true
   on:
     tags: true

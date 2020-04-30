@@ -1,0 +1,13 @@
+[Unit]
+Description=Web service for Try PureScript
+
+[Service]
+Type=simple
+User=www-data
+ExecStart=/var/www/trypurescript/deploy/start
+WorkingDirectory=/var/www/trypurescript/staging
+Restart=always
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
