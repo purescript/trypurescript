@@ -7,7 +7,7 @@
 
 module Main (main) where
 
-import           Control.Monad (unless, (>=>))
+import           Control.Monad (unless, (>=>), foldM)
 import           Control.Monad.Error.Class (throwError)
 import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Logger (runLogger')
@@ -16,6 +16,7 @@ import qualified Control.Monad.State as State
 import           Control.Monad.Trans (lift)
 import           Control.Monad.Trans.Except (ExceptT(..), runExceptT)
 import           Control.Monad.Trans.Reader (runReaderT)
+import           Control.Monad.Writer.Strict (runWriterT)
 import qualified Data.Aeson as A
 import           Data.Aeson ((.=))
 import           Data.Bifunctor (first, second)
@@ -72,7 +73,8 @@ server externs initEnv port = do
             Right m | P.getModuleName m == P.ModuleName [P.ProperName "Main"] -> do
               (resultMay, ws) <- runLogger' . runExceptT . flip runReaderT P.defaultOptions $ do
                 ((P.Module ss coms moduleName elaborated exps, env), nextVar) <- P.runSupplyT 0 $ do
-                  desugared <- P.desugar externs [P.importPrim m] >>= \case
+                  env <- fmap fst . runWriterT $ foldM P.externsEnv P.primEnv externs
+                  desugared <- P.desugar env externs [P.importPrim m] >>= \case
                     [d] -> pure d
                     _ -> error "desugaring did not produce one module"
                   P.runCheck' (P.emptyCheckState initEnv) $ P.typeCheckModule desugared

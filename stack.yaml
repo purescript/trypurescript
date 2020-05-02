@@ -8,7 +8,7 @@ flags:
 packages:
 - '.'
 extra-deps:
-- purescript-0.13.5
+- purescript-0.13.6
 - happy-1.19.9
 - language-javascript-0.7.0.0
 - network-3.0.1.1
