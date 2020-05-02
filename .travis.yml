@@ -35,7 +35,7 @@ before_deploy:
 deploy:
   provider: releases
   edge: true # use dpl v2
-  token: $RELEASE_KEY
+  token: $GITHUB_TOKEN
   file: trypurescript-$COMPONENT.tar.gz
   on:
     tags: true
