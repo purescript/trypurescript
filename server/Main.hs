@@ -60,8 +60,8 @@ data Error
 
 instance A.ToJSON Error
 
-server :: [P.ExternsFile] -> P.Environment -> Int -> IO ()
-server externs initEnv port = do
+server :: [P.ExternsFile] -> P.Env -> P.Environment -> Int -> IO ()
+server externs initNamesEnv initEnv port = do
   let compile :: Text -> IO (Either Error ([P.JSONError], JS))
       compile input
         | T.length input > 20000 = return (Left (OtherError "Please limit your input to 20000 characters"))
@@ -73,8 +73,7 @@ server externs initEnv port = do
             Right m | P.getModuleName m == P.ModuleName [P.ProperName "Main"] -> do
               (resultMay, ws) <- runLogger' . runExceptT . flip runReaderT P.defaultOptions $ do
                 ((P.Module ss coms moduleName elaborated exps, env), nextVar) <- P.runSupplyT 0 $ do
-                  env <- fmap fst . runWriterT $ foldM P.externsEnv P.primEnv externs
-                  desugared <- P.desugar env externs [P.importPrim m] >>= \case
+                  desugared <- P.desugar initNamesEnv externs [P.importPrim m] >>= \case
                     [d] -> pure d
                     _ -> error "desugaring did not produce one module"
                   P.runCheck' (P.emptyCheckState initEnv) $ P.typeCheckModule desugared
@@ -169,7 +168,9 @@ main = do
   let onError f = either (Left . f) Right
   e <- runExceptT $ do
     modules <- ExceptT $ I.loadAllModules inputFiles
-    ExceptT . I.runMake . I.make $ map (second CST.pureResult) modules
+    (exts, env) <- ExceptT . I.runMake . I.make $ map (second CST.pureResult) modules
+    namesEnv <- fmap fst . runWriterT $ foldM P.externsEnv P.primEnv exts
+    pure (exts, namesEnv, env)
   case e of
     Left err -> print err >> exitFailure
-    Right (exts, env) -> server exts env port
+    Right (exts, namesEnv, env) -> server exts namesEnv env port
