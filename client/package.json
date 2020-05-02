@@ -1,9 +1,11 @@
 {
   "private": true,
+  "config": {
+    "configpath": "config/dev/*.purs"
+  },
   "scripts": {
     "clean": "rimraf output",
-    "build": "spago build --purs-args '--censor-lib --strict'",
-    "bundle": "spago bundle-app --to public/js/index.js"
+    "build": "spago bundle-app --path $npm_package_config_configpath --purs-args '--censor-lib --strict' --to public/js/index.js"
   },
   "devDependencies": {
     "purescript": "^0.13.6",
