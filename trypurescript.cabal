@@ -32,4 +32,4 @@ executable trypurescript
     main-is: Main.hs
     buildable: True
     other-modules: Main
-    ghc-options: -Werror -O2
+    ghc-options: -Werror -O2 -threaded -rtsopts
