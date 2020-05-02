@@ -1,3 +1,7 @@
-#! /usr/bin/env/bash
+#! /usr/bin/env bash
 
+set -ex
+set -o noglob
+export XDG_CACHE_HOME=.spago-cache
+spago install
 exec trypurescript +RTS -N1 -A128m -M750M -RTS 8081 $(spago sources)
