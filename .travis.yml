@@ -34,8 +34,8 @@ before_deploy:
 
 deploy:
   provider: releases
-  api_key: $RELEASE_KEY
+  edge: true # use dpl v2
+  token: $RELEASE_KEY
   file: trypurescript-$COMPONENT.tar.gz
-  skip_cleanup: true
   on:
     tags: true
