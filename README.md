@@ -74,21 +74,59 @@ stack exec trypurescript 8081 $(spago sources)
 ## Server API
 
 The server is a very basic web service which wraps the PureScript compiler, allowing clients to send PureScript code to be compiled and receiving either compiled JS or error messages in response.
+It is hosted at <https://compile.purescript.org/>.
 
 ### Compile PureScript code
 
-**POST /compile**
+#### POST /compile
 
-- Request body: PureScript code
-- Response body: Either `{ js: "..." }` or `{ error: "..." }`
+- Request body: PureScript code defining a module whose name must be Main
 - Status code: 200 (success)
 
-Note that if the code in the request body fails to compile, this is considered a success from the perspective of the API, so compilation failures will be returned with 2xx status codes.
+Response body on compilation success:
+
+```javascript
+{
+  "js": "...", // a string containing JavaScript code
+  "warnings": [ ... ] // an array of warnings, using the same format as the
+                      // compiler's --json-errors flag
+}
+```
+
+Response body on compilation failure:
+
+```javascript
+{
+  "error": {
+    "tag": "CompilerErrors",
+    "contents": [ ... ] // an array of errors, using the same format as the
+                        // compiler's --json-errors flag
+  }
+}
+```
+
+Response body on other errors (eg, the name of the module in request body was not Main, or the request body was too large)
+
+```javascript
+{
+  "error": {
+    "tag": "OtherError",
+    "contents": "..." // a string containing an error message
+  }
+}
+```
+
+Note that the API returns a 200 response in all of the above cases; in particular, if the code in the request body fails to compile and the API returns errors, this is still considered a success.
 Among other things, this makes it easier to use the API from another domain using CORS.
 
-The output code will contain references to preloaded modules using `require` calls.
+The output code will contain references to any imported modules using `require` calls.
 To run these files in the browser, it is necessary to either use a `require` shim (such as require1k), or replace these calls and deploy a bundle of precompiled modules.
-The Try PureScript client uses the second approach.
+The Try PureScript client uses the first approach.
+
+#### GET /output/:module/(index.js|foreign.js)
+
+The server exposes the compiled JS for all of the modules it has access to.
+If the compiled JavaScript code in the response includes a `require` call such as `require(../Web.HTML/index.js)`, then the client is expected to arrange things so that this `require` call provides access to the JavaScript code available at the URL path `/output/Web.HTML/index.js`, via a shim or otherwise.
 
 ### Configuration
 
@@ -99,4 +137,4 @@ The server application takes the following arguments on the command line:
 
 #### Example
 
-    dist/build/trypurescript/trypurescript 8081 'bower_components/purescript-*/src/**/*.purs'
+    trypurescript 8081 'bower_components/purescript-*/src/**/*.purs'
