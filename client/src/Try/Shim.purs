@@ -23,5 +23,9 @@ shims = Object.fromFoldable
       { url: "https://unpkg.com/react-dom@16.13.0/umd/react-dom-server.browser.development.js"
       , deps: [ "react" ]
       }
+  , Tuple "big-integer"
+      { url: "https://unpkg.com/big-integer@1.6.48/BigInteger.min.js"
+      , deps: []
+      }
   ]
 
