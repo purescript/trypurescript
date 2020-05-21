@@ -14,6 +14,18 @@
 - Persistent session
 - Load PureScript code from Github Gists
 
+### Which Libraries are Available?
+
+Try PureScript aims to provide a complete, recent package set from <https://github.com/purescript/package-sets>. The available libraries are those listed in `staging/spago.dhall`, at the versions in the package set mentioned in `staging/packages.dhall`.
+
+To update to a more recent package set, first update the `upstream` package set in `staging/packages.dhall`, and then run:
+
+```
+$ spago ls packages | cut -f 1 -d ' ' | xargs spago install
+```
+
+to install every package in the set. Before deploying an updated package set, someone should check that the memory required to hold the package set's externs files does not exceed that of the try.purescript.org server.
+
 ### Control Features via the Query String
 
 Most of these features can be controlled not only from the toolbar, but also using the [query parameters](https://en.wikipedia.org/wiki/Query_string):
