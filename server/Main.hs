@@ -70,7 +70,7 @@ server externs initNamesEnv initEnv port = do
           case CST.parseModuleFromFile "<file>" input >>= CST.resFull of
             Left parseError ->
               return . Left . CompilerErrors . P.toJSONErrors False P.Error $ CST.toMultipleErrors "<file>" parseError
-            Right m | P.getModuleName m == P.ModuleName [P.ProperName "Main"] -> do
+            Right m | P.getModuleName m == P.ModuleName "Main" -> do
               (resultMay, ws) <- runLogger' . runExceptT . flip runReaderT P.defaultOptions $ do
                 ((P.Module ss coms moduleName elaborated exps, env), nextVar) <- P.runSupplyT 0 $ do
                   desugared <- P.desugar initNamesEnv externs [P.importPrim m] >>= \case
