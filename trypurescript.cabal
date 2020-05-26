@@ -16,6 +16,7 @@ executable trypurescript
     build-depends: base ==4.*,
                    aeson -any,
                    bytestring >=0.10.0.2 && <0.11,
+                   data-default -any,
                    directory -any,
                    filepath -any,
                    Glob -any,
@@ -27,7 +28,8 @@ executable trypurescript
                    mtl ==2.2.2,
                    parsec,
                    text -any,
-                   time -any
+                   time -any,
+                   warp -any
     hs-source-dirs: server
     main-is: Main.hs
     buildable: True
