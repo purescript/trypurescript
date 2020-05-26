@@ -49,7 +49,6 @@ import           System.FilePath ((</>))
 import           System.FilePath.Glob (glob)
 import qualified System.IO as IO
 import           System.IO.UTF8 (readUTF8File)
-import qualified Text.Parsec.Combinator as Parsec
 import           Web.Scotty
 import qualified Web.Scotty as Scotty
 
