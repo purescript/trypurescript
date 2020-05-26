@@ -21,6 +21,7 @@ import qualified Data.Aeson as A
 import           Data.Aeson ((.=))
 import           Data.Bifunctor (first, second)
 import qualified Data.ByteString.Lazy as BL
+import           Data.Default (def)
 import           Data.Function (on)
 import           Data.List (foldl', nubBy)
 import qualified Data.List.NonEmpty as NE
@@ -41,6 +42,7 @@ import qualified Language.PureScript.CoreFn as CF
 import qualified Language.PureScript.Errors.JSON as P
 import qualified Language.PureScript.Interactive as I
 import qualified Language.PureScript.TypeChecker.TypeSearch as TS
+import qualified Network.Wai.Handler.Warp as Warp
 import           System.Environment (getArgs)
 import           System.Exit (exitFailure)
 import           System.FilePath ((</>))
@@ -89,7 +91,7 @@ server externs initNamesEnv initEnv port = do
             Right _ ->
               (return . Left . OtherError) "The name of the main module should be Main."
 
-  scotty port $ do
+  scottyOpts (getOpts port) $ do
     get "/" $
       Scotty.text "POST api.purescript.org/compile"
     post "/compile" $ do
@@ -119,6 +121,14 @@ server externs initNamesEnv initEnv port = do
                                                 | (k, _) <- take 50 results
                                                 ]
                                  ]
+
+getOpts :: Int -> Scotty.Options
+getOpts port = def
+  { settings =
+      Warp.setHost "127.0.0.1"
+      $ Warp.setPort port
+      $ Warp.defaultSettings
+  }
 
 lookupAllConstructors :: P.Environment -> P.SourceType -> [P.SourceType]
 lookupAllConstructors env = P.everywhereOnTypesM $ \case
