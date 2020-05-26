@@ -25,7 +25,6 @@ executable trypurescript
                    http-types >= 0.8.5,
                    transformers ==0.5.*,
                    mtl ==2.2.2,
-                   parsec,
                    text -any,
                    time -any
     hs-source-dirs: server
