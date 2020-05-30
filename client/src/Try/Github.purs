@@ -6,7 +6,7 @@ import Control.Monad.Cont.Trans (ContT(..))
 import Control.Monad.Except.Trans (ExceptT(..))
 import Data.Either (Either(..))
 import Effect (Effect)
-import Effect.Uncurried (EffectFn1, EffectFn3, EffectFn4, mkEffectFn1, runEffectFn3, runEffectFn4)
+import Effect.Uncurried (EffectFn1, EffectFn3, mkEffectFn1, runEffectFn3)
 
 -- | Fetch a raw file from a GitHub repo via raw.githubusercontent.com
 foreign import getRawGithubFile_
