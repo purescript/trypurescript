@@ -71,7 +71,7 @@ server externs initNamesEnv initEnv port = do
           case CST.parseModuleFromFile "<file>" input >>= CST.resFull of
             Left parseError ->
               return . Left . CompilerErrors . P.toJSONErrors False P.Error $ CST.toMultipleErrors "<file>" parseError
-            Right m | P.getModuleName m == P.ModuleName "Main" -> do
+            Right m -> do
               (resultMay, ws) <- runLogger' . runExceptT . flip runReaderT P.defaultOptions $ do
                 ((P.Module ss coms moduleName elaborated exps, env), nextVar) <- P.runSupplyT 0 $ do
                   desugared <- P.desugar initNamesEnv externs [P.importPrim m] >>= \case
@@ -87,8 +87,6 @@ server externs initNamesEnv initEnv port = do
               case resultMay of
                 Left errs -> (return . Left . CompilerErrors . P.toJSONErrors False P.Error) errs
                 Right js -> (return . Right) (P.toJSONErrors False P.Error ws, js)
-            Right _ ->
-              (return . Left . OtherError) "The name of the main module should be Main."
 
   scottyOpts (getOpts port) $ do
     get "/" $

@@ -117,7 +117,7 @@ Response body on compilation failure:
 }
 ```
 
-Response body on other errors (eg, the name of the module in request body was not Main, or the request body was too large)
+Response body on other errors (eg, the request body was too large)
 
 ```javascript
 {
