@@ -72,9 +72,13 @@ server externs initNamesEnv initEnv port = do
             Left parseError ->
               return . Left . CompilerErrors . P.toJSONErrors False P.Error $ CST.toMultipleErrors "<file>" parseError
             Right m -> do
+              -- Rewrite the module name to "$Main" in order to ensure that the
+              -- module name doesn't clash with any existing module names in
+              -- the package set.
+              let rewriteModuleName (P.Module ss coms _ decls refs) = P.Module ss coms (P.moduleNameFromString "$Main") decls refs
               (resultMay, ws) <- runLogger' . runExceptT . flip runReaderT P.defaultOptions $ do
                 ((P.Module ss coms moduleName elaborated exps, env), nextVar) <- P.runSupplyT 0 $ do
-                  desugared <- P.desugar initNamesEnv externs [P.importPrim m] >>= \case
+                  desugared <- P.desugar initNamesEnv externs [P.importPrim (rewriteModuleName m)] >>= \case
                     [d] -> pure d
                     _ -> error "desugaring did not produce one module"
                   P.runCheck' (P.emptyCheckState initEnv) $ P.typeCheckModule desugared
