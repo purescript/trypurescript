@@ -7,9 +7,10 @@ import Control.Monad.Except.Trans (runExceptT)
 import Data.Array (mapMaybe)
 import Data.Array as Array
 import Data.Either (Either(..))
-import Data.Foldable (elem, fold, for_, intercalate, traverse_)
+import Data.Foldable (elem, fold, for_, intercalate, traverse_, oneOf)
 import Data.FoldableWithIndex (forWithIndex_)
 import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Traversable (sequence)
 import Effect (Effect)
 import Effect.Console (error)
 import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn5, mkEffectFn1, runEffectFn1, runEffectFn2, runEffectFn5)
@@ -22,6 +23,7 @@ import Try.API (CompileError(..), CompileResult(..), CompileWarning(..), Compile
 import Try.API as API
 import Try.Config as Config
 import Try.Gist (getGistById, tryLoadFileFromGist, uploadGist)
+import Try.Github (getRawGithubFile)
 import Try.Loader (Loader, makeLoader, runLoader)
 import Try.QueryString (getQueryStringMaybe, setQueryStrings)
 import Try.Session (createSessionIdIfNecessary, storeSession, tryRetrieveSession)
@@ -231,6 +233,18 @@ loadFromGist id_ k = do
         k { code: "" }
       Right code -> k { code }
 
+loadFromGithub
+  :: String
+  -> ({ code :: String } -> Effect Unit)
+  -> Effect Unit
+loadFromGithub id_ k = do
+  runContT (runExceptT (getRawGithubFile id_)) $
+    case _ of
+      Left err -> do
+        window >>= alert err
+        k { code: "" }
+      Right code -> k { code }
+
 withSession
   :: String
   -> ({ code :: String } -> Effect Unit)
@@ -240,8 +254,11 @@ withSession sessionId k = do
   case state of
     Just state' -> k state'
     Nothing -> do
-      gist <- fromMaybe Config.mainGist <$> getQueryStringMaybe "gist"
-      loadFromGist gist k
+      action <- oneOf <$> sequence
+        [ map loadFromGithub <$> getQueryStringMaybe "github"
+        , map loadFromGist <$> getQueryStringMaybe "gist"
+        ]
+      fromMaybe (loadFromGithub Config.mainGithubExample) action k
 
 -- | Cache the current code in the session state
 cacheCurrentCode :: Effect Unit

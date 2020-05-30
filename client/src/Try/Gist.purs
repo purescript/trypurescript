@@ -5,7 +5,6 @@ module Try.Gist
   , tryLoadFileFromGist
   ) where
 
--- | An abstract data type representing the data we get back from the GitHub API.
 import Prelude
 
 import Control.Monad.Cont.Trans (ContT(..))
