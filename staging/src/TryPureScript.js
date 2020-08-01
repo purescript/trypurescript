@@ -6,14 +6,6 @@ exports.setInnerHTML = function(html) {
   };
 };
 
-exports.encode = function(text) {
-  return text
-    .replace('<', '&lt;')
-    .replace('>', '&gt;')
-    .replace('&', '&amp;')
-    .replace('"', '&quot;');
-};
-
 exports.withConsoleImpl = function(f) {
   return function() {
     var oldLog = console.log;
