@@ -13,7 +13,6 @@ import Data.Argonaut.Decode.Generic.Rep (genericDecodeJsonWith)
 import Data.Argonaut.Types.Generic.Rep (defaultEncoding)
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Aff (Aff)
@@ -99,13 +98,6 @@ instance decodeJsonCompileError :: DecodeJson CompileError where
           }
 
 derive instance genericCompileError :: Generic CompileError _
-
--- temp
-instance showCompileResult :: Show CompileResult where
-  show = genericShow
-
-instance showCompileError :: Show CompileError where
-  show = genericShow
 
 -- | POST the specified code to the Try PureScript API, and wait for
 -- | a response.

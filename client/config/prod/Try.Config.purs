@@ -11,8 +11,8 @@ tokenServerUrl = "https://tpsfunction.azurewebsites.net/api/tps?code=JmxFIJvNG9E
 clientID :: String
 clientID = "3634da383bb531261af5"
 
-compileUrl :: String
-compileUrl = "https://compile.purescript.org"
-
 loaderUrl :: String
 loaderUrl = "https://compile.purescript.org/output"
+
+compileUrl :: String
+compileUrl = "https://compile.purescript.org"

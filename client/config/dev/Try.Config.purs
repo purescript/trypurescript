@@ -12,11 +12,11 @@ tokenServerUrl = "https://localtpsfunction.azurewebsites.net/api/localtps?code=I
 clientID :: String
 clientID = "6f4e10fd8cef6995ac09"
 
-compileUrl :: String
---compileUrl = "http://localhost:8081"
-compileUrl = "https://compile.purescript.org"
-
 loaderUrl :: String
 --loaderUrl = "js/output"
 --loaderUrl = "http://localhost:8080"
 loaderUrl = "https://compile.purescript.org/output"
+
+compileUrl :: String
+--compileUrl = "http://localhost:8081"
+compileUrl = "https://compile.purescript.org"

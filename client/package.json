@@ -1,6 +1,6 @@
 {
-  "license": "MIT",
   "name": "tps",
+  "private": "true",
   "config": {
     "configpath": "config/dev/*.purs"
   },

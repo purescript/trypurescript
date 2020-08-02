@@ -15,7 +15,6 @@ module.exports = {
   plugins: [
     new CleanWebpackPlugin(),
     new HtmlWebpackPlugin({
-      title: 'Try PureScript!',
       template: './public/index.html',
     }),
     new CopyPlugin({

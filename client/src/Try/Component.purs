@@ -460,7 +460,8 @@ component =
           [ sandbox "allow-scripts allow-top-navigation"
           , HP.src "frame-error.html"
           , srcDoc
-              $ "<script src='frame-load.js'> loadFrame('"
+              $ "<script src=\"https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js\"></script>"
+              <> "<script src='frame-load.js'> loadFrame('"
               <> jsonStr
               <> "'); </script>"
           , HP.classes [ T.flexGrow ]
