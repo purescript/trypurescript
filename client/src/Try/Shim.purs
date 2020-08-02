@@ -1,4 +1,4 @@
-module TPS.Shim where
+module Try.Shim where
 
 import Data.Tuple (Tuple(..))
 import Foreign.Object (Object)

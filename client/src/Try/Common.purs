@@ -1,4 +1,4 @@
-module TPS.Common where
+module Try.Common where
 
 import Prelude
 

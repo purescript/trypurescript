@@ -10,8 +10,8 @@ import Halogen as H
 import Halogen.Aff as HA
 import Halogen.VDom.Driver (runUI)
 import Routing.PushState (makeInterface, matches)
-import TPS.Component (component, Query(..))
-import TPS.Routing (route)
+import Try.Component (component, Query(..))
+import Try.Routing (route)
 import Web.HTML (HTMLElement)
 
 main :: Effect Unit

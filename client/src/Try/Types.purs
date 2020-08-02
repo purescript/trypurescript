@@ -1,4 +1,4 @@
-module TPS.Types where
+module Try.Types where
 
 import Data.Argonaut (class EncodeJson)
 import Data.Newtype (class Newtype)

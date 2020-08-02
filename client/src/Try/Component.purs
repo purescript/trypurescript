@@ -1,4 +1,4 @@
-module TPS.Component where
+module Try.Component where
 
 import Prelude
 import Ace (Document, EditSession, Range, ace, edit)
@@ -32,14 +32,14 @@ import Halogen.Hooks.Extra.Hooks (useDebouncer, useModifyState_, usePutState)
 import Halogen.Query.EventSource as ES
 import LzString (compressToEncodedURIComponent)
 import MyAce as MyAce
-import TPS.Classes (Responsiveness(..), commonMenuClasses, dropdownItemClasses, menuTextClasses, nonMobileBlock, nonMobileBlockClasses)
-import TPS.Common (Content(..), GhPath(..), GhToken, GistID(..), gistQP, homeRoute, pursQP)
-import TPS.Compile (AnnotationType(..), CompileError(..), CompileResult(..), CompilerError, WarningOrError, compile, mkMarkerRange, toAnnotation)
-import TPS.Loader (Loader, makeLoader, runLoader)
-import TPS.Request (getFile, ghCreateGist, ghGetGist, ghRequestToken)
-import TPS.Routing (Route(..))
-import TPS.Types (JS(..))
-import TPS.Utility (ContentSource(..), PushRoute, ViewMode(..), compress, decompress, ghAuthorize)
+import Try.Classes (Responsiveness(..), commonMenuClasses, dropdownItemClasses, menuTextClasses, nonMobileBlock, nonMobileBlockClasses)
+import Try.Common (Content(..), GhPath(..), GhToken, GistID(..), gistQP, homeRoute, pursQP)
+import Try.Compile (AnnotationType(..), CompileError(..), CompileResult(..), CompilerError, WarningOrError, compile, mkMarkerRange, toAnnotation)
+import Try.Loader (Loader, makeLoader, runLoader)
+import Try.Request (getFile, ghCreateGist, ghGetGist, ghRequestToken)
+import Try.Routing (Route(..))
+import Try.Types (JS(..))
+import Try.Utility (ContentSource(..), PushRoute, ViewMode(..), compress, decompress, ghAuthorize)
 import Tailwind as T
 import Web.HTML (window)
 import Web.HTML.Location (setHref)

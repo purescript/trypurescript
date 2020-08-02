@@ -1,4 +1,4 @@
-module TPS.Classes where
+module Try.Classes where
 
 import Prelude
 import Halogen (ClassName)

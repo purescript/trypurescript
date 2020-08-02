@@ -1,4 +1,4 @@
-module TPS.Config where
+module Try.Config where
 
 appDomain :: String
 appDomain = "http://localhost:1234"

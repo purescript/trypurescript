@@ -1,8 +1,8 @@
-module TPS.Utility where
+module Try.Utility where
 
 import Prelude
-import TPS.Common (Compressed(..), Content(..), GistID, pursQP)
-import TPS.Config (appDomain, clientID)
+import Try.Common (Compressed(..), Content(..), GistID, pursQP)
+import Try.Config (appDomain, clientID)
 import Effect (Effect)
 import LzString (compressToEncodedURIComponent, decompressFromEncodedURIComponent)
 import Web.HTML (window)

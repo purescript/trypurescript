@@ -1,11 +1,11 @@
-module TPS.Routing where
+module Try.Routing where
 
 import Prelude
 import Data.Foldable (oneOf)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Routing.Match (Match, end, param, root)
-import TPS.Common (AuthCode(..), Compressed(..), GhPath(..), GistID(..), ghPathQP, gistQP, pursQP)
+import Try.Common (AuthCode(..), Compressed(..), GhPath(..), GistID(..), ghPathQP, gistQP, pursQP)
 
 {-
 Handles navigation within the single-page-app.

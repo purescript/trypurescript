@@ -1,9 +1,9 @@
-module TPS.Loader where
+module Try.Loader where
 
 import Prelude
 import Affjax as AX
 import Affjax.ResponseFormat as AXRF
-import TPS.Config (loaderUrl)
+import Try.Config (loaderUrl)
 import Control.Bind (bindFlipped)
 import Control.Parallel (parTraverse)
 import Data.Array as Array
@@ -26,8 +26,8 @@ import Effect.Ref as Ref
 import Effect.Unsafe (unsafePerformEffect)
 import Foreign.Object (Object)
 import Foreign.Object as Object
-import TPS.Shim (shims)
-import TPS.Types (JS(..))
+import Try.Shim (shims)
+import Try.Types (JS(..))
 
 {-
 Collects all JS modules required by compled code.

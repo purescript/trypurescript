@@ -1,4 +1,4 @@
-module TPS.Compile where
+module Try.Compile where
 
 import Prelude
 import Ace (Range)
@@ -17,8 +17,8 @@ import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Aff (Aff)
-import TPS.Common (Content(..))
-import TPS.Config (compileUrl)
+import Try.Common (Content(..))
+import Try.Config (compileUrl)
 
 ------- Compile API types -------
 --

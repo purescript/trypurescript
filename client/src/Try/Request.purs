@@ -1,4 +1,4 @@
-module TPS.Request where
+module Try.Request where
 
 import Prelude
 import Affjax as AX
@@ -11,8 +11,8 @@ import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
-import TPS.Common (AuthCode(..), Content(..), GhToken(..), GistID(..))
-import TPS.Config (tokenServerUrl)
+import Try.Common (AuthCode(..), Content(..), GhToken(..), GistID(..))
+import Try.Config (tokenServerUrl)
 
 {-
 Handles HTTP requests for fetching github files and gists,
