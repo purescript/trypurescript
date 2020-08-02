@@ -1,0 +1,18 @@
+.error {
+  position: absolute;
+  z-index: 20;
+  border-bottom: 2px dotted red;
+}
+
+/* Currently unsued, but can re-enable. Assuming it's spammy */
+.warning {
+  position: absolute;
+  z-index: 20;
+  border-bottom: 2px dotted #c4953a;
+}
+
+/* Can re-enable if there's an issue without this option
+.ace_gutter-tooltip {
+  white-space: pre-wrap;
+}
+*/
