@@ -1,49 +1,36 @@
-module Try.Gist
-  ( GistInfo
-  , uploadGist
-  , getGistById
-  , tryLoadFileFromGist
-  ) where
+module Try.Gist where
 
--- | An abstract data type representing the data we get back from the GitHub API.
 import Prelude
-
-import Control.Monad.Cont.Trans (ContT(..))
-import Control.Monad.Except.Trans (ExceptT(..))
+import Affjax as AX
+import Affjax.ResponseFormat as AXRF
+import Data.Argonaut (decodeJson, stringify)
 import Data.Either (Either(..))
-import Effect (Effect)
-import Effect.Uncurried (EffectFn1, EffectFn3, EffectFn4, mkEffectFn1, runEffectFn3, runEffectFn4)
+import Effect.Aff (Aff)
+import Try.Common (Content(..), GistID(..))
 
--- | An abstract data type representing the data we get back from the GitHub API.
-data GistInfo
+{-
+Handles HTTP requests for fetching github gists.
+-}
+--
+gistApiUrl :: String
+gistApiUrl = "https://api.github.com/gists"
 
-foreign import uploadGist_
-  :: EffectFn3 String
-               (EffectFn1 String Unit)
-               (EffectFn1 String Unit)
-               Unit
+type GistJson
+  = { files :: { "Main.purs" :: { content :: String } }
+    }
 
--- | A wrapper for `uploadGist` which uses `ContT`.
-uploadGist :: String -> ExceptT String (ContT Unit Effect) String
-uploadGist content = ExceptT (ContT \k -> runEffectFn3 uploadGist_ content (mkEffectFn1 (k <<< Right)) (mkEffectFn1 (k <<< Left)))
+getGistContent :: GistJson -> Content
+getGistContent obj = Content obj.files."Main.purs".content
 
--- | Get a gist by its ID
-foreign import getGistById_
-  :: EffectFn3 String
-               (EffectFn1 GistInfo Unit)
-               (EffectFn1 String Unit)
-               Unit
-
--- | A wrapper for `getGistById` which uses `ContT`.
-getGistById :: String -> ExceptT String (ContT Unit Effect) GistInfo
-getGistById id_ = ExceptT (ContT \k -> runEffectFn3 getGistById_ id_ (mkEffectFn1 (k <<< Right)) (mkEffectFn1 (k <<< Left)))
-
-foreign import tryLoadFileFromGist_
-  :: EffectFn4 GistInfo
-               String
-               (EffectFn1 String Unit)
-               (EffectFn1 String Unit)
-               Unit
-
-tryLoadFileFromGist :: GistInfo -> String -> ExceptT String (ContT Unit Effect) String
-tryLoadFileFromGist gi filename = ExceptT (ContT \k -> runEffectFn4 tryLoadFileFromGist_ gi filename (mkEffectFn1 (k <<< Right)) (mkEffectFn1 (k <<< Left)))
+ghGetGist :: GistID -> Aff (Either String Content)
+ghGetGist (GistID gistID) = do
+  result <- AX.get AXRF.json $ gistApiUrl <> "/" <> gistID
+  pure
+    $ case result of
+        Left err -> Left $ "GET gist response failed to decode: " <> AX.printError err
+        Right response -> do
+          let
+            respStr = "POST /api response: " <> stringify response.body
+          case decodeJson response.body of
+            Left err -> Left $ "Failed to decode json response: " <> respStr <> ", Error: " <> show err
+            Right (decoded :: GistJson) -> Right $ getGistContent decoded

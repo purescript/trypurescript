@@ -1,10 +1,10 @@
 module Try.Config where
 
 loaderUrl :: String
-loaderUrl = "js/output"
+--loaderUrl = "js/output"
+--loaderUrl = "http://localhost:8080"
+loaderUrl = "https://compile.purescript.org/output"
 
 compileUrl :: String
-compileUrl = "http://localhost:8081"
-
-mainGist :: String
-mainGist = "7ad2b2eef11ac7dcfd14aa1585dd8f69"
+--compileUrl = "http://localhost:8081"
+compileUrl = "https://compile.purescript.org"
