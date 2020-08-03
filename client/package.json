@@ -1,6 +1,6 @@
 {
   "name": "tps",
-  "private": "true",
+  "private": true,
   "config": {
     "configpath": "config/dev/*.purs"
   },
