@@ -14,6 +14,8 @@ import Data.Foldable (traverse_)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Newtype (unwrap)
 import Data.String (Pattern(..), joinWith, split)
+import Data.String.Regex (regex, replace)
+import Data.String.Regex.Flags (multiline)
 import Data.Time.Duration (Milliseconds(..))
 import Data.Traversable (traverse)
 import Data.Tuple.Nested ((/\))
@@ -187,9 +189,14 @@ component =
     let
       -- update content in editor and state
       writeContent (Content ct) = do
-        --log $ "writing content: " <> ct
-        HK.put contentIdx $ Content ct
-        liftEffect $ traverse_ (Document.setValue ct) document
+        -- Automatically modify non-Main module names
+        let
+          ctEdit = case regex "^module (?!Main ).*" multiline of
+            Left err -> "-- Error constructing regex: " <> err <> "\n" <> ct
+            Right reg -> replace reg "module Main where -- Overwritten by Try PureScript" ct
+        --log $ "writing content: " <> ctEdit
+        HK.put contentIdx $ Content ctEdit
+        liftEffect $ traverse_ (Document.setValue ctEdit) document
         -- Queue an automatic recompile (ignored if setting disabled)
         debouncedRecompile unit
     --
