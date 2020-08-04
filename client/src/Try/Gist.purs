@@ -19,7 +19,8 @@ import Web.HTML.Location (setHref)
 import Web.HTML.Window (location)
 
 {-
-Handles HTTP requests for fetching and saving github gists.
+Handles HTTP requests for fetching github files and gists,
+and saving gists.
 -}
 --
 type TokenResp
@@ -80,6 +81,14 @@ ghGetGist (GistID gistID) = do
           case decodeJson response.body of
             Left err -> Left $ "Failed to decode json response: " <> respStr <> ", Error: " <> show err
             Right (decoded :: GistJson) -> Right $ getGistContent decoded
+
+getFile :: String -> Aff (Either String Content)
+getFile url = do
+  result <- AX.get AXRF.string url
+  pure
+    $ case result of
+        Left err -> Left $ "Failed to get file at: " <> url <> ", " <> AX.printError err
+        Right response -> Right $ Content response.body
 
 ghCreateGist :: GhToken -> Content -> Aff (Either String GistID)
 ghCreateGist token content = do

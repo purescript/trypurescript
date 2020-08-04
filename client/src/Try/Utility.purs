@@ -29,6 +29,7 @@ data ContentSource
   = NewContent --NoGist
   | SavingGist
   | HaveGist GistID
+  | HaveGhFile String
 
 compress :: Content -> Compressed
 compress (Content c) = Compressed $ compressToEncodedURIComponent c

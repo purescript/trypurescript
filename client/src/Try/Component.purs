@@ -7,12 +7,13 @@ import Ace.EditSession as Session
 import Ace.Editor as Editor
 import Ace.Marker as Marker
 import Data.Argonaut (encodeJson, stringify)
-import Data.Array (catMaybes, concat, mapMaybe, mapWithIndex)
+import Data.Array (catMaybes, concat, insertAt, mapMaybe, mapWithIndex)
 import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Foldable (traverse_)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Newtype (unwrap)
+import Data.String (Pattern(..), joinWith, split)
 import Data.Time.Duration (Milliseconds(..))
 import Data.Traversable (traverse)
 import Data.Tuple.Nested ((/\))
@@ -32,8 +33,8 @@ import MyAce as MyAce
 import Tailwind as T
 import Try.API (AnnotationType(..), CompileError(..), CompileResult(..), CompilerError, WarningOrError, compile, mkMarkerRange, toAnnotation)
 import Try.Classes (Responsiveness(..), commonMenuClasses, dropdownItemClasses, menuTextClasses, nonMobileBlock, nonMobileBlockClasses)
-import Try.Common (Content(..), GhToken, GistID(..), gistQP, homeRoute, pursQP)
-import Try.Gist (ghAuthorize, ghCreateGist, ghGetGist, ghRequestToken)
+import Try.Common (Content(..), GhPath(..), GhToken, GistID(..), gistQP, homeRoute, pursQP)
+import Try.Gist (getFile, ghAuthorize, ghCreateGist, ghGetGist, ghRequestToken)
 import Try.Loader (Loader, makeLoader, runLoader)
 import Try.Routing (Route(..))
 import Try.Types (JS(..))
@@ -271,6 +272,24 @@ component =
               --log $ "Got content from gist: " <> show c
               writeContent c
               putContentSource $ HaveGist gist_id
+        LoadGitHub (GhPath path) -> do
+          let
+            rawPath = "https://raw.githubusercontent.com/" <> path
+
+            elements = split (Pattern "/") path
+
+            richPath =
+              "https://github.com/"
+                <> case insertAt 2 "blob" elements of
+                    Just arr -> joinWith "/" arr
+                    Nothing -> "problem_with_original_github_path"
+          eitherContent <- liftAff $ getFile rawPath
+          case eitherContent of
+            Left err -> putOutput $ Text err
+            Right c -> do
+              --log $ "Got content from gh: " <> show c
+              writeContent c
+              putContentSource $ HaveGhFile richPath
         --
         -- Note that pushRoute just sets the URL, but won't reload the page:
         -- liftEffect $ pushRoute homeRoute
@@ -423,6 +442,11 @@ component =
             "Open the original gist in a new window"
             $ "https://gist.github.com/"
             <> id
+        HaveGhFile url ->
+          newTabLink
+            "View File"
+            "Open the original GitHub file in a new window"
+            url
 
       renderIframe jsonStr =
         HH.iframe
