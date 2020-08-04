@@ -32,8 +32,8 @@ import MyAce as MyAce
 import Tailwind as T
 import Try.API (AnnotationType(..), CompileError(..), CompileResult(..), CompilerError, WarningOrError, compile, mkMarkerRange, toAnnotation)
 import Try.Classes (Responsiveness(..), commonMenuClasses, dropdownItemClasses, menuTextClasses, nonMobileBlock, nonMobileBlockClasses)
-import Try.Common (Content(..), GistID(..), homeRoute, pursQP)
-import Try.Gist (ghGetGist)
+import Try.Common (Content(..), GhToken, GistID(..), gistQP, homeRoute, pursQP)
+import Try.Gist (ghAuthorize, ghCreateGist, ghGetGist, ghRequestToken)
 import Try.Loader (Loader, makeLoader, runLoader)
 import Try.Routing (Route(..))
 import Try.Types (JS(..))
@@ -77,12 +77,26 @@ component =
     document /\ putDocument <- usePutState (Nothing :: Maybe Document)
     session /\ sessionIdx <- useState (Nothing :: Maybe EditSession)
     route /\ putRoute <- usePutState (Nothing :: Maybe Route)
+    ghToken /\ putGhToken <- usePutState (Nothing :: Maybe GhToken)
     pushRoute /\ putPushRoute <- usePutState (input :: PushRoute)
     contentSource /\ putContentSource <- usePutState (NewContent :: ContentSource)
     output /\ putOutput <- usePutState $ (Text "" :: Output)
     --
     -- Helper functions to reduce code duplication
     let
+      -- GhToken is a parameter rather than picked-up from state
+      -- to ensure it is not Nothing
+      doSaveGist gh_token = do
+        -- Cannot just use `content` - will be stale
+        currentContent <- HK.get contentIdx
+        log $ "saving gist, content: " <> show currentContent
+        eitherId <- liftAff $ ghCreateGist gh_token $ currentContent
+        case eitherId of
+          Left err -> log err
+          Right id -> do
+            putContentSource $ HaveGist id
+            liftEffect $ pushRoute $ "/?" <> gistQP <> "=" <> (show id)
+
       -- Create editor annotations and markers for errors or warnings
       annotateAndMark :: forall r. AnnotationType -> Array (WarningOrError r) -> _
       annotateAndMark type_ arr = do
@@ -228,6 +242,22 @@ component =
       -- multiple state modifications, but not a performance issue now.
       putRoute $ Just rt
       case rt of
+        AuthorizeCallback authCode compressed -> do
+          log "in auth callback"
+          -- Immediately show new content.
+          -- This also requires setting saving flag again, since state
+          -- is reset upon page refresh from callback.
+          writeContent $ decompress compressed
+          putContentSource SavingGist
+          -- Make ghToken request to private app server
+          res <- liftAff $ ghRequestToken authCode
+          case res of
+            Left err -> log err
+            Right gh_token -> do
+              -- Save ghToken
+              putGhToken $ Just gh_token
+              -- Save gist
+              doSaveGist gh_token
         LoadCompressed compressed -> do
           let
             ct = decompress compressed
@@ -368,11 +398,25 @@ component =
 
       gistButtonOrLink = case contentSource of
         NewContent ->
+          mkClickButton
+            "Save Gist"
+            "Save code to GitHub Gist (requires OAuth login)"
+            NonMobile
+            ( do
+                -- Immediately show "saving" status
+                putContentSource SavingGist
+                case ghToken of
+                  Nothing -> do
+                    log "need token - authorizing"
+                    liftEffect $ ghAuthorize content
+                  Just gh_token -> do
+                    log "have token"
+                    doSaveGist gh_token
+            )
+        SavingGist ->
           HH.div
-            [ HP.classes $ menuTextClasses <> [ T.textTpsDisabled, T.lineThrough ]
-            , HP.title "View Gist is disabled after local edits"
-            ]
-            [ HH.text "View Gist" ]
+            [ HP.classes menuTextClasses ]
+            [ HH.text "Saving..." ]
         HaveGist (GistID id) ->
           newTabLink
             "View Gist"

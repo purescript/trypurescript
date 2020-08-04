@@ -27,6 +27,7 @@ type PushRoute
 
 data ContentSource
   = NewContent --NoGist
+  | SavingGist
   | HaveGist GistID
 
 compress :: Content -> Compressed

@@ -18,6 +18,12 @@ pursQP = "purs"
 gistQP :: String
 gistQP = "gist"
 
+newtype AuthCode
+  = AuthCode String
+
+instance showAuthCode :: Show AuthCode where
+  show (AuthCode c) = c
+
 newtype Compressed
   = Compressed String
 
@@ -37,3 +43,9 @@ newtype GistID
 
 instance showGistID :: Show GistID where
   show (GistID g) = g
+
+newtype GhToken
+  = GhToken String
+
+instance showToken :: Show GhToken where
+  show (GhToken t) = t

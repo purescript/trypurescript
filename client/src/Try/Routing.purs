@@ -5,14 +5,15 @@ import Data.Foldable (oneOf)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Routing.Match (Match, end, param, root)
-import Try.Common (Compressed(..), GistID(..), gistQP, pursQP)
+import Try.Common (AuthCode(..), Compressed(..), GistID(..), gistQP, pursQP)
 
 {-
 Handles navigation within the single-page-app.
 -}
 --
 data Route
-  = LoadCompressed Compressed
+  = AuthorizeCallback AuthCode Compressed
+  | LoadCompressed Compressed
   | LoadGist GistID
   | Home
 
@@ -25,7 +26,8 @@ route :: Match Route
 route =
   root
     *> oneOf
-        [ LoadCompressed <$> Compressed <$> param pursQP
+        [ AuthorizeCallback <$> (AuthCode <$> param "code") <*> (Compressed <$> param pursQP)
+        , LoadCompressed <$> Compressed <$> param pursQP
         , LoadGist <$> GistID <$> param gistQP
         , Home <$ end
         ]
