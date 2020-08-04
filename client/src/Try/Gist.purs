@@ -1,49 +1,120 @@
-module Try.Gist
-  ( GistInfo
-  , uploadGist
-  , getGistById
-  , tryLoadFileFromGist
-  ) where
+module Try.Gist where
 
--- | An abstract data type representing the data we get back from the GitHub API.
 import Prelude
-
-import Control.Monad.Cont.Trans (ContT(..))
-import Control.Monad.Except.Trans (ExceptT(..))
+import Affjax as AX
+import Affjax.RequestBody as AXRB
+import Affjax.RequestHeader as AXRH
+import Affjax.ResponseFormat as AXRF
+import Data.Argonaut (decodeJson, encodeJson, stringify)
 import Data.Either (Either(..))
+import Data.HTTP.Method (Method(..))
+import Data.Maybe (Maybe(..))
 import Effect (Effect)
-import Effect.Uncurried (EffectFn1, EffectFn3, EffectFn4, mkEffectFn1, runEffectFn3, runEffectFn4)
+import Effect.Aff (Aff)
+import Try.Common (AuthCode(..), Content(..), GhToken(..), GistID(..), pursQP)
+import Try.Config (appDomain, clientID, tokenServerUrl)
+import Try.Utility (compress)
+import Web.HTML (window)
+import Web.HTML.Location (setHref)
+import Web.HTML.Window (location)
 
--- | An abstract data type representing the data we get back from the GitHub API.
-data GistInfo
+{-
+Handles HTTP requests for fetching and saving github gists.
+-}
+--
+type TokenResp
+  = { access_token :: String }
 
-foreign import uploadGist_
-  :: EffectFn3 String
-               (EffectFn1 String Unit)
-               (EffectFn1 String Unit)
-               Unit
+ghRequestToken :: AuthCode -> Aff (Either String GhToken)
+ghRequestToken (AuthCode code) = do
+  result <- AX.post AXRF.json tokenServerUrl $ Just $ AXRB.json $ encodeJson { code }
+  pure
+    $ case result of
+        Left err -> do
+          Left $ "POST /api response failed to decode: " <> AX.printError err
+        Right response -> do
+          let
+            respStr = "POST /api response: " <> stringify response.body
+          case decodeJson response.body of
+            Left err -> Left $ "Failed to decode json response: " <> respStr <> ", Error: " <> show err
+            Right (decoded :: TokenResp) -> Right $ GhToken decoded.access_token
 
--- | A wrapper for `uploadGist` which uses `ContT`.
-uploadGist :: String -> ExceptT String (ContT Unit Effect) String
-uploadGist content = ExceptT (ContT \k -> runEffectFn3 uploadGist_ content (mkEffectFn1 (k <<< Right)) (mkEffectFn1 (k <<< Left)))
+gistApiUrl :: String
+gistApiUrl = "https://api.github.com/gists"
 
--- | Get a gist by its ID
-foreign import getGistById_
-  :: EffectFn3 String
-               (EffectFn1 GistInfo Unit)
-               (EffectFn1 String Unit)
-               Unit
+type GistJson
+  = { files :: { "Main.purs" :: { content :: String } }
+    }
 
--- | A wrapper for `getGistById` which uses `ContT`.
-getGistById :: String -> ExceptT String (ContT Unit Effect) GistInfo
-getGistById id_ = ExceptT (ContT \k -> runEffectFn3 getGistById_ id_ (mkEffectFn1 (k <<< Right)) (mkEffectFn1 (k <<< Left)))
+type GistJsonWithDescription
+  = { files ::
+        { "Main.purs" ::
+            { content :: String
+            , description :: String
+            }
+        }
+    }
 
-foreign import tryLoadFileFromGist_
-  :: EffectFn4 GistInfo
-               String
-               (EffectFn1 String Unit)
-               (EffectFn1 String Unit)
-               Unit
+setGistContent :: Content -> GistJsonWithDescription
+setGistContent (Content content) =
+  { files:
+      { "Main.purs":
+          { content
+          , description: "Created by TryPurescript"
+          }
+      }
+  }
 
-tryLoadFileFromGist :: GistInfo -> String -> ExceptT String (ContT Unit Effect) String
-tryLoadFileFromGist gi filename = ExceptT (ContT \k -> runEffectFn4 tryLoadFileFromGist_ gi filename (mkEffectFn1 (k <<< Right)) (mkEffectFn1 (k <<< Left)))
+getGistContent :: GistJson -> Content
+getGistContent obj = Content obj.files."Main.purs".content
+
+ghGetGist :: GistID -> Aff (Either String Content)
+ghGetGist (GistID gistID) = do
+  result <- AX.get AXRF.json $ gistApiUrl <> "/" <> gistID
+  pure
+    $ case result of
+        Left err -> Left $ "GET gist response failed to decode: " <> AX.printError err
+        Right response -> do
+          let
+            respStr = "POST /api response: " <> stringify response.body
+          case decodeJson response.body of
+            Left err -> Left $ "Failed to decode json response: " <> respStr <> ", Error: " <> show err
+            Right (decoded :: GistJson) -> Right $ getGistContent decoded
+
+ghCreateGist :: GhToken -> Content -> Aff (Either String GistID)
+ghCreateGist token content = do
+  result <-
+    AX.request
+      ( AX.defaultRequest
+          { url = gistApiUrl
+          , method = Left POST
+          , responseFormat = AXRF.json
+          , headers = [ AXRH.RequestHeader "Authorization" $ "token " <> show token ]
+          , content = Just $ AXRB.json $ encodeJson $ setGistContent content
+          }
+      )
+  pure
+    $ case result of
+        Left err -> do
+          Left $ "POST /api response failed to decode: " <> AX.printError err
+        Right response -> do
+          let
+            respStr = "POST /api response: " <> stringify response.body
+          case decodeJson response.body of
+            Left err -> Left $ "Failed to decode json response: " <> respStr <> ", Error: " <> show err
+            Right (decoded :: { id :: String }) -> Right $ GistID decoded.id
+
+ghAuthorize :: Content -> Effect Unit
+ghAuthorize content = window >>= location >>= setHref authUrl
+  where
+  authUrl =
+    "https://github.com/login/oauth/authorize?"
+      <> "client_id="
+      <> clientID
+      <> "&scope=gist"
+      <> "&redirect_uri="
+      <> appDomain
+      <> "/?"
+      <> pursQP
+      <> "="
+      <> (show $ compress content)
