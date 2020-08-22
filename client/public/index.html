@@ -10,6 +10,7 @@
   <link rel="icon" type="image/png" href="./img/favicon_clear-32.png" sizes="32x32">
   <link rel="icon" type="image/png" href="./img/favicon_clear-256.png" sizes="256x256">
 
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
   <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
   <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.js"></script>
   <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/ace/1.1.01/ace.js" charset="utf-8"></script>
@@ -156,41 +157,6 @@
           editor.session.removeMarker(marker);
         };
       })(marker));
-    }
-
-    function setupIFrame($ctr, data) {
-      var $iframe = $('<iframe sandbox="allow-scripts" id="output-iframe" src="frame.html">');
-
-      $ctr
-        .empty()
-        .append($iframe);
-
-      var tries = 0;
-      var sendSources = setInterval(function() {
-        // Stop after 10 seconds
-        if (tries >= 100) {
-          return clearInterval(sendSources);
-        }
-        tries++;
-        var iframe = $iframe.get(0).contentWindow;
-        if (iframe) {
-          iframe.postMessage(data, "*");
-        } else {
-          console.warn("Frame is not available");
-        }
-      }, 100);
-
-      window.addEventListener("message", function() {
-        clearInterval(sendSources);
-      }, { once: true });
-
-      window.addEventListener("message", function(event) {
-        if (event.data && event.data.gistId && /^[0-9a-f]+$/.test(event.data.gistId)) {
-          window.location.search = "gist=" + event.data.gistId;
-        }
-      });
-
-      return $iframe;
     }
   </script>
   <script type="text/javascript" src="js/index.js"></script>

@@ -4,12 +4,14 @@ import Prelude
 
 import Control.Monad.Cont.Trans (ContT(..), runContT)
 import Control.Monad.Except.Trans (runExceptT)
+import Data.Argonaut (encodeJson, stringify)
 import Data.Array (mapMaybe)
 import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Foldable (elem, fold, for_, intercalate, traverse_)
 import Data.FoldableWithIndex (forWithIndex_)
 import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Newtype (unwrap)
 import Effect (Effect)
 import Effect.Console (error)
 import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn5, mkEffectFn1, runEffectFn1, runEffectFn2, runEffectFn5)
@@ -18,6 +20,7 @@ import Foreign.Object (Object)
 import Foreign.Object as Object
 import JQuery as JQuery
 import JQuery.Extras as JQueryExtras
+import LzString (compressToEncodedURIComponent)
 import Try.API (CompileError(..), CompileResult(..), CompileWarning(..), CompilerError(..), ErrorPosition(..), FailedResult(..), SuccessResult(..))
 import Try.API as API
 import Try.Config as Config
@@ -114,13 +117,6 @@ foreign import setAnnotations :: EffectFn1 (Array Annotation) Unit
 clearAnnotations :: Effect Unit
 clearAnnotations = runEffectFn1 setAnnotations []
 
--- | Set up a fresh iframe in the specified container, and use it
--- | to execute the provided JavaScript code.
-foreign import setupIFrame
-  :: EffectFn2 JQuery.JQuery
-               (Object JS)
-               Unit
-
 loader :: Loader
 loader = makeLoader Config.loaderUrl
 
@@ -188,9 +184,31 @@ compile = do
 -- | Execute the compiled code in a new iframe.
 execute :: JS -> Object JS -> Effect Unit
 execute js modules = do
-  let eventData = Object.insert "<file>" js modules
+  let
+    -- Add JS entry file, labeled with '<file>' key.
+    eventData = Object.insert "<file>" js modules
+    -- Convert object of JS files to JSON string.
+    -- Compress each file with LZString to avoid
+    -- non-trivial HTML + JSON string escaping.
+    jsonStr
+      = stringify
+      $ encodeJson
+      $ map (unwrap >>> compressToEncodedURIComponent) eventData
+    -- HTML for iframe srcdoc attribute.
+    -- We pass the above JSON string to `loadFrame`, which is defined in frame.js.
+    -- Note that we must also point to lz-string cdn for decompressing contents.
+    iframeSrcDoc
+      = "<script src=\"https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js\"></script>"
+      <> "<script src='js/frame.js'> loadFrame('" <> jsonStr <> "'); </script>"
+
+  -- Set up an iframe and use it to execute the provided JavaScript code.
   column2 <- JQuery.select "#column2"
-  runEffectFn2 setupIFrame column2 eventData
+  iframe <- JQuery.create "<iframe>"
+  -- allow-top-navigation lets us click on links to other examples
+  JQuery.setAttr "sandbox" "allow-scripts allow-top-navigation" iframe
+  JQuery.setAttr "src" "frame-error.html" iframe
+  JQuery.setAttr "srcdoc" iframeSrcDoc iframe
+  JQuery.append iframe column2
 
 -- | Setup the editor component and some event handlers.
 setupEditor :: forall r. { code :: String | r } -> Effect Unit

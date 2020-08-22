@@ -7,4 +7,4 @@ compileUrl :: String
 compileUrl = "https://compile.purescript.org"
 
 mainGist :: String
-mainGist = "7ad2b2eef11ac7dcfd14aa1585dd8f69"
+mainGist = "005a86e5c843d3738c1fdd95cc278144"
