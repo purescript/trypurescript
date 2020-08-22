@@ -76,7 +76,7 @@ stack build
 
 # Install PureScript dependencies
 cd staging
-spago install
+spago build
 
 stack exec trypurescript 8081 $(spago sources)
 # should output that is is compiling the sources (first time)
