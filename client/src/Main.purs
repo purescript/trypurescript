@@ -204,8 +204,8 @@ execute js modules = do
   -- Set up an iframe and use it to execute the provided JavaScript code.
   column2 <- JQuery.select "#column2"
   iframe <- JQuery.create "<iframe>"
-  -- allow-top-navigation lets us click on links to other examples
-  JQuery.setAttr "sandbox" "allow-scripts allow-top-navigation" iframe
+  -- allow-top-navigation-by-user-activation lets us click on links to other examples
+  JQuery.setAttr "sandbox" "allow-scripts allow-top-navigation-by-user-activation" iframe
   JQuery.setAttr "src" "frame-error.html" iframe
   JQuery.setAttr "srcdoc" iframeSrcDoc iframe
   JQuery.append iframe column2
