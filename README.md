@@ -54,6 +54,8 @@ Most of these features can be controlled not only from the toolbar, but also usi
 
 ### 1. Client setup
 
+Note, should actually do step 2 first so output dir is ready to be symlinked.
+
 ```sh
 git clone git@github.com:purescript/trypurescript.git
 cd trypurescript/client
@@ -61,9 +63,10 @@ cd trypurescript/client
 npm install
 npm run build
 
-cd public
-httpserver 8080 #eg with: alias httpserver='python -m SimpleHTTPServer'
-open http://localhost:8080
+ln -rs ../staging/output public/js/output
+
+npm i http-server
+http-server public -o
 ```
 
 ### 2. Local compile server setup
@@ -76,7 +79,7 @@ stack build
 
 # Install PureScript dependencies
 cd staging
-spago install
+spago build
 
 stack exec trypurescript 8081 $(spago sources)
 # should output that is is compiling the sources (first time)
