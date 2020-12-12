@@ -112,7 +112,10 @@ server externs initNamesEnv initEnv port = do
 
 getOpts :: Int -> Scotty.Options
 getOpts port = def
-  { settings = Warp.setHost "127.0.0.1" $ Warp.setPort port Warp.defaultSettings
+  { settings =
+      Warp.setHost "127.0.0.1"
+      $ Warp.setPort port
+      $ Warp.defaultSettings
   }
 
 lookupAllConstructors :: P.Environment -> P.SourceType -> [P.SourceType]
