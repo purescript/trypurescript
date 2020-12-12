@@ -24,13 +24,20 @@ To update to a more recent package set, first update the `upstream` package set 
 $ spago upgrade-set
 ```
 
-Then, install every package in the set:
+Then, set the dependencies key in the `spago.dhall` file to be an empty list. This will require a type annotation of `List Text`:
+
+```dhall
+{ name = "try-purescript-server"
+, dependencies = [] : List Text
+, ...
+}
+```
+
+Finally, run this command to install every package in the package set:
 
 ```
 $ spago ls packages | cut -f 1 -d ' ' | xargs spago install
 ```
-
-If this command fails because a package that previously existed in the package set has been removed, then edit the `spago.dhall` file to remove the offending packages (you can also just remove all dependencies). Then, re-run the installation command above.
 
 Before deploying an updated package set, someone (your reviewer) should check that the memory required to hold the package set's externs files does not exceed that of the try.purescript.org server.
 
