@@ -1,17 +1,13 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TupleSections #-}
 
 module Main (main) where
 
-import           Control.Monad (unless, (>=>), foldM)
+import           Control.Monad (unless, foldM)
 import           Control.Monad.Error.Class (throwError)
-import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Logger (runLogger')
-import           Control.Monad.State (State)
 import qualified Control.Monad.State as State
 import           Control.Monad.Trans (lift)
 import           Control.Monad.Trans.Except (ExceptT(..), runExceptT)
@@ -23,15 +19,12 @@ import           Data.Bifunctor (first, second)
 import qualified Data.ByteString.Lazy as BL
 import           Data.Default (def)
 import           Data.Function (on)
-import           Data.List (foldl', nubBy)
+import           Data.List (nubBy)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
-import           Data.String (fromString)
 import           Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
-import qualified Data.Text.Lazy as TL
-import           Data.Traversable (for)
 import           GHC.Generics (Generic)
 import qualified Language.PureScript as P
 import qualified Language.PureScript.CST as CST
@@ -45,10 +38,7 @@ import qualified Language.PureScript.TypeChecker.TypeSearch as TS
 import qualified Network.Wai.Handler.Warp as Warp
 import           System.Environment (getArgs)
 import           System.Exit (exitFailure)
-import           System.FilePath ((</>))
 import           System.FilePath.Glob (glob)
-import qualified System.IO as IO
-import           System.IO.UTF8 (readUTF8File)
 import           Web.Scotty
 import qualified Web.Scotty as Scotty
 
@@ -67,7 +57,6 @@ server externs initNamesEnv initEnv port = do
       compile input
         | T.length input > 20000 = return (Left (OtherError "Please limit your input to 20000 characters"))
         | otherwise = do
-          let printErrors = P.prettyPrintMultipleErrors (P.defaultPPEOptions { P.ppeCodeColor = Nothing })
           case CST.parseModuleFromFile "<file>" input >>= CST.resFull of
             Left parseError ->
               return . Left . CompilerErrors . P.toJSONErrors False P.Error $ CST.toMultipleErrors "<file>" parseError
@@ -137,7 +126,7 @@ lookupAllConstructors env = P.everywhereOnTypesM $ \case
     lookupConstructor :: P.Environment -> P.ProperName 'P.TypeName -> [P.Qualified (P.ProperName 'P.TypeName)]
     lookupConstructor env nm =
       [ q
-      | (q@(P.Qualified (Just mn) thisNm), _) <- M.toList (P.types env)
+      | (q@(P.Qualified (Just _) thisNm), _) <- M.toList (P.types env)
       , thisNm == nm
       ]
 
@@ -165,7 +154,7 @@ tryParseType = hush . fmap (CST.convertType "<file>") . runParser CST.parseTypeP
 
     runParser :: CST.Parser a -> Text -> Either String a
     runParser p =
-       first (CST.prettyPrintError . NE.head)
+      first (CST.prettyPrintError . NE.head)
         . CST.runTokenParser (p <* CSTM.token CST.TokEof)
         . CST.lexTopLevel
 
@@ -174,7 +163,6 @@ main = do
   (portString : inputGlobs) <- getArgs
   let port = read portString
   inputFiles <- concat <$> traverse glob inputGlobs
-  let onError f = either (Left . f) Right
   e <- runExceptT $ do
     modules <- ExceptT $ I.loadAllModules inputFiles
     (exts, env) <- ExceptT . I.runMake . I.make $ map (second CST.pureResult) modules
