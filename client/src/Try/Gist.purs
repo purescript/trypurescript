@@ -13,7 +13,7 @@ import Affjax.RequestBody as AXRB
 import Affjax.ResponseFormat as AXRF
 import Affjax.StatusCode (StatusCode(..))
 import Control.Monad.Except.Trans (ExceptT(..))
-import Data.Argonaut.Core (caseJsonObject, stringify, toString)
+import Data.Argonaut.Core (Json, caseJsonObject, stringify, toString)
 import Data.Either (Either(..))
 import Data.Function.Uncurried (Fn2, runFn2)
 import Data.Maybe (Maybe(..))
@@ -62,13 +62,13 @@ uploadGist content = ExceptT $ AX.post AXRF.json "https://api.github.com/gists" 
     }
 
 getGistById :: String -> ExceptT String Aff GistInfo
-getGistById id = ExceptT $ AX.get AXRF.string ("https://api.github.com/gists/" <> id) >>= case _ of
+getGistById id = ExceptT $ AX.get AXRF.json ("https://api.github.com/gists/" <> id) >>= case _ of
   Left e ->
     pure $ Left $ "Unable to load Gist metadata: \n" <> printError e
   Right { status } | status >= StatusCode 400 ->
     pure $ Left $ "Received error status code: " <> show status
   Right { body } ->
-    pure $ Right $ (unsafeCoerce :: String -> GistInfo) body
+    pure $ Right $ (unsafeCoerce :: Json -> GistInfo) body
 
 tryLoadFileFromGist :: GistInfo -> FileName -> ExceptT String Aff String
 tryLoadFileFromGist gi filename = do
