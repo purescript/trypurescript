@@ -12,6 +12,7 @@ You can edit this file as you like.
   , "const"
   , "contravariant"
   , "control"
+  , "debug"
   , "distributive"
   , "effect"
   , "either"

@@ -195,8 +195,8 @@ execute js modules = do
   runEffectFn2 setupIFrame column2 eventData
 
 -- | Setup the editor component and some event handlers.
-setupEditor :: forall r. { code :: String | r } -> Aff Unit
-setupEditor { code } = liftEffect do
+setupEditor :: forall r. { code :: String | r } -> Effect Unit
+setupEditor { code } = do
   loadOptions
   setTextAreaContent code
   runEffectFn1 setEditorContent code
@@ -308,4 +308,4 @@ main = JQuery.ready do
     changeViewMode viewMode
 
   createSessionIdIfNecessary \sessionId ->
-    launchAff_ $ withSession sessionId setupEditor
+    launchAff_ $ withSession sessionId (liftEffect <<< setupEditor)

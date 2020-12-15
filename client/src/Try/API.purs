@@ -136,7 +136,7 @@ get url = ExceptT $ AX.get AXRF.string url >>= case _ of
 
 -- | POST the specified code to the Try PureScript API, and wait for a response.
 compile :: String -> String -> ExceptT String Aff (Either (NonEmptyList ForeignError) CompileResult)
-compile endpoint code = ExceptT $ AX.post AXRF.string (endpoint <> "/compile") (Just requestBody) >>= case _ of
+compile endpoint code = ExceptT $ AX.post AXRF.json (endpoint <> "/compile") (Just requestBody) >>= case _ of
   Left e ->
     pure $ Left $ printError e
   Right { status } | status >= StatusCode 400 ->
