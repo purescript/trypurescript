@@ -2,7 +2,6 @@ module Main where
 
 import Prelude
 
-import Control.Monad.Cont.Trans (ContT(..), runContT)
 import Control.Monad.Except.Trans (runExceptT)
 import Data.Array (mapMaybe)
 import Data.Array as Array
@@ -11,7 +10,7 @@ import Data.Foldable (elem, fold, for_, intercalate, traverse_)
 import Data.FoldableWithIndex (forWithIndex_)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Effect (Effect)
-import Effect.Aff (launchAff_)
+import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Console (error)
 import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn5, mkEffectFn1, runEffectFn1, runEffectFn2, runEffectFn5)
@@ -196,10 +195,9 @@ execute js modules = do
   runEffectFn2 setupIFrame column2 eventData
 
 -- | Setup the editor component and some event handlers.
-setupEditor :: forall r. { code :: String | r } -> Effect Unit
-setupEditor { code } = do
+setupEditor :: forall r. { code :: String | r } -> Aff Unit
+setupEditor { code } = liftEffect do
   loadOptions
-
   setTextAreaContent code
   runEffectFn1 setEditorContent code
 
@@ -217,33 +215,32 @@ setupEditor { code } = do
     compile
 
   JQuery.select "#gist_save" >>= JQuery.on "click" \e _ ->
-    publishNewGist
+    launchAff_ publishNewGist
 
   compile
   cacheCurrentCode
 
 loadFromGist
   :: String
-  -> ({ code :: String } -> Effect Unit)
-  -> Effect Unit
-loadFromGist id_ k = do
-  runContT (runExceptT (getGistById id_ >>= \gi -> tryLoadFileFromGist gi "Main.purs")) $
-    case _ of
-      Left err -> do
-        window >>= alert err
-        k { code: "" }
-      Right code -> k { code }
+  -> ({ code :: String } -> Aff Unit)
+  -> Aff Unit
+loadFromGist id k = do
+  runExceptT (getGistById id >>= \gi -> tryLoadFileFromGist gi "Main.purs") >>= case _ of
+    Left err -> do
+      liftEffect $ window >>= alert err
+      k { code: "" }
+    Right code -> k { code }
 
 withSession
   :: String
-  -> ({ code :: String } -> Effect Unit)
-  -> Effect Unit
+  -> ({ code :: String } -> Aff Unit)
+  -> Aff Unit
 withSession sessionId k = do
-  state <- tryRetrieveSession sessionId
+  state <- liftEffect $ tryRetrieveSession sessionId
   case state of
     Just state' -> k state'
     Nothing -> do
-      gist <- fromMaybe Config.mainGist <$> getQueryStringMaybe "gist"
+      gist <- liftEffect $ fromMaybe Config.mainGist <$> getQueryStringMaybe "gist"
       loadFromGist gist k
 
 -- | Cache the current code in the session state
@@ -257,22 +254,21 @@ cacheCurrentCode  = do
     Nothing -> error "No session ID"
 
 -- | Create a new Gist using the current content
-publishNewGist :: Effect Unit
+publishNewGist :: Aff Unit
 publishNewGist = do
-  ok <- window >>= confirm (intercalate "\n"
+  ok <- liftEffect $ window >>= confirm (intercalate "\n"
           [ "Do you really want to publish this code as an anonymous Gist?"
           , ""
           , "Note: this code will be available to anyone with a link to the Gist."
           ])
   when ok do
-    content <- getTextAreaContent
-    runContT (runExceptT (uploadGist content)) $
-      case _ of
-        Left err -> do
-          window >>= alert "Failed to create gist"
-          error ("Failed to create gist: " <> err)
-        Right gistId -> do
-          setQueryStrings (Object.singleton "gist" gistId)
+    content <- liftEffect $ getTextAreaContent
+    runExceptT (uploadGist content) >>= case _ of
+      Left err -> liftEffect do
+        window >>= alert "Failed to create gist"
+        error ("Failed to create gist: " <> err)
+      Right gistId -> liftEffect do
+        setQueryStrings (Object.singleton "gist" gistId)
 
 -- | Navigate to the specified URL.
 navigateTo :: String -> Effect Unit
@@ -311,5 +307,5 @@ main = JQuery.ready do
     viewMode <- JQueryExtras.filter jq ":checked" >>= JQueryExtras.getValueMaybe
     changeViewMode viewMode
 
-  runContT (do sessionId <- ContT createSessionIdIfNecessary
-               ContT (withSession sessionId)) setupEditor
+  createSessionIdIfNecessary \sessionId ->
+    launchAff_ $ withSession sessionId setupEditor
