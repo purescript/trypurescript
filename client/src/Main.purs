@@ -11,6 +11,8 @@ import Data.Foldable (elem, fold, for_, intercalate, traverse_)
 import Data.FoldableWithIndex (forWithIndex_)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Effect (Effect)
+import Effect.Aff (launchAff_)
+import Effect.Class (liftEffect)
 import Effect.Console (error)
 import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn5, mkEffectFn1, runEffectFn1, runEffectFn2, runEffectFn5)
 import Foreign (renderForeignError)
@@ -132,31 +134,32 @@ compile = do
   displayLoadingMessage
   clearAnnotations
 
-  runContT (runExceptT (API.compile Config.compileUrl code)) \res_ ->
+  launchAff_ $ runExceptT (API.compile Config.compileUrl code) >>= \res_ ->
     case res_ of
-      Left err -> displayPlainText err
+      Left err -> liftEffect $ displayPlainText err
       Right res -> do
-        cleanUpMarkers
+        liftEffect cleanUpMarkers
 
         case res of
           Right (CompileSuccess (SuccessResult { js, warnings })) -> do
-            showJs <- isShowJsChecked
-            if showJs
-              then do hideLoadingMessage
-                      displayPlainText js
-              else runContT (runExceptT $ runLoader loader (JS js)) \sources -> do
-                     hideLoadingMessage
-                     for_ warnings \warnings_ -> do
-                       let toAnnotation (CompileWarning{ errorCode, position, message }) =
-                             position <#> \(ErrorPosition pos) ->
-                               { row: pos.startLine - 1
-                               , column: pos.startColumn - 1
-                               , type: "warning"
-                               , text: message
-                               }
-                       runEffectFn1 setAnnotations (mapMaybe toAnnotation warnings_)
-                     for_ sources (execute (JS js))
-          Right (CompileFailed (FailedResult { error })) -> do
+            showJs <- liftEffect isShowJsChecked
+            if showJs then liftEffect do
+              hideLoadingMessage
+              displayPlainText js
+            else do
+              sources <- runExceptT $ runLoader loader (JS js)
+              liftEffect hideLoadingMessage
+              for_ warnings \warnings_ -> liftEffect do
+                let toAnnotation (CompileWarning{ errorCode, position, message }) =
+                      position <#> \(ErrorPosition pos) ->
+                        { row: pos.startLine - 1
+                        , column: pos.startColumn - 1
+                        , type: "warning"
+                        , text: message
+                        }
+                runEffectFn1 setAnnotations (mapMaybe toAnnotation warnings_)
+              for_ sources (liftEffect <<< execute (JS js))
+          Right (CompileFailed (FailedResult { error })) -> liftEffect do
             hideLoadingMessage
             case error of
               CompilerErrors errs -> do
@@ -180,7 +183,7 @@ compile = do
                       pos.endLine
                       pos.endColumn
               OtherError err -> displayPlainText err
-          Left errs -> do
+          Left errs -> liftEffect do
             hideLoadingMessage
             displayPlainText "Unable to parse the response from the server"
             traverse_ (error <<< renderForeignError) errs

@@ -5,6 +5,7 @@ You can edit this file as you like.
 { name = "try-purescript"
 , dependencies =
   [ "aff"
+  , "affjax"
   , "arrays"
   , "bifunctors"
   , "console"
