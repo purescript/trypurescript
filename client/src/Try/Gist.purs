@@ -26,15 +26,11 @@ import Unsafe.Coerce (unsafeCoerce)
 -- | An abstract data type representing the data we get back from the GitHub API.
 data GistInfo
 
-type FileName = String
-
-type RawURL = String
-
-foreign import rawUrl_ :: Fn2 GistInfo FileName (Nullable RawURL)
+foreign import rawUrl_ :: Fn2 GistInfo String (Nullable String)
 
 -- | Retrieve the URL for the raw contents of a particular file within a gist,
 -- | if that file exists as part of the gist.
-rawUrl :: GistInfo -> FileName -> Either String RawURL
+rawUrl :: GistInfo -> String -> Either String String
 rawUrl gist filename = case toMaybe $ runFn2 rawUrl_ gist filename of
   Nothing ->
     Left $ "Gist does not contain a file named " <> filename
@@ -70,7 +66,7 @@ getGistById id = ExceptT $ AX.get AXRF.json ("https://api.github.com/gists/" <> 
   Right { body } ->
     pure $ Right $ (unsafeCoerce :: Json -> GistInfo) body
 
-tryLoadFileFromGist :: GistInfo -> FileName -> ExceptT String Aff String
+tryLoadFileFromGist :: GistInfo -> String -> ExceptT String Aff String
 tryLoadFileFromGist gi filename = do
   url <- ExceptT $ pure $ rawUrl gi filename
   ExceptT $ AX.get AXRF.string url >>= case _ of
