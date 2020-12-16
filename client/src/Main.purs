@@ -222,26 +222,25 @@ setupEditor { code } = do
 
 loadFromGist
   :: String
-  -> ({ code :: String } -> Aff Unit)
-  -> Aff Unit
-loadFromGist id k = do
+  -> Aff { code :: String }
+loadFromGist id = do
   runExceptT (getGistById id >>= \gi -> tryLoadFileFromGist gi "Main.purs") >>= case _ of
     Left err -> do
       liftEffect $ window >>= alert err
-      k { code: "" }
-    Right code -> k { code }
+      pure { code: "" }
+    Right code ->
+      pure { code }
 
 withSession
   :: String
-  -> ({ code :: String } -> Aff Unit)
-  -> Aff Unit
-withSession sessionId k = do
+  -> Aff { code :: String }
+withSession sessionId = do
   state <- liftEffect $ tryRetrieveSession sessionId
   case state of
-    Just state' -> k state'
+    Just state' -> pure state'
     Nothing -> do
       gist <- liftEffect $ fromMaybe Config.mainGist <$> getQueryStringMaybe "gist"
-      loadFromGist gist k
+      loadFromGist gist
 
 -- | Cache the current code in the session state
 cacheCurrentCode :: Effect Unit
@@ -307,5 +306,6 @@ main = JQuery.ready do
     viewMode <- JQueryExtras.filter jq ":checked" >>= JQueryExtras.getValueMaybe
     changeViewMode viewMode
 
-  createSessionIdIfNecessary \sessionId ->
-    launchAff_ $ withSession sessionId (liftEffect <<< setupEditor)
+  createSessionIdIfNecessary \sessionId -> launchAff_ do
+    code <- withSession sessionId
+    liftEffect $ setupEditor code
