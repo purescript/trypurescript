@@ -4,12 +4,15 @@ You can edit this file as you like.
 -}
 { name = "try-purescript"
 , dependencies =
-  [ "arrays"
+  [ "aff"
+  , "affjax"
+  , "arrays"
   , "bifunctors"
   , "console"
   , "const"
   , "contravariant"
   , "control"
+  , "debug"
   , "distributive"
   , "effect"
   , "either"

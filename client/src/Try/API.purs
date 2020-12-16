@@ -13,17 +13,19 @@ module Try.API
 
 import Prelude
 
+import Affjax (URL, printError)
+import Affjax as AX
+import Affjax.RequestBody as AXRB
+import Affjax.ResponseFormat as AXRF
+import Affjax.StatusCode (StatusCode(..))
 import Control.Alt ((<|>))
-import Control.Monad.Cont.Trans (ContT(ContT))
-import Control.Monad.Except (runExcept)
-import Control.Monad.Except.Trans (ExceptT(ExceptT))
+import Control.Monad.Except (ExceptT(..), runExcept)
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.List.NonEmpty (NonEmptyList)
-import Data.Maybe (Maybe)
-import Effect (Effect)
-import Effect.Uncurried (EffectFn1, EffectFn3, EffectFn4, mkEffectFn1, runEffectFn3, runEffectFn4)
-import Foreign (Foreign, ForeignError)
+import Data.Maybe (Maybe(..))
+import Effect.Aff (Aff)
+import Foreign (ForeignError, unsafeToForeign)
 import Foreign.Class (class Decode, decode)
 import Foreign.Generic (defaultOptions, genericDecode)
 import Foreign.Generic.Class (Options, SumEncoding(..))
@@ -123,31 +125,23 @@ instance decodeCompileResult :: Decode CompileResult where
     CompileSuccess <$> genericDecode decodingOptions f
     <|> CompileFailed <$> genericDecode decodingOptions f
 
-foreign import get_
-  :: EffectFn3
-            String
-            (EffectFn1 String Unit)
-            (EffectFn1 String Unit)
-            Unit
+get :: URL -> ExceptT String Aff String
+get url = ExceptT $ AX.get AXRF.string url >>= case _ of
+  Left e ->
+    pure $ Left $ printError e
+  Right { status } | status >= StatusCode 400 ->
+    pure $ Left $ "Received error status code: " <> show status
+  Right { body } ->
+    pure $ Right body
 
--- | A wrapper for `get` which uses `ContT`.
-get :: String -> ExceptT String (ContT Unit Effect) String
-get uri = ExceptT (ContT \k -> runEffectFn3 get_ uri (mkEffectFn1 (k <<< Right)) (mkEffectFn1 (k <<< Left)))
-
--- | POST the specified code to the Try PureScript API, and wait for
--- | a response.
-foreign import compile_
-  :: EffectFn4
-            String
-            String
-            (EffectFn1 Foreign Unit)
-            (EffectFn1 String Unit)
-            Unit
-
--- | A wrapper for `compileApi` which uses `ContT`.
-compile
-  :: String
-  -> String
-  -> ExceptT String (ContT Unit Effect)
-       (Either (NonEmptyList ForeignError) CompileResult)
-compile endpoint code = ExceptT (ContT \k -> runEffectFn4 compile_ endpoint code (mkEffectFn1 (k <<< Right <<< runExcept <<< decode)) (mkEffectFn1 (k <<< Left)))
+-- | POST the specified code to the Try PureScript API, and wait for a response.
+compile :: String -> String -> ExceptT String Aff (Either (NonEmptyList ForeignError) CompileResult)
+compile endpoint code = ExceptT $ AX.post AXRF.json (endpoint <> "/compile") (Just requestBody) >>= case _ of
+  Left e ->
+    pure $ Left $ printError e
+  Right { status } | status >= StatusCode 400 ->
+    pure $ Left $ "Received error status code: " <> show status
+  Right { body } ->
+    pure $ Right $ runExcept (decode (unsafeToForeign body))
+  where
+  requestBody = AXRB.String code

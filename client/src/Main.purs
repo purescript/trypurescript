@@ -2,7 +2,6 @@ module Main where
 
 import Prelude
 
-import Control.Monad.Cont.Trans (ContT(..), runContT)
 import Control.Monad.Except.Trans (runExceptT)
 import Data.Array (mapMaybe)
 import Data.Array as Array
@@ -11,6 +10,8 @@ import Data.Foldable (elem, fold, for_, intercalate, traverse_)
 import Data.FoldableWithIndex (forWithIndex_)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Effect (Effect)
+import Effect.Aff (Aff, launchAff_)
+import Effect.Class (liftEffect)
 import Effect.Console (error)
 import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn5, mkEffectFn1, runEffectFn1, runEffectFn2, runEffectFn5)
 import Foreign (renderForeignError)
@@ -132,31 +133,32 @@ compile = do
   displayLoadingMessage
   clearAnnotations
 
-  runContT (runExceptT (API.compile Config.compileUrl code)) \res_ ->
+  launchAff_ $ runExceptT (API.compile Config.compileUrl code) >>= \res_ ->
     case res_ of
-      Left err -> displayPlainText err
+      Left err -> liftEffect $ displayPlainText err
       Right res -> do
-        cleanUpMarkers
+        liftEffect cleanUpMarkers
 
         case res of
           Right (CompileSuccess (SuccessResult { js, warnings })) -> do
-            showJs <- isShowJsChecked
-            if showJs
-              then do hideLoadingMessage
-                      displayPlainText js
-              else runContT (runExceptT $ runLoader loader (JS js)) \sources -> do
-                     hideLoadingMessage
-                     for_ warnings \warnings_ -> do
-                       let toAnnotation (CompileWarning{ errorCode, position, message }) =
-                             position <#> \(ErrorPosition pos) ->
-                               { row: pos.startLine - 1
-                               , column: pos.startColumn - 1
-                               , type: "warning"
-                               , text: message
-                               }
-                       runEffectFn1 setAnnotations (mapMaybe toAnnotation warnings_)
-                     for_ sources (execute (JS js))
-          Right (CompileFailed (FailedResult { error })) -> do
+            showJs <- liftEffect isShowJsChecked
+            if showJs then liftEffect do
+              hideLoadingMessage
+              displayPlainText js
+            else do
+              sources <- runExceptT $ runLoader loader (JS js)
+              liftEffect hideLoadingMessage
+              for_ warnings \warnings_ -> liftEffect do
+                let toAnnotation (CompileWarning{ errorCode, position, message }) =
+                      position <#> \(ErrorPosition pos) ->
+                        { row: pos.startLine - 1
+                        , column: pos.startColumn - 1
+                        , type: "warning"
+                        , text: message
+                        }
+                runEffectFn1 setAnnotations (mapMaybe toAnnotation warnings_)
+              for_ sources (liftEffect <<< execute (JS js))
+          Right (CompileFailed (FailedResult { error })) -> liftEffect do
             hideLoadingMessage
             case error of
               CompilerErrors errs -> do
@@ -180,7 +182,7 @@ compile = do
                       pos.endLine
                       pos.endColumn
               OtherError err -> displayPlainText err
-          Left errs -> do
+          Left errs -> liftEffect do
             hideLoadingMessage
             displayPlainText "Unable to parse the response from the server"
             traverse_ (error <<< renderForeignError) errs
@@ -196,7 +198,6 @@ execute js modules = do
 setupEditor :: forall r. { code :: String | r } -> Effect Unit
 setupEditor { code } = do
   loadOptions
-
   setTextAreaContent code
   runEffectFn1 setEditorContent code
 
@@ -214,34 +215,32 @@ setupEditor { code } = do
     compile
 
   JQuery.select "#gist_save" >>= JQuery.on "click" \e _ ->
-    publishNewGist
+    launchAff_ publishNewGist
 
   compile
   cacheCurrentCode
 
 loadFromGist
   :: String
-  -> ({ code :: String } -> Effect Unit)
-  -> Effect Unit
-loadFromGist id_ k = do
-  runContT (runExceptT (getGistById id_ >>= \gi -> tryLoadFileFromGist gi "Main.purs")) $
-    case _ of
-      Left err -> do
-        window >>= alert err
-        k { code: "" }
-      Right code -> k { code }
+  -> Aff { code :: String }
+loadFromGist id = do
+  runExceptT (getGistById id >>= \gi -> tryLoadFileFromGist gi "Main.purs") >>= case _ of
+    Left err -> do
+      liftEffect $ window >>= alert err
+      pure { code: "" }
+    Right code ->
+      pure { code }
 
 withSession
   :: String
-  -> ({ code :: String } -> Effect Unit)
-  -> Effect Unit
-withSession sessionId k = do
-  state <- tryRetrieveSession sessionId
+  -> Aff { code :: String }
+withSession sessionId = do
+  state <- liftEffect $ tryRetrieveSession sessionId
   case state of
-    Just state' -> k state'
+    Just state' -> pure state'
     Nothing -> do
-      gist <- fromMaybe Config.mainGist <$> getQueryStringMaybe "gist"
-      loadFromGist gist k
+      gist <- liftEffect $ fromMaybe Config.mainGist <$> getQueryStringMaybe "gist"
+      loadFromGist gist
 
 -- | Cache the current code in the session state
 cacheCurrentCode :: Effect Unit
@@ -254,22 +253,21 @@ cacheCurrentCode  = do
     Nothing -> error "No session ID"
 
 -- | Create a new Gist using the current content
-publishNewGist :: Effect Unit
+publishNewGist :: Aff Unit
 publishNewGist = do
-  ok <- window >>= confirm (intercalate "\n"
+  ok <- liftEffect $ window >>= confirm (intercalate "\n"
           [ "Do you really want to publish this code as an anonymous Gist?"
           , ""
           , "Note: this code will be available to anyone with a link to the Gist."
           ])
   when ok do
-    content <- getTextAreaContent
-    runContT (runExceptT (uploadGist content)) $
-      case _ of
-        Left err -> do
-          window >>= alert "Failed to create gist"
-          error ("Failed to create gist: " <> err)
-        Right gistId -> do
-          setQueryStrings (Object.singleton "gist" gistId)
+    content <- liftEffect $ getTextAreaContent
+    runExceptT (uploadGist content) >>= case _ of
+      Left err -> liftEffect do
+        window >>= alert "Failed to create gist"
+        error ("Failed to create gist: " <> err)
+      Right gistId -> liftEffect do
+        setQueryStrings (Object.singleton "gist" gistId)
 
 -- | Navigate to the specified URL.
 navigateTo :: String -> Effect Unit
@@ -308,5 +306,6 @@ main = JQuery.ready do
     viewMode <- JQueryExtras.filter jq ":checked" >>= JQueryExtras.getValueMaybe
     changeViewMode viewMode
 
-  runContT (do sessionId <- ContT createSessionIdIfNecessary
-               ContT (withSession sessionId)) setupEditor
+  createSessionIdIfNecessary \sessionId -> launchAff_ do
+    code <- withSession sessionId
+    liftEffect $ setupEditor code

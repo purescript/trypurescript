@@ -7,7 +7,6 @@ module Try.Loader
 import Prelude
 
 import Control.Bind (bindFlipped)
-import Control.Monad.Cont (ContT)
 import Control.Monad.Except (ExceptT)
 import Control.Parallel (parTraverse)
 import Data.Array as Array
@@ -22,6 +21,7 @@ import Data.String.Regex.Flags (noFlags)
 import Data.String.Regex.Unsafe (unsafeRegex)
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
+import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
@@ -75,9 +75,9 @@ parseDeps current = Array.mapMaybe go <<< String.split (Pattern "\n") <<< unwrap
         , path: Nothing
         }
 
-newtype Loader = Loader (JS -> ExceptT String (ContT Unit Effect) (Object JS))
+newtype Loader = Loader (JS -> ExceptT String Aff (Object JS))
 
-runLoader :: Loader -> JS -> ExceptT String (ContT Unit Effect) (Object JS)
+runLoader :: Loader -> JS -> ExceptT String Aff (Object JS)
 runLoader (Loader k) = k
 
 makeLoader :: String -> Loader
@@ -92,7 +92,7 @@ makeLoader rootPath = Loader (go Object.empty <<< parseDeps "<file>")
   getModule :: String -> Effect (Maybe Module)
   getModule a = Object.lookup a <$> Ref.read moduleCache
 
-  load :: Dependency -> ExceptT String (ContT Unit Effect) Module
+  load :: Dependency -> ExceptT String Aff Module
   load { name, path } = do
     cached <- liftEffect $ getModule name
     case cached of
@@ -116,7 +116,7 @@ makeLoader rootPath = Loader (go Object.empty <<< parseDeps "<file>")
         liftEffect $ putModule name mod
         pure mod
 
-  go :: Object JS -> Array Dependency -> ExceptT String (ContT Unit Effect) (Object JS)
+  go :: Object JS -> Array Dependency -> ExceptT String Aff (Object JS)
   go ms []   = pure ms
   go ms deps = do
     modules <- parTraverse load deps
