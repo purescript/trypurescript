@@ -8,7 +8,13 @@ flags:
 packages:
 - '.'
 extra-deps:
-- purescript-0.13.8
+# purescript 0.14.0-rc5
+- github: purescript/purescript
+  commit: 7ecc42669c69682996f2196ba2eef6c4ca827348
+  subdirs:
+    - .
+    - lib/purescript-ast
+    - lib/purescript-cst
 - happy-1.19.9
 - language-javascript-0.7.0.0
 - network-3.0.1.1
