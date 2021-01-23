@@ -53,31 +53,40 @@ instance A.ToJSON Error
 
 server :: [P.ExternsFile] -> P.Env -> P.Environment -> Int -> IO ()
 server externs initNamesEnv initEnv port = do
+              -- module contents           warnings       compiled result
   let compile :: Text -> IO (Either Error ([P.JSONError], JS))
       compile input
         | T.length input > 20000 = return (Left (OtherError "Please limit your input to 20000 characters"))
         | otherwise = do
-          case CST.parseModuleFromFile "<file>" input >>= CST.resFull of
+          case CST.parseModuleFromFile "<file>" input of -- >>= CST.resFull of
             Left parseError ->
               return . Left . CompilerErrors . P.toJSONErrors False P.Error $ CST.toMultipleErrors "<file>" parseError
-            Right m | P.getModuleName m == P.ModuleName "Main" -> do
-              (resultMay, ws) <- runLogger' . runExceptT . flip runReaderT P.defaultOptions $ do
-                ((P.Module ss coms moduleName elaborated exps, env), nextVar) <- P.runSupplyT 0 $ do
-                  desugared <- P.desugar initNamesEnv externs [P.importPrim m] >>= \case
-                    [d] -> pure d
-                    _ -> error "desugaring did not produce one module"
-                  P.runCheck' (P.emptyCheckState initEnv) $ P.typeCheckModule desugared
-                regrouped <- P.createBindingGroups moduleName . P.collapseBindingGroups $ elaborated
-                let mod' = P.Module ss coms moduleName regrouped exps
-                    corefn = CF.moduleToCoreFn env mod'
-                    [renamed] = P.renameInModules [corefn]
-                unless (null . CF.moduleForeign $ renamed) . throwError . P.errorMessage $ P.MissingFFIModule moduleName
-                P.evalSupplyT nextVar $ P.prettyPrintJS <$> J.moduleToJs renamed Nothing
-              case resultMay of
-                Left errs -> (return . Left . CompilerErrors . P.toJSONErrors False P.Error) errs
-                Right js -> (return . Right) (P.toJSONErrors False P.Error ws, js)
-            Right _ ->
-              (return . Left . OtherError) "The name of the main module should be Main."
+
+            Right partialResult -> case CST.resFull partialResult of
+              (warnings, Left parseError) ->
+                -- TODO: Maybe return errors and warnings if possible; otherwise, fall back to
+                -- only returning parse error.
+                -- _ -- wildcard
+                return . Left . CompilerErrors . P.toJSONErrors False P.Error $ CST.toMultipleErrors "<file>" parseError
+
+              (warnings, Right m) | P.getModuleName m == P.ModuleName "Main" -> do
+                (resultMay, ws) <- runLogger' . runExceptT . flip runReaderT P.defaultOptions $ do
+                  ((P.Module ss coms moduleName elaborated exps, env), nextVar) <- P.runSupplyT 0 $ do
+                    (desugared, (namesEnv, _)) <- State.runStateT (P.desugar externs (P.importPrim m)) (initNamesEnv, mempty)
+                    let typecheck = P.typeCheckModule (fmap (\(_, _, exports) -> exports) namesEnv) desugared
+                    P.runCheck' (P.emptyCheckState initEnv) typecheck
+                  regrouped <- P.createBindingGroups moduleName . P.collapseBindingGroups $ elaborated
+                  let mod' = P.Module ss coms moduleName regrouped exps
+                      corefn = CF.moduleToCoreFn env mod'
+                      [renamed] = P.renameInModules [corefn]
+                  unless (null . CF.moduleForeign $ renamed) . throwError . P.errorMessage $ P.MissingFFIModule moduleName
+                  P.evalSupplyT nextVar $ P.prettyPrintJS <$> J.moduleToJs renamed Nothing
+                case resultMay of
+                  Left errs -> (return . Left . CompilerErrors . P.toJSONErrors False P.Error) errs
+                  Right js -> (return . Right) (P.toJSONErrors False P.Error ws, js)
+
+              (_, Right _) ->
+                (return . Left . OtherError) "The name of the main module should be Main."
 
   scottyOpts (getOpts port) $ do
     get "/" $
@@ -102,7 +111,7 @@ server externs initNamesEnv initEnv port = do
               search = fst . TS.typeSearch (Just []) initEnv (P.emptyCheckState initEnv)
               results = nubBy ((==) `on` fst) $ do
                 elab <- elabs
-                let strictMatches = search (replaceTypeVariablesAndDesugar (\nm s -> P.Skolem P.NullSourceAnn nm s (P.SkolemScope 0)) elab)
+                let strictMatches = search (replaceTypeVariablesAndDesugar (\nm s -> P.Skolem P.NullSourceAnn nm Nothing s (P.SkolemScope 0)) elab)
                     flexMatches = search (replaceTypeVariablesAndDesugar (const (P.TUnknown P.NullSourceAnn)) elab)
                 take 50 (strictMatches ++ flexMatches)
           Scotty.json $ A.object [ "results" .= [ P.showQualified id k
@@ -152,9 +161,12 @@ tryParseType = hush . fmap (CST.convertType "<file>") . runParser CST.parseTypeP
   where
     hush = either (const Nothing) Just
 
+    -- TODO: Should we preserve and use the [CST.ParserWarning] result here
+    -- instead of throwing it away?
     runParser :: CST.Parser a -> Text -> Either String a
     runParser p =
-      first (CST.prettyPrintError . NE.head)
+      fmap snd
+        . first (CST.prettyPrintError . NE.head)
         . CST.runTokenParser (p <* CSTM.token CST.TokEof)
         . CST.lexTopLevel
 
