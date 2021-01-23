@@ -60,7 +60,7 @@ server externs initNamesEnv initEnv port = do
       compile input
         | T.length input > 20000 = return (Left (OtherError "Please limit your input to 20000 characters"))
         | otherwise = do
-          case CST.parseModuleFromFile "<file>" input of -- >>= CST.resFull of
+          case CST.parseModuleFromFile "<file>" input of
             Left parseError ->
               return $ toCompilerErrors parseError
             Right partialResult -> case CST.resFull partialResult of
