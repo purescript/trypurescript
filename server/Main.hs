@@ -15,7 +15,7 @@ import           Control.Monad.Trans.Reader (runReaderT)
 import           Control.Monad.Writer.Strict (runWriterT)
 import qualified Data.Aeson as A
 import           Data.Aeson ((.=))
-import           Data.Bifunctor (first, second)
+import           Data.Bifunctor (first, second, bimap)
 import qualified Data.ByteString.Lazy as BL
 import           Data.Default (def)
 import           Data.Function (on)
@@ -159,8 +159,7 @@ tryParseType = hush . fmap (CST.convertType "<file>") . runParser CST.parseTypeP
 
     runParser :: CST.Parser a -> Text -> Either String a
     runParser p =
-      fmap snd
-        . first (CST.prettyPrintError . NE.head)
+      bimap (CST.prettyPrintError . NE.head) snd
         . CST.runTokenParser (p <* CSTM.token CST.TokEof)
         . CST.lexTopLevel
 
