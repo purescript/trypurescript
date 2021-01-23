@@ -66,7 +66,7 @@ server externs initNamesEnv initEnv port = do
             Right partialResult -> case CST.resFull partialResult of
               (_, Left parseError) ->
                 return $ toCompilerErrors parseError
-              (_, Right m) | P.getModuleName m == P.ModuleName "Main" -> do
+              (warnings, Right m) | P.getModuleName m == P.ModuleName "Main" -> do
                 (resultMay, ws) <- runLogger' . runExceptT . flip runReaderT P.defaultOptions $ do
                   ((P.Module ss coms moduleName elaborated exps, env), nextVar) <- P.runSupplyT 0 $ do
                     (desugared, (namesEnv, _)) <- State.runStateT (P.desugar externs (P.importPrim m)) (initNamesEnv, mempty)
@@ -80,7 +80,7 @@ server externs initNamesEnv initEnv port = do
                   P.evalSupplyT nextVar $ P.prettyPrintJS <$> J.moduleToJs renamed Nothing
                 case resultMay of
                   Left errs -> (return . Left . CompilerErrors . P.toJSONErrors False P.Error) errs
-                  Right js -> (return . Right) (P.toJSONErrors False P.Error ws, js)
+                  Right js -> (return . Right) (P.toJSONErrors False P.Error (ws <> CST.toMultipleWarnings "<file>" warnings), js)
               (_, Right _) ->
                 (return . Left . OtherError) "The name of the main module should be Main."
 
