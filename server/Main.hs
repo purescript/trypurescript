@@ -53,23 +53,20 @@ instance A.ToJSON Error
 
 server :: [P.ExternsFile] -> P.Env -> P.Environment -> Int -> IO ()
 server externs initNamesEnv initEnv port = do
-              -- module contents           warnings       compiled result
+  let toCompilerErrors :: NE.NonEmpty CST.ParserError -> Either Error a
+      toCompilerErrors = Left . CompilerErrors . P.toJSONErrors False P.Error . CST.toMultipleErrors "<file>"
+
   let compile :: Text -> IO (Either Error ([P.JSONError], JS))
       compile input
         | T.length input > 20000 = return (Left (OtherError "Please limit your input to 20000 characters"))
         | otherwise = do
           case CST.parseModuleFromFile "<file>" input of -- >>= CST.resFull of
             Left parseError ->
-              return . Left . CompilerErrors . P.toJSONErrors False P.Error $ CST.toMultipleErrors "<file>" parseError
-
+              return $ toCompilerErrors parseError
             Right partialResult -> case CST.resFull partialResult of
-              (warnings, Left parseError) ->
-                -- TODO: Maybe return errors and warnings if possible; otherwise, fall back to
-                -- only returning parse error.
-                -- _ -- wildcard
-                return . Left . CompilerErrors . P.toJSONErrors False P.Error $ CST.toMultipleErrors "<file>" parseError
-
-              (warnings, Right m) | P.getModuleName m == P.ModuleName "Main" -> do
+              (_, Left parseError) ->
+                return $ toCompilerErrors parseError
+              (_, Right m) | P.getModuleName m == P.ModuleName "Main" -> do
                 (resultMay, ws) <- runLogger' . runExceptT . flip runReaderT P.defaultOptions $ do
                   ((P.Module ss coms moduleName elaborated exps, env), nextVar) <- P.runSupplyT 0 $ do
                     (desugared, (namesEnv, _)) <- State.runStateT (P.desugar externs (P.importPrim m)) (initNamesEnv, mempty)
@@ -84,7 +81,6 @@ server externs initNamesEnv initEnv port = do
                 case resultMay of
                   Left errs -> (return . Left . CompilerErrors . P.toJSONErrors False P.Error) errs
                   Right js -> (return . Right) (P.toJSONErrors False P.Error ws, js)
-
               (_, Right _) ->
                 (return . Left . OtherError) "The name of the main module should be Main."
 
@@ -161,8 +157,6 @@ tryParseType = hush . fmap (CST.convertType "<file>") . runParser CST.parseTypeP
   where
     hush = either (const Nothing) Just
 
-    -- TODO: Should we preserve and use the [CST.ParserWarning] result here
-    -- instead of throwing it away?
     runParser :: CST.Parser a -> Text -> Either String a
     runParser p =
       fmap snd
