@@ -26,6 +26,7 @@ import           Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import           GHC.Generics (Generic)
+import qualified Data.IORef as IORef
 import qualified Language.PureScript as P
 import qualified Language.PureScript.CST as CST
 import qualified Language.PureScript.CST.Monad as CSTM
@@ -34,6 +35,7 @@ import qualified Language.PureScript.CodeGen.JS.Printer as P
 import qualified Language.PureScript.CoreFn as CF
 import qualified Language.PureScript.Errors.JSON as P
 import qualified Language.PureScript.Interactive as I
+import qualified Language.PureScript.Make as Make
 import qualified Language.PureScript.TypeChecker.TypeSearch as TS
 import qualified Network.Wai.Handler.Warp as Warp
 import           System.Environment (getArgs)
@@ -54,8 +56,13 @@ instance A.ToJSON Error
 fromParserErrors :: NE.NonEmpty CST.ParserError -> Error
 fromParserErrors = CompilerErrors . P.toJSONErrors False P.Error . CST.toMultipleErrors "<file>"
 
+buildMakeActions :: IORef.IORef (Maybe (Either w (w1, JS))) -> Make.MakeActions Make.Make
+buildMakeActions codegenRef = undefined
+
 server :: [P.ExternsFile] -> P.Env -> P.Environment -> Int -> IO ()
 server externs initNamesEnv initEnv port = do
+  codegenRef <- IORef.newIORef Nothing
+  let makeActions = buildMakeActions codegenRef
   let compile :: Text -> IO (Either Error ([P.JSONError], JS))
       compile input
         | T.length input > 20000 = return (Left (OtherError "Please limit your input to 20000 characters"))
@@ -63,26 +70,41 @@ server externs initNamesEnv initEnv port = do
           case CST.parseModuleFromFile "<file>" input of
             Left parserErrors ->
               return $ Left $ fromParserErrors parserErrors
+
             Right partialResult -> case CST.resFull partialResult of
               (_, Left parserErrors) ->
                 return $ Left $ fromParserErrors parserErrors
+
               (parserWarnings, Right m) | P.getModuleName m == P.ModuleName "Main" -> do
-                (resultMay, ws) <- runLogger' . runExceptT . flip runReaderT P.defaultOptions $ do
-                  ((P.Module ss coms moduleName elaborated exps, env), nextVar) <- P.runSupplyT 0 $ do
-                    (desugared, (namesEnv, _)) <- State.runStateT (P.desugar externs (P.importPrim m)) (initNamesEnv, mempty)
-                    let typecheck = P.typeCheckModule (fmap (\(_, _, exports) -> exports) namesEnv) desugared
-                    P.runCheck' (P.emptyCheckState initEnv) typecheck
-                  regrouped <- P.createBindingGroups moduleName . P.collapseBindingGroups $ elaborated
-                  let mod' = P.Module ss coms moduleName regrouped exps
-                      corefn = CF.moduleToCoreFn env mod'
-                      [renamed] = P.renameInModules [corefn]
-                  unless (null . CF.moduleForeign $ renamed) . throwError . P.errorMessage $ P.MissingFFIModule moduleName
-                  P.evalSupplyT nextVar $ P.prettyPrintJS <$> J.moduleToJs renamed Nothing
-                case resultMay of
-                  Left errs -> (return . Left . CompilerErrors . P.toJSONErrors False P.Error) errs
-                  Right js -> do
-                      let warnings = ws <> CST.toMultipleWarnings "<file>" parserWarnings
-                      (return . Right) (P.toJSONErrors False P.Error warnings, js)
+                Make.runMake P.defaultOptions $ Make.rebuildModule makeActions [] m
+                  {-
+                    The code below has been replaced with Make.rebuildModule and this comment section
+                    should be removed once tests confirm that the new implementation works.
+
+                    -----
+
+                    runLogger' . runExceptT . flip runReaderT P.defaultOptions $ do
+                    ((P.Module ss coms moduleName elaborated exps, env), nextVar) <- P.runSupplyT 0 $ do
+                      (desugared, (namesEnv, _)) <- State.runStateT (P.desugar externs (P.importPrim m)) (initNamesEnv, mempty)
+                      let typecheck = P.typeCheckModule (fmap (\(_, _, exports) -> exports) namesEnv) desugared
+                      P.runCheck' (P.emptyCheckState initEnv) typecheck
+                    regrouped <- P.createBindingGroups moduleName . P.collapseBindingGroups $ elaborated
+                    let mod' = P.Module ss coms moduleName regrouped exps
+                        corefn = CF.moduleToCoreFn env mod'
+                        [renamed] = P.renameInModules [corefn]
+                    unless (null . CF.moduleForeign $ renamed) . throwError . P.errorMessage $ P.MissingFFIModule moduleName
+                    P.evalSupplyT nextVar $ P.prettyPrintJS <$> J.moduleToJs renamed Nothing
+                  -}
+
+                IORef.readIORef codegenRef >>= \case
+                  Nothing ->
+                    (return . Left . OtherError) "Failed to read the results of codegen."
+                  Just (Left errs) ->
+                    (return . Left . CompilerErrors . P.toJSONErrors False P.Error) errs
+                  Just (Right (ws, js)) -> do
+                    let warnings = ws <> CST.toMultipleWarnings "<file>" parserWarnings
+                    (return . Right) (P.toJSONErrors False P.Error warnings, js)
+
               (_, Right _) ->
                 (return . Left . OtherError) "The name of the main module should be Main."
 
