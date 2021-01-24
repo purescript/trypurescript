@@ -51,22 +51,22 @@ data Error
 
 instance A.ToJSON Error
 
+fromParserErrors :: NE.NonEmpty CST.ParserError -> Error
+fromParserErrors = CompilerErrors . P.toJSONErrors False P.Error . CST.toMultipleErrors "<file>"
+
 server :: [P.ExternsFile] -> P.Env -> P.Environment -> Int -> IO ()
 server externs initNamesEnv initEnv port = do
-  let toCompilerErrors :: NE.NonEmpty CST.ParserError -> Either Error a
-      toCompilerErrors = Left . CompilerErrors . P.toJSONErrors False P.Error . CST.toMultipleErrors "<file>"
-
   let compile :: Text -> IO (Either Error ([P.JSONError], JS))
       compile input
         | T.length input > 20000 = return (Left (OtherError "Please limit your input to 20000 characters"))
         | otherwise = do
           case CST.parseModuleFromFile "<file>" input of
-            Left parseError ->
-              return $ toCompilerErrors parseError
+            Left parserErrors ->
+              return $ Left $ fromParserErrors parserErrors
             Right partialResult -> case CST.resFull partialResult of
-              (_, Left parseError) ->
-                return $ toCompilerErrors parseError
-              (warnings, Right m) | P.getModuleName m == P.ModuleName "Main" -> do
+              (_, Left parserErrors) ->
+                return $ Left $ fromParserErrors parserErrors
+              (parserWarnings, Right m) | P.getModuleName m == P.ModuleName "Main" -> do
                 (resultMay, ws) <- runLogger' . runExceptT . flip runReaderT P.defaultOptions $ do
                   ((P.Module ss coms moduleName elaborated exps, env), nextVar) <- P.runSupplyT 0 $ do
                     (desugared, (namesEnv, _)) <- State.runStateT (P.desugar externs (P.importPrim m)) (initNamesEnv, mempty)
@@ -80,7 +80,9 @@ server externs initNamesEnv initEnv port = do
                   P.evalSupplyT nextVar $ P.prettyPrintJS <$> J.moduleToJs renamed Nothing
                 case resultMay of
                   Left errs -> (return . Left . CompilerErrors . P.toJSONErrors False P.Error) errs
-                  Right js -> (return . Right) (P.toJSONErrors False P.Error (ws <> CST.toMultipleWarnings "<file>" warnings), js)
+                  Right js -> do
+                      let warnings = ws <> CST.toMultipleWarnings "<file>" parserWarnings
+                      (return . Right) (P.toJSONErrors False P.Error warnings, js)
               (_, Right _) ->
                 (return . Left . OtherError) "The name of the main module should be Main."
 
