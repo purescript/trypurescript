@@ -109,7 +109,8 @@ server externs initNamesEnv initEnv port = do
               search = fst . TS.typeSearch (Just []) initEnv (P.emptyCheckState initEnv)
               results = nubBy ((==) `on` fst) $ do
                 elab <- elabs
-                let strictMatches = search (replaceTypeVariablesAndDesugar (\nm s -> P.Skolem P.NullSourceAnn nm Nothing s (P.SkolemScope 0)) elab)
+                let mkSkolemType nm s = P.Skolem P.NullSourceAnn nm Nothing s (P.SkolemScope 0)
+                    strictMatches = search (replaceTypeVariablesAndDesugar mkSkolemType elab)
                     flexMatches = search (replaceTypeVariablesAndDesugar (const (P.TUnknown P.NullSourceAnn)) elab)
                 take 50 (strictMatches ++ flexMatches)
           Scotty.json $ A.object [ "results" .= [ P.showQualified id k
