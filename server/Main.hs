@@ -7,6 +7,7 @@ module Main (main) where
 
 import           Control.Monad (unless, foldM)
 import           Control.Monad.Error.Class (throwError)
+import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Logger (runLogger')
 import qualified Control.Monad.State as State
 import           Control.Monad.Trans (lift)
@@ -19,23 +20,26 @@ import           Data.Bifunctor (first, second, bimap)
 import qualified Data.ByteString.Lazy as BL
 import           Data.Default (def)
 import           Data.Function (on)
+import qualified Data.IORef as IORef
 import           Data.List (nubBy)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import           Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
+import           Data.Time.Clock (UTCTime)
 import           GHC.Generics (Generic)
-import qualified Data.IORef as IORef
 import qualified Language.PureScript as P
 import qualified Language.PureScript.CST as CST
 import qualified Language.PureScript.CST.Monad as CSTM
 import qualified Language.PureScript.CodeGen.JS as J
 import qualified Language.PureScript.CodeGen.JS.Printer as P
 import qualified Language.PureScript.CoreFn as CF
+import qualified Language.PureScript.Docs.Types as Docs
 import qualified Language.PureScript.Errors.JSON as P
 import qualified Language.PureScript.Interactive as I
 import qualified Language.PureScript.Make as Make
+import qualified Language.PureScript.Make.Cache as Cache
 import qualified Language.PureScript.TypeChecker.TypeSearch as TS
 import qualified Network.Wai.Handler.Warp as Warp
 import           System.Environment (getArgs)
@@ -53,11 +57,59 @@ data Error
 
 instance A.ToJSON Error
 
-fromParserErrors :: NE.NonEmpty CST.ParserError -> Error
-fromParserErrors = CompilerErrors . P.toJSONErrors False P.Error . CST.toMultipleErrors "<file>"
+toCompilerErrors :: NE.NonEmpty CST.ParserError -> Error
+toCompilerErrors = CompilerErrors . toJsonErrors . CST.toMultipleErrors "<file>"
 
-buildMakeActions :: IORef.IORef (Maybe (Either w (w1, JS))) -> Make.MakeActions Make.Make
-buildMakeActions codegenRef = undefined
+toJsonErrors :: P.MultipleErrors -> [P.JSONError]
+toJsonErrors = P.toJSONErrors False P.Error
+
+-- As of PureScript 0.14 we only need the `codegen` part of `MakeActions` to run
+-- Try PureScript, because we already know all dependencies are compiled, we're
+-- only building one module, we don't allow FFI declarations, and we want to
+-- avoid writing to the file system as much as possible.
+buildMakeActions :: IORef.IORef (Maybe JS) -> Make.MakeActions Make.Make
+buildMakeActions codegenRef =
+  Make.MakeActions
+    getInputTimestampsAndHashes
+    getOutputTimestamp
+    readExterns
+    codegen
+    ffiCodegen
+    progress
+    readCacheDb
+    writeCacheDb
+    outputPrimDocs
+  where
+  getInputTimestampsAndHashes :: P.ModuleName -> Make.Make (Either Make.RebuildPolicy (M.Map FilePath (UTCTime, Make.Make Cache.ContentHash)))
+  getInputTimestampsAndHashes _ = pure $ Right M.empty
+
+  getOutputTimestamp :: P.ModuleName -> Make.Make (Maybe UTCTime)
+  getOutputTimestamp _ = pure Nothing
+
+  readExterns :: P.ModuleName -> Make.Make (FilePath, Maybe P.ExternsFile)
+  readExterns _ = pure ("<file>", Nothing)
+
+  codegen :: CF.Module CF.Ann -> Docs.Module -> P.ExternsFile -> P.SupplyT Make.Make ()
+  codegen m _ _ = do
+    rawJs <- J.moduleToJs m Nothing
+    lift $ liftIO $ IORef.writeIORef codegenRef $ Just $ P.prettyPrintJS rawJs
+
+  -- If we ever support FFI implementations in Try PureScript then we will need
+  -- to implement this function. However, we do not plan to support this feature.
+  ffiCodegen :: CF.Module CF.Ann -> Make.Make ()
+  ffiCodegen _ = pure ()
+
+  progress :: Make.ProgressMessage -> Make.Make ()
+  progress _ = pure ()
+
+  readCacheDb :: Make.Make Cache.CacheDb
+  readCacheDb = pure M.empty
+
+  writeCacheDb :: Cache.CacheDb -> Make.Make ()
+  writeCacheDb _ = pure ()
+
+  outputPrimDocs :: Make.Make ()
+  outputPrimDocs = pure ()
 
 server :: [P.ExternsFile] -> P.Env -> P.Environment -> Int -> IO ()
 server externs initNamesEnv initEnv port = do
@@ -65,48 +117,30 @@ server externs initNamesEnv initEnv port = do
   let makeActions = buildMakeActions codegenRef
   let compile :: Text -> IO (Either Error ([P.JSONError], JS))
       compile input
-        | T.length input > 20000 = return (Left (OtherError "Please limit your input to 20000 characters"))
+        | T.length input > 20000 = return $ Left $ OtherError "Please limit your input to 20000 characters"
         | otherwise = do
           case CST.parseModuleFromFile "<file>" input of
             Left parserErrors ->
-              return $ Left $ fromParserErrors parserErrors
+              return $ Left $ toCompilerErrors parserErrors
 
             Right partialResult -> case CST.resFull partialResult of
               (_, Left parserErrors) ->
-                return $ Left $ fromParserErrors parserErrors
+                return $ Left $ toCompilerErrors parserErrors
 
               (parserWarnings, Right m) | P.getModuleName m == P.ModuleName "Main" -> do
-                Make.runMake P.defaultOptions $ Make.rebuildModule makeActions [] m
-                  {-
-                    The code below has been replaced with Make.rebuildModule and this comment section
-                    should be removed once tests confirm that the new implementation works.
-
-                    -----
-
-                    runLogger' . runExceptT . flip runReaderT P.defaultOptions $ do
-                    ((P.Module ss coms moduleName elaborated exps, env), nextVar) <- P.runSupplyT 0 $ do
-                      (desugared, (namesEnv, _)) <- State.runStateT (P.desugar externs (P.importPrim m)) (initNamesEnv, mempty)
-                      let typecheck = P.typeCheckModule (fmap (\(_, _, exports) -> exports) namesEnv) desugared
-                      P.runCheck' (P.emptyCheckState initEnv) typecheck
-                    regrouped <- P.createBindingGroups moduleName . P.collapseBindingGroups $ elaborated
-                    let mod' = P.Module ss coms moduleName regrouped exps
-                        corefn = CF.moduleToCoreFn env mod'
-                        [renamed] = P.renameInModules [corefn]
-                    unless (null . CF.moduleForeign $ renamed) . throwError . P.errorMessage $ P.MissingFFIModule moduleName
-                    P.evalSupplyT nextVar $ P.prettyPrintJS <$> J.moduleToJs renamed Nothing
-                  -}
-
-                IORef.readIORef codegenRef >>= \case
-                  Nothing ->
-                    (return . Left . OtherError) "Failed to read the results of codegen."
-                  Just (Left errs) ->
-                    (return . Left . CompilerErrors . P.toJSONErrors False P.Error) errs
-                  Just (Right (ws, js)) -> do
-                    let warnings = ws <> CST.toMultipleWarnings "<file>" parserWarnings
-                    (return . Right) (P.toJSONErrors False P.Error warnings, js)
+                (makeResult, warnings) <- Make.runMake P.defaultOptions $ Make.rebuildModule makeActions [] m
+                codegenResult <- IORef.readIORef codegenRef
+                return $ case makeResult of
+                  Left errors ->
+                    Left $ CompilerErrors $ toJsonErrors errors
+                  Right _ | Just js <- codegenResult -> do
+                    let ws = warnings <> CST.toMultipleWarnings "<file>" parserWarnings
+                    Right (toJsonErrors ws, js)
+                  Right _ ->
+                    Left $ OtherError "Failed to read the results of codegen."
 
               (_, Right _) ->
-                (return . Left . OtherError) "The name of the main module should be Main."
+                return $ Left $ OtherError "The name of the main module should be Main."
 
   scottyOpts (getOpts port) $ do
     get "/" $
