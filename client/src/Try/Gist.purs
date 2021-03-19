@@ -14,12 +14,12 @@ import Affjax.ResponseFormat as AXRF
 import Affjax.StatusCode (StatusCode(..))
 import Control.Monad.Except.Trans (ExceptT(..))
 import Data.Argonaut.Core (Json, caseJsonObject, stringify, toString)
+import Data.Argonaut.Encode (encodeJson)
 import Data.Either (Either(..))
 import Data.Function.Uncurried (Fn2, runFn2)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable, toMaybe)
 import Effect.Aff (Aff)
-import Foreign.Generic (encodeJSON)
 import Foreign.Object as Object
 import Unsafe.Coerce (unsafeCoerce)
 
@@ -51,7 +51,7 @@ uploadGist content = ExceptT $ AX.post AXRF.json "https://api.github.com/gists" 
         _ -> Left "Key id was not a string."
 
   where
-  requestBody = Just $ AXRB.string $ encodeJSON
+  requestBody = Just $ AXRB.json $ encodeJson
     { description: "Published with try.purescript.org"
     , public: false
     , files: { "Main.purs": { content } }

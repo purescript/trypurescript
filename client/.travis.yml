@@ -7,4 +7,5 @@ install:
   - npm install
   - bower install --production
 script:
-  - npm run -s bundle
+  - npm run -s test
+  - npm run -s build:prod
