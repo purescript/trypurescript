@@ -25,9 +25,9 @@ readFile path = do
 
 readFixtures :: Effect Fixtures
 readFixtures = do
-  compileFailure <- readFile "compile-failure.json"
-  compileOtherError <- readFile "compile-other-error.json"
-  compileSuccess <- readFile "compile-success.json"
+  compileFailure <- readFile "test/Fixture/compile-failure.json"
+  compileOtherError <- readFile "test/Fixture/compile-other-error.json"
+  compileSuccess <- readFile "test/Fixture/compile-success.json"
 
   pure
     { compileFailure
