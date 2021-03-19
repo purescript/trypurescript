@@ -1,0 +1,28 @@
+{
+  "js": "\"use strict\";\nvar Control_Bind = require(\"../Control.Bind/index.js\");\nvar Data_Eq = require(\"../Data.Eq/index.js\");\nvar Data_Map_Internal = require(\"../Data.Map.Internal/index.js\");\nvar Data_Maybe = require(\"../Data.Maybe/index.js\");\nvar Data_Ord = require(\"../Data.Ord/index.js\");\nvar Data_Ordering = require(\"../Data.Ordering/index.js\");\nvar Data_Show = require(\"../Data.Show/index.js\");\nvar Effect = require(\"../Effect/index.js\");\nvar Effect_Console = require(\"../Effect.Console/index.js\");\nvar TryPureScript = require(\"../TryPureScript/index.js\");\n\n// | A Name consists of a first name and a last name\nvar Name = (function () {\n    function Name(value0, value1) {\n        this.value0 = value0;\n        this.value1 = value1;\n    };\n    Name.create = function (value0) {\n        return function (value1) {\n            return new Name(value0, value1);\n        };\n    };\n    return Name;\n})();\n\n// | The Ord instance allows us to use Names as the\n// | keys in a Map.\nvar phoneBook = Data_Map_Internal.singleton(new Name(\"John\", \"Smith\"))(\"555-555-1234\");\n\n// | With compiler versions >= 0.8.2, we can derive \n// | instances for Eq and Ord, making names comparable.\nvar eqName = new Data_Eq.Eq(function (x) {\n    return function (y) {\n        return x.value0 === y.value0 && x.value1 === y.value1;\n    };\n});\nvar ordName = new Data_Ord.Ord(function () {\n    return eqName;\n}, function (x) {\n    return function (y) {\n        var $20 = Data_Ord.compare(Data_Ord.ordString)(x.value0)(y.value0);\n        if ($20 instanceof Data_Ordering.LT) {\n            return Data_Ordering.LT.value;\n        };\n        if ($20 instanceof Data_Ordering.GT) {\n            return Data_Ordering.GT.value;\n        };\n        return Data_Ord.compare(Data_Ord.ordString)(x.value1)(y.value1);\n    };\n});\nvar main = Control_Bind.bindFlipped(Effect.bindEffect)(TryPureScript.render)(TryPureScript.withConsole(Effect_Console.logShow(Data_Maybe.showMaybe(Data_Show.showString))(Data_Map_Internal.lookup(ordName)(new Name(\"John\", \"Smith\"))(phoneBook))));\nmodule.exports = {\n    Name: Name,\n    phoneBook: phoneBook,\n    main: main,\n    eqName: eqName,\n    ordName: ordName\n};",
+  "warnings": [
+    {
+      "suggestion": {
+        "replaceRange": {
+          "startLine": 22,
+          "endLine": 22,
+          "startColumn": 1,
+          "endColumn": 1
+        },
+        "replacement": "main :: Effect Unit\n\n"
+      },
+      "moduleName": "Main",
+      "errorLink": "https://github.com/purescript/documentation/blob/master/errors/MissingTypeDeclaration.md",
+      "errorCode": "MissingTypeDeclaration",
+      "message": "  No type declaration was provided for the top-level declaration of main.\n  It is good practice to provide type declarations as a form of documentation.\n  The inferred type of main was:\n\n    Effect Unit\n\n\nin value declaration main\n",
+      "allSpans": [{ "start": [22, 1], "name": "<file>", "end": [23, 51] }],
+      "filename": "<file>",
+      "position": {
+        "startLine": 22,
+        "endLine": 23,
+        "startColumn": 1,
+        "endColumn": 51
+      }
+    }
+  ]
+}

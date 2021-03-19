@@ -7,6 +7,7 @@ You can edit this file as you like.
   [ "aff"
   , "affjax"
   , "arrays"
+  , "assert"
   , "bifunctors"
   , "console"
   , "const"
@@ -35,6 +36,7 @@ You can edit this file as you like.
   , "lazy"
   , "math"
   , "maybe"
+  , "node-fs"
   , "ordered-collections"
   , "parallel"
   , "prelude"
@@ -56,5 +58,5 @@ You can edit this file as you like.
   , "web-html"
   ]
 , packages = ./packages.dhall
-, sources = [ "src/**/*.purs" ]
+, sources = [ "src/**/*.purs", "test/**/*.purs" ]
 }
