@@ -1,0 +1,6 @@
+{
+  "error": {
+    "tag": "OtherError",
+    "contents": "The name of the main module should be Main."
+  }
+}
