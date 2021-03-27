@@ -1,9 +1,6 @@
 {
   "name": "trypurescript-client",
   "private": true,
-  "config": {
-    "configpath": "config/dev/*.purs"
-  },
   "scripts": {
     "clean": "rimraf output",
     "test": "spago test --path config/dev/Try.Config.purs",
