@@ -6,7 +6,7 @@ import Control.Monad.Except.Trans (runExceptT)
 import Data.Array (mapMaybe)
 import Data.Array as Array
 import Data.Either (Either(..))
-import Data.Foldable (elem, fold, for_, intercalate, traverse_)
+import Data.Foldable (elem, fold, for_, intercalate)
 import Data.FoldableWithIndex (forWithIndex_)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Effect (Effect)
@@ -14,12 +14,11 @@ import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Console (error)
 import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn5, mkEffectFn1, runEffectFn1, runEffectFn2, runEffectFn5)
-import Foreign (renderForeignError)
 import Foreign.Object (Object)
 import Foreign.Object as Object
 import JQuery as JQuery
 import JQuery.Extras as JQueryExtras
-import Try.API (CompileError(..), CompileResult(..), CompileWarning(..), CompilerError(..), ErrorPosition(..), FailedResult(..), SuccessResult(..))
+import Try.API (CompileError(..), CompileResult(..), CompilerError)
 import Try.API as API
 import Try.Config as Config
 import Try.Gist (getGistById, tryLoadFileFromGist, uploadGist)
@@ -43,7 +42,7 @@ displayErrors errs = do
   column2 <- JQuery.select "#column2"
   JQueryExtras.empty column2
 
-  forWithIndex_ errs \i (CompilerError{ message }) -> do
+  forWithIndex_ errs \i { message } -> do
     h1 <- JQuery.create "<h1>"
     JQuery.addClass "error-banner" h1
     JQuery.setText ("Error " <> show (i + 1) <> " of " <> show (Array.length errs)) h1
@@ -140,7 +139,11 @@ compile = do
         liftEffect cleanUpMarkers
 
         case res of
-          Right (CompileSuccess (SuccessResult { js, warnings })) -> do
+          Left err -> liftEffect do
+            hideLoadingMessage
+            displayPlainText "Unable to parse the response from the server"
+            error err
+          Right (CompileSuccess { js, warnings }) -> do
             showJs <- liftEffect isShowJsChecked
             if showJs then liftEffect do
               hideLoadingMessage
@@ -149,32 +152,32 @@ compile = do
               sources <- runExceptT $ runLoader loader (JS js)
               liftEffect hideLoadingMessage
               for_ warnings \warnings_ -> liftEffect do
-                let toAnnotation (CompileWarning{ errorCode, position, message }) =
-                      position <#> \(ErrorPosition pos) ->
-                        { row: pos.startLine - 1
-                        , column: pos.startColumn - 1
-                        , type: "warning"
-                        , text: message
-                        }
+                let
+                  toAnnotation { errorCode, position, message } =
+                    position <#> \pos ->
+                      { row: pos.startLine - 1
+                      , column: pos.startColumn - 1
+                      , type: "warning"
+                      , text: message
+                      }
                 runEffectFn1 setAnnotations (mapMaybe toAnnotation warnings_)
               for_ sources (liftEffect <<< execute (JS js))
-          Right (CompileFailed (FailedResult { error })) -> liftEffect do
+          Right (CompileFailed { error }) -> liftEffect do
             hideLoadingMessage
             case error of
               CompilerErrors errs -> do
                 displayErrors errs
-
-                let toAnnotation (CompilerError{ position, message }) =
-                      position <#> \(ErrorPosition pos) ->
-                        { row: pos.startLine - 1
-                        , column: pos.startColumn - 1
-                        , type: "error"
-                        , text: message
-                        }
+                let
+                  toAnnotation { position, message } =
+                    position <#> \pos ->
+                      { row: pos.startLine - 1
+                      , column: pos.startColumn - 1
+                      , type: "error"
+                      , text: message
+                      }
                 runEffectFn1 setAnnotations (mapMaybe toAnnotation errs)
-
-                for_ errs \(CompilerError{ position }) ->
-                  for_ position \(ErrorPosition pos) ->
+                for_ errs \{ position } ->
+                  for_ position \pos ->
                     runEffectFn5 addMarker
                       "error"
                       pos.startLine
@@ -182,10 +185,6 @@ compile = do
                       pos.endLine
                       pos.endColumn
               OtherError err -> displayPlainText err
-          Left errs -> liftEffect do
-            hideLoadingMessage
-            displayPlainText "Unable to parse the response from the server"
-            traverse_ (error <<< renderForeignError) errs
 
 -- | Execute the compiled code in a new iframe.
 execute :: JS -> Object JS -> Effect Unit

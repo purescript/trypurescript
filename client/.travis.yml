@@ -1,10 +1,10 @@
 language: node_js
-dist: trusty
+dist: bionic
 sudo: required
-node_js: 6
+node_js: 12
 install:
   - npm install -g bower
   - npm install
   - bower install --production
 script:
-  - npm run -s bundle
+  - npm run -s test

@@ -19,100 +19,63 @@ import Affjax.RequestBody as AXRB
 import Affjax.ResponseFormat as AXRF
 import Affjax.StatusCode (StatusCode(..))
 import Control.Alt ((<|>))
-import Control.Monad.Except (ExceptT(..), runExcept)
+import Control.Monad.Except (ExceptT(..))
+import Data.Argonaut.Decode (class DecodeJson, decodeJson, (.:))
+import Data.Argonaut.Encode (encodeJson)
 import Data.Either (Either(..))
-import Data.Generic.Rep (class Generic)
-import Data.List.NonEmpty (NonEmptyList)
 import Data.Maybe (Maybe(..))
+import Data.Traversable (traverse)
 import Effect.Aff (Aff)
-import Foreign (ForeignError, unsafeToForeign)
-import Foreign.Class (class Decode, decode)
-import Foreign.Generic (defaultOptions, genericDecode)
-import Foreign.Generic.Class (Options, SumEncoding(..))
-
-decodingOptions :: Options
-decodingOptions = defaultOptions { unwrapSingleConstructors = true }
 
 -- | The range of text associated with an error
-newtype ErrorPosition = ErrorPosition
+type ErrorPosition =
   { startLine :: Int
   , endLine :: Int
   , startColumn :: Int
   , endColumn :: Int
   }
 
-derive instance genericErrorPosition :: Generic ErrorPosition _
-
-instance decodeErrorPosition :: Decode ErrorPosition where
-  decode = genericDecode decodingOptions
-
-newtype CompilerError = CompilerError
+type CompilerError =
   { message :: String
   , position :: Maybe ErrorPosition
   }
-
-derive instance genericCompilerError :: Generic CompilerError _
-
-instance decodeCompilerError :: Decode CompilerError where
-  decode = genericDecode decodingOptions
 
 -- | An error reported from the compile API.
 data CompileError
   = CompilerErrors (Array CompilerError)
   | OtherError String
 
-derive instance genericCompileError :: Generic CompileError _
+instance decodeJsonCompileError :: DecodeJson CompileError where
+  decodeJson = decodeJson >=> \obj -> do
+    contents <- obj .: "contents"
+    obj .: "tag" >>= case _ of
+      "OtherError" ->
+        map OtherError $ decodeJson contents
+      "CompilerErrors" ->
+        map CompilerErrors $ traverse decodeJson =<< decodeJson contents
+      _ ->
+        Left "Tag must be one of: OtherError, CompilerErrors"
 
-instance decodeCompileError :: Decode CompileError where
-  decode = genericDecode
-    (defaultOptions
-      { sumEncoding =
-          TaggedObject
-            { tagFieldName: "tag"
-            , contentsFieldName: "contents"
-            , constructorTagTransform: identity
-            }
-      })
-
-newtype Suggestion = Suggestion
+type Suggestion =
   { replacement :: String
   , replaceRange :: Maybe ErrorPosition
   }
 
-derive instance genericSuggestion :: Generic Suggestion _
-
-instance decodeSuggestion :: Decode Suggestion where
-  decode = genericDecode decodingOptions
-
-newtype CompileWarning = CompileWarning
+type CompileWarning =
   { errorCode :: String
   , message :: String
   , position :: Maybe ErrorPosition
   , suggestion :: Maybe Suggestion
   }
 
-derive instance genericCompileWarning :: Generic CompileWarning _
-
-instance decodeCompileWarning :: Decode CompileWarning where
-  decode = genericDecode decodingOptions
-
-newtype SuccessResult = SuccessResult
+type SuccessResult =
   { js :: String
   , warnings :: Maybe (Array CompileWarning)
   }
 
-derive instance genericSuccessResult :: Generic SuccessResult _
-
-instance decodeSuccessResult :: Decode SuccessResult where
-  decode = genericDecode decodingOptions
-
-newtype FailedResult = FailedResult
-  { error :: CompileError }
-
-derive instance genericFailedResult :: Generic FailedResult _
-
-instance decodeFailedResult :: Decode FailedResult where
-  decode = genericDecode decodingOptions
+type FailedResult =
+  { error :: CompileError
+  }
 
 -- | The result of calling the compile API.
 data CompileResult
@@ -120,10 +83,10 @@ data CompileResult
   | CompileFailed FailedResult
 
 -- | Parse the result from the compile API and verify it
-instance decodeCompileResult :: Decode CompileResult where
-  decode f =
-    CompileSuccess <$> genericDecode decodingOptions f
-    <|> CompileFailed <$> genericDecode decodingOptions f
+instance decodeJsonCompileResult :: DecodeJson CompileResult where
+  decodeJson json =
+    map CompileSuccess (decodeJson json)
+      <|> map CompileFailed (decodeJson json)
 
 get :: URL -> ExceptT String Aff String
 get url = ExceptT $ AX.get AXRF.string url >>= case _ of
@@ -135,13 +98,13 @@ get url = ExceptT $ AX.get AXRF.string url >>= case _ of
     pure $ Right body
 
 -- | POST the specified code to the Try PureScript API, and wait for a response.
-compile :: String -> String -> ExceptT String Aff (Either (NonEmptyList ForeignError) CompileResult)
-compile endpoint code = ExceptT $ AX.post AXRF.json (endpoint <> "/compile") (Just requestBody) >>= case _ of
+compile :: String -> String -> ExceptT String Aff (Either String CompileResult)
+compile endpoint code = ExceptT $ AX.post AXRF.json (endpoint <> "/compile") requestBody >>= case _ of
   Left e ->
     pure $ Left $ printError e
   Right { status } | status >= StatusCode 400 ->
     pure $ Left $ "Received error status code: " <> show status
   Right { body } ->
-    pure $ Right $ runExcept (decode (unsafeToForeign body))
+    pure $ Right $ decodeJson body
   where
-  requestBody = AXRB.String code
+  requestBody = Just $ AXRB.Json $ encodeJson code
