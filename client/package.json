@@ -1,9 +1,6 @@
 {
   "name": "trypurescript-client",
   "private": true,
-  "config": {
-    "configpath": "config/dev/*.purs"
-  },
   "scripts": {
     "clean": "rimraf output",
     "test": "spago test --path config/dev/Try.Config.purs",
@@ -11,9 +8,9 @@
     "build:production": "spago bundle-app --path config/prod/Try.Config.purs --purs-args '--censor-lib --strict' --to public/js/index.js"
   },
   "devDependencies": {
-    "purescript": "^0.13.6",
-    "purescript-psa": "^0.7.3",
-    "rimraf": "^2.5.4",
-    "spago": "^0.14.0"
+    "purescript": "^0.14.0",
+    "purescript-psa": "^0.8.2",
+    "rimraf": "^3.0.2",
+    "spago": "^0.19.1"
   }
 }
