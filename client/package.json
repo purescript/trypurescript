@@ -7,8 +7,8 @@
   "scripts": {
     "clean": "rimraf output",
     "test": "spago test --path config/dev/Try.Config.purs",
-    "dev": "spago build --path config/dev/Try.Config.purs",
-    "build": "spago bundle-app --path $npm_package_config_configpath --purs-args '--censor-lib --strict' --to public/js/index.js"
+    "build": "spago build --path config/dev/Try.Config.purs",
+    "build:production": "spago bundle-app --path confi/prod/Try.Config.purs --purs-args '--censor-lib --strict' --to public/js/index.js"
   },
   "devDependencies": {
     "purescript": "^0.13.6",

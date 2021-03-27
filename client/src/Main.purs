@@ -42,7 +42,7 @@ displayErrors errs = do
   column2 <- JQuery.select "#column2"
   JQueryExtras.empty column2
 
-  forWithIndex_ errs \i ({ message }) -> do
+  forWithIndex_ errs \i { message } -> do
     h1 <- JQuery.create "<h1>"
     JQuery.addClass "error-banner" h1
     JQuery.setText ("Error " <> show (i + 1) <> " of " <> show (Array.length errs)) h1
@@ -152,13 +152,14 @@ compile = do
               sources <- runExceptT $ runLoader loader (JS js)
               liftEffect hideLoadingMessage
               for_ warnings \warnings_ -> liftEffect do
-                let toAnnotation ({ errorCode, position, message }) =
-                      position <#> \pos ->
-                        { row: pos.startLine - 1
-                        , column: pos.startColumn - 1
-                        , type: "warning"
-                        , text: message
-                        }
+                let
+                  toAnnotation { errorCode, position, message } =
+                    position <#> \pos ->
+                      { row: pos.startLine - 1
+                      , column: pos.startColumn - 1
+                      , type: "warning"
+                      , text: message
+                      }
                 runEffectFn1 setAnnotations (mapMaybe toAnnotation warnings_)
               for_ sources (liftEffect <<< execute (JS js))
           Right (CompileFailed { error }) -> liftEffect do
@@ -166,16 +167,15 @@ compile = do
             case error of
               CompilerErrors errs -> do
                 displayErrors errs
-
-                let toAnnotation { position, message } =
-                      position <#> \pos ->
-                        { row: pos.startLine - 1
-                        , column: pos.startColumn - 1
-                        , type: "error"
-                        , text: message
-                        }
+                let
+                  toAnnotation { position, message } =
+                    position <#> \pos ->
+                      { row: pos.startLine - 1
+                      , column: pos.startColumn - 1
+                      , type: "error"
+                      , text: message
+                      }
                 runEffectFn1 setAnnotations (mapMaybe toAnnotation errs)
-
                 for_ errs \{ position } ->
                   for_ position \pos ->
                     runEffectFn5 addMarker

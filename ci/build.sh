@@ -13,8 +13,7 @@ case $COMPONENT in
     cd client
     npm install
     # Use production config, since we want to use these bundles for deploys
-    npm config set trypurescript-client:configpath "config/prod/*.purs"
-    npm run build
+    npm run build:production
     ;;
   *)
     echo >&2 "Unrecognised component: $COMPONENT"
