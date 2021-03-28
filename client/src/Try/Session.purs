@@ -28,10 +28,7 @@ randomGuid =
     s4 = padLeft <<< toStringAs hexadecimal <$> randomInt 0 (256 * 256)
     padLeft s = String.drop (String.length s - 1) ("000" <> s)
 
-foreign import storeSession_
-  :: EffectFn2 String
-               { code :: String }
-               Unit
+foreign import storeSession_ :: EffectFn2 String { code :: String } Unit
 
 -- | Store the current session state in local storage
 storeSession
@@ -40,20 +37,19 @@ storeSession
   -> Effect Unit
 storeSession sessionId values = runEffectFn2 storeSession_ sessionId values
 
-foreign import tryRetrieveSession_
-  :: EffectFn1 String
-               (Nullable { code :: String })
+foreign import tryRetrieveSession_ :: EffectFn1 String (Nullable { code :: String })
 
 -- | Retrieve the session state from local storage
 tryRetrieveSession :: String -> Effect (Maybe { code :: String })
 tryRetrieveSession sessionId = toMaybe <$> runEffectFn1 tryRetrieveSession_ sessionId
 
 -- | Look up the session by ID, or create a new session ID.
-createSessionIdIfNecessary
-  :: (String -> Effect Unit)
-  -> Effect Unit
-createSessionIdIfNecessary k = do
+createSessionIdIfNecessary :: Effect String
+createSessionIdIfNecessary = do
   sessionId <- getQueryStringMaybe "session"
   case sessionId of
-    Just sessionId_ -> k sessionId_
-    Nothing -> randomGuid >>= setQueryString "session"
+    Just sessionId_ -> pure sessionId_
+    Nothing -> do
+      id <- randomGuid
+      setQueryString "session" id
+      pure id

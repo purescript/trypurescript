@@ -5,6 +5,7 @@
     "clean": "rimraf output",
     "test": "spago test --path config/dev/Try.Config.purs",
     "build": "spago build --path config/dev/Try.Config.purs",
+    "build:dev": "spago bundle-app --path config/dev/Try.Config.purs --to public/js/index.js",
     "build:production": "spago bundle-app --path config/prod/Try.Config.purs --purs-args '--censor-lib --strict' --to public/js/index.js"
   },
   "devDependencies": {
