@@ -168,8 +168,8 @@ component = H.mkComponent
       H.gets _.editor >>= traverse_ \editor -> H.liftEffect do
         current <- Editor.getValue editor
         when (text /= current) do
-          void $ Editor.setValue text Nothing editor
-      H.raise $ TextChanged text
+          _ <- Editor.setValue text Nothing editor
+          pure unit
       pure (Just next)
 
     SetAnnotations annotations next -> do

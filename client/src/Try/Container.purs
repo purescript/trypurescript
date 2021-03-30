@@ -147,7 +147,6 @@ component = H.mkComponent
         Just text ->
           pure text
       _ <- H.query _editor unit $ H.tell $ Editor.SetAnnotations []
-      _ <- H.query _editor unit $ H.tell $ Editor.SetAnnotations []
       runExceptT (API.compile Config.compileUrl code) >>= case _ of
         Left err -> do
           H.modify_ _ { compiled = Just (Left err) }
@@ -173,7 +172,7 @@ component = H.mkComponent
 
         Right (Right res@(CompileSuccess { js, warnings })) -> do
           { settings } <- H.modify _ { compiled = Just (Right res) }
-          when settings.showJs do
+          when (not settings.showJs) do
             mbSources <- H.liftAff $ map hush $ runExceptT $ runLoader loader (JS js)
             for_ warnings \warnings_ -> do
               let anns = Array.mapMaybe (toAnnotation MarkerWarning) warnings_

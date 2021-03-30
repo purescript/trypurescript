@@ -1,3 +1,3 @@
 "use strict";
 
-exports.setupIFrame = exports.setupIFrame;
+exports.setupIFrame = setupIFrame;
