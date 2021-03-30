@@ -21,7 +21,6 @@ import Affjax.StatusCode (StatusCode(..))
 import Control.Alt ((<|>))
 import Control.Monad.Except (ExceptT(..))
 import Data.Argonaut.Decode (class DecodeJson, decodeJson, (.:))
-import Data.Argonaut.Encode (encodeJson)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse)
@@ -108,4 +107,4 @@ compile endpoint code = ExceptT $ liftAff $ AX.post AXRF.json (endpoint <> "/com
   Right { body } ->
     pure $ Right $ decodeJson body
   where
-  requestBody = Just $ AXRB.Json $ encodeJson code
+  requestBody = Just $ AXRB.string code
