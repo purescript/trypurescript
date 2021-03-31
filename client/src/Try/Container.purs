@@ -11,6 +11,7 @@ import Data.Foldable (for_)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Maybe (Maybe(..), fromMaybe, isNothing)
 import Data.Symbol (SProxy(..))
+import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class.Console (error)
 import Effect.Uncurried (EffectFn1, runEffectFn1)
@@ -82,6 +83,7 @@ loader :: Loader
 loader = makeLoader Config.loaderUrl
 
 foreign import setupIFrame :: EffectFn1 (Object JS) Unit
+foreign import teardownIFrame :: Effect Unit
 
 component :: forall q i o. H.Component HH.HTML q i o Aff
 component = H.mkComponent
@@ -127,8 +129,14 @@ component = H.mkComponent
       -- cache + compile step.
       void $ H.query _editor unit $ H.tell $ Editor.SetEditorContent code
 
-    UpdateSettings k ->
-      H.modify_ \state -> state { settings = k state.settings }
+    UpdateSettings k -> do
+      old <- H.get
+      new <- H.modify \state -> state { settings = k state.settings }
+      when (old.settings.showJs /= new.settings.showJs) do
+        if new.settings.showJs then
+          H.liftEffect teardownIFrame
+        else
+          handleAction $ Compile Nothing
 
     Cache text -> H.liftEffect do
       sessionId <- getQueryStringMaybe "session"
@@ -147,17 +155,19 @@ component = H.mkComponent
         Just text ->
           pure text
       _ <- H.query _editor unit $ H.tell $ Editor.SetAnnotations []
+      _ <- H.query _editor unit $ H.tell $ Editor.RemoveMarkers
       runExceptT (API.compile Config.compileUrl code) >>= case _ of
         Left err -> do
+          H.liftEffect teardownIFrame
           H.modify_ _ { compiled = Just (Left err) }
 
         Right (Left err) -> do
-          _ <- H.query _editor unit $ H.tell $ Editor.RemoveMarkers
+          H.liftEffect teardownIFrame
           H.liftEffect $ error err
           H.modify_ _ { compiled = Just (Left err) }
 
         Right (Right res@(CompileFailed { error })) -> do
-          _ <- H.query _editor unit $ H.tell $ Editor.RemoveMarkers
+          H.liftEffect teardownIFrame
           H.modify_ _ { compiled = Just (Right res) }
           case error of
             OtherError _ ->
@@ -172,7 +182,9 @@ component = H.mkComponent
 
         Right (Right res@(CompileSuccess { js, warnings })) -> do
           { settings } <- H.modify _ { compiled = Just (Right res) }
-          when (not settings.showJs) do
+          if settings.showJs then
+            H.liftEffect teardownIFrame
+          else do
             mbSources <- H.liftAff $ map hush $ runExceptT $ runLoader loader (JS js)
             for_ warnings \warnings_ -> do
               let anns = Array.mapMaybe (toAnnotation MarkerWarning) warnings_
@@ -405,6 +417,7 @@ menuRadio props =
         , HP.value props.value
         , HP.id_ props.id
         , HE.onClick \_ -> Just props.onClick
+        , HP.checked props.checked
         ]
     , HH.label
         [ HP.for props.id

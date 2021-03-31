@@ -12,6 +12,7 @@ import Prelude
 import Ace (Annotation, Range)
 import Ace as Ace
 import Ace.EditSession as EditSession
+import Ace.Editor as Edit
 import Ace.Editor as Editor
 import Ace.Range as Range
 import Ace.Types (Editor)
@@ -102,7 +103,12 @@ component = H.mkComponent
   -- As we're embedding a 3rd party component we only need to create a placeholder
   -- div here and attach the ref property which will let us reference the element.
   render :: State -> H.ComponentHTML Action () m
-  render _ = HH.div [ HP.ref $ H.RefLabel "ace" ] []
+  render _ =
+    HH.div
+      [ HP.ref $ H.RefLabel "ace"
+      , HP.id_ "code"
+      ]
+      [ ]
 
   handleAction :: Action -> H.HalogenM State Action () Output m Unit
   handleAction = case _ of
@@ -168,8 +174,8 @@ component = H.mkComponent
       H.gets _.editor >>= traverse_ \editor -> H.liftEffect do
         current <- Editor.getValue editor
         when (text /= current) do
-          _ <- Editor.setValue text Nothing editor
-          pure unit
+          session <- Edit.getSession editor
+          EditSession.setValue text session
       pure (Just next)
 
     SetAnnotations annotations next -> do
@@ -195,7 +201,6 @@ component = H.mkComponent
 setupEditor :: HTMLElement -> Effect Editor
 setupEditor element = do
   editor <- Ace.editNode element Ace.ace
-  Editor.setFontSize "13" editor
   Editor.setShowPrintMargin false editor
   Editor.setTheme "ace/theme/dawn" editor
 
