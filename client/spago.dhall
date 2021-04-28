@@ -1,10 +1,7 @@
-{-
-Welcome to a Spago project!
-You can edit this file as you like.
--}
 { name = "try-purescript"
 , dependencies =
-  [ "aff"
+  [ "ace"
+  , "aff"
   , "affjax"
   , "argonaut-codecs"
   , "arrays"
@@ -21,11 +18,10 @@ You can edit this file as you like.
   , "foreign-object"
   , "functions"
   , "functors"
-  , "generics-rep"
   , "globals"
+  , "halogen"
   , "identity"
   , "integers"
-  , "jquery"
   , "js-timers"
   , "math"
   , "maybe"

@@ -25,6 +25,7 @@ import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse)
 import Effect.Aff (Aff)
+import Effect.Aff.Class (class MonadAff, liftAff)
 
 -- | The range of text associated with an error
 type ErrorPosition =
@@ -97,8 +98,8 @@ get url = ExceptT $ AX.get AXRF.string url >>= case _ of
     pure $ Right body
 
 -- | POST the specified code to the Try PureScript API, and wait for a response.
-compile :: String -> String -> ExceptT String Aff (Either String CompileResult)
-compile endpoint code = ExceptT $ AX.post AXRF.json (endpoint <> "/compile") requestBody >>= case _ of
+compile :: forall m. MonadAff m => String -> String -> ExceptT String m (Either String CompileResult)
+compile endpoint code = ExceptT $ liftAff $ AX.post AXRF.json (endpoint <> "/compile") requestBody >>= case _ of
   Left e ->
     pure $ Left $ printError e
   Right { status } | status >= StatusCode 400 ->
