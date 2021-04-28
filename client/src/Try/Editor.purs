@@ -18,19 +18,16 @@ import Ace.Range as Range
 import Ace.Types (Editor)
 import Ace.VirtualRenderer as Renderer
 import Data.Foldable (for_, traverse_)
+import Data.Int as Int
 import Data.List (List(..))
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Data.Time.Duration (Milliseconds(..))
 import Data.Traversable (traverse)
 import Effect (Effect)
-import Effect.Aff (Fiber, forkAff)
-import Effect.Aff as Aff
-import Effect.Aff.AVar (AVar)
-import Effect.Aff.AVar as AVar
 import Effect.Aff.Class (class MonadAff)
-import Effect.Ref (Ref)
 import Effect.Ref as Ref
+import Effect.Timer (clearTimeout, setTimeout)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
@@ -61,18 +58,12 @@ derive instance newtypeMarkerId :: Newtype MarkerId _
 
 derive instance eqMarkerType :: Eq MarkerType
 
-type Debouncer =
-  { var :: AVar Unit
-  , fiber :: Fiber Unit
-  }
-
 debounceTime :: Milliseconds
 debounceTime = Milliseconds 750.0
 
 type State =
   { editor :: Maybe Editor
   , markers :: List MarkerId
-  , debounceRef :: Maybe (Ref (Maybe Debouncer))
   }
 
 data Action
@@ -97,7 +88,6 @@ component = H.mkComponent
   initialState _ =
     { editor: Nothing
     , markers: Nil
-    , debounceRef: Nothing
     }
 
   -- As we're embedding a 3rd party component we only need to create a placeholder
@@ -114,12 +104,12 @@ component = H.mkComponent
   handleAction = case _ of
     Initialize -> do
       H.getHTMLElementRef (H.RefLabel "ace") >>= traverse_ \element -> do
-        debounceRef <- H.liftEffect $ Ref.new Nothing
         editor <- H.liftEffect $ setupEditor element
-        H.modify_ _ { editor = Just editor, debounceRef = Just debounceRef }
+        H.modify_ _ { editor = Just editor }
         session <- H.liftEffect $ Editor.getSession editor
         void $ H.subscribe $ ES.effectEventSource \emitter -> do
-          EditSession.onChange session (\_ -> ES.emit emitter HandleChange)
+          emit <- debounce debounceTime \_ -> ES.emit emitter HandleChange
+          EditSession.onChange session emit
           pure mempty
 
     Finalize -> do
@@ -134,35 +124,9 @@ component = H.mkComponent
         traverse_ cleanup markers
 
     HandleChange -> do
-      let
-        handleChange = H.gets _.editor >>= traverse_ \editor -> do
-          text <- H.liftEffect (Editor.getValue editor)
-          H.raise $ TextChanged text
-
-      H.gets _.debounceRef >>= traverse_ \ref -> do
-        mbDebouncer <- H.liftEffect $ Ref.read ref
-        case mbDebouncer of
-          Nothing -> do
-            var   <- H.liftAff AVar.empty
-            fiber <- H.liftAff $ forkAff do
-              Aff.delay debounceTime
-              AVar.put unit var
-
-            -- This compututation will fork and run in the background. When the
-            -- var is finally filled, the action will run.
-            _ <- H.fork do
-              H.liftAff $ AVar.take var
-              H.liftEffect $ Ref.write Nothing ref
-              handleChange
-
-            H.liftEffect $ Ref.write (Just { var, fiber }) ref
-
-          Just debouncer -> do
-            H.liftAff $ Aff.killFiber (Aff.error "Time's up!") debouncer.fiber
-            fiber <- H.liftAff $ forkAff do
-              Aff.delay debounceTime
-              AVar.put unit debouncer.var
-            H.liftEffect $ Ref.write (Just (debouncer { fiber = fiber })) ref
+      H.gets _.editor >>= traverse_ \editor -> do
+        text <- H.liftEffect (Editor.getValue editor)
+        H.raise $ TextChanged text
 
   handleQuery :: forall a. Query a -> H.HalogenM State Action () Output m (Maybe a)
   handleQuery = case _ of
@@ -232,3 +196,13 @@ rangeFromPosition pos = do
     (startColumn - 1)
     (endLine - 1)
     (endColumn - 1)
+
+debounce :: forall a. Milliseconds -> (a -> Effect Unit) -> Effect (a -> Effect Unit)
+debounce (Milliseconds wait) k = do
+  tidRef <- Ref.new Nothing
+  pure \a -> do
+    Ref.read tidRef >>= traverse_ clearTimeout
+    tid <- setTimeout (Int.floor wait) do
+      Ref.write Nothing tidRef
+      k a
+    Ref.write (Just tid) tidRef
