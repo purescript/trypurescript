@@ -2,8 +2,8 @@ module Main where
 
 import Prelude
 
-import Effect (Effect)
 import Data.Foldable (fold)
+import Effect (Effect)
 import TryPureScript (h1, h2, p, text, list, indent, link, render, code)
 
 main :: Effect Unit
