@@ -18,11 +18,15 @@
 
 Most of these features can be controlled not only from the toolbar, but also using the [query parameters](https://en.wikipedia.org/wiki/Query_string):
 
-- **Load From GitHub Repo**: Load PureScript code from a GitHub repository using the `github` parameter
-    - Example: `github=/purescript/trypurescript/master/client/examples/Main.purs` will load the code from this file. Note: the file should be a single PureScript module with the module name `Main`.
+- **Load From GitHub Repo**: Load a PureScript file from a GitHub repository using the `github` parameter
+    - Format: `github=/<owner>/<repo>/<branch or tag>/<file>.purs`
+    - Example: `github=/purescript/trypurescript/master/client/examples/Main.purs`.
+    - Notes: the file should be a single PureScript module with the module name `Main`.
 
-- **Load From Gist**: Load PureScript code from Gist id using the `gist` parameter
-    - Example: `gist=37c3c97f47a43f20c548` will load the code from this Gist if the file was named `Main.purs`.
+- **Load From Gist**: Load PureScript code from a gist using the `gist` parameter
+    - Format: `gist=<gist id>`
+    - Example: `gist=37c3c97f47a43f20c548`
+    - Notes: the file should be named `Main.purs` with the module name `Main`.
 
 - **View Mode**: Control the view mode using the `view` parameter
     - Options are: `code`, `output`, `both` (default)
