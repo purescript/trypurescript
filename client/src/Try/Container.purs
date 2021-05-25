@@ -7,7 +7,7 @@ import Control.Monad.Except (runExceptT)
 import Data.Array (fold)
 import Data.Array as Array
 import Data.Either (Either(..), hush)
-import Data.Foldable (for_)
+import Data.Foldable (for_, oneOf)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Maybe (Maybe(..), fromMaybe, isNothing)
 import Data.Symbol (SProxy(..))
@@ -27,6 +27,7 @@ import Try.Config as Config
 import Try.Editor (MarkerType(..), toStringMarkerType)
 import Try.Editor as Editor
 import Try.Gist (getGistById, tryLoadFileFromGist)
+import Try.GitHub (getRawGitHubFile)
 import Try.Loader (Loader, makeLoader, runLoader)
 import Try.QueryString (getQueryStringMaybe)
 import Try.Session (createSessionIdIfNecessary, storeSession, tryRetrieveSession)
@@ -457,13 +458,26 @@ withSession sessionId = do
   case state of
     Just state' -> pure state'.code
     Nothing -> do
-      gist <- H.liftEffect $ fromMaybe Config.mainGist <$> getQueryStringMaybe "gist"
-      loadFromGist gist
+      mbGitHub <- H.liftEffect $ getQueryStringMaybe "github"
+      mbGist <- H.liftEffect $ getQueryStringMaybe "gist"
+
+      let
+        action = oneOf
+          [ map loadFromGitHub mbGitHub
+          , map loadFromGist mbGist
+          ]
+
+      fromMaybe (loadFromGitHub Config.mainGitHubExample) action
   where
-  loadFromGist id = do
-    runExceptT (getGistById id >>= \gi -> tryLoadFileFromGist gi "Main.purs") >>= case _ of
-      Left err -> do
-        H.liftEffect $ window >>= alert err
-        pure ""
-      Right code ->
-        pure code
+  handleResult = case _ of
+    Left err -> do
+      H.liftEffect $ window >>= alert err
+      pure ""
+    Right code ->
+      pure code
+
+  loadFromGist id =
+    runExceptT (getGistById id >>= \gi -> tryLoadFileFromGist gi "Main.purs") >>= handleResult
+
+  loadFromGitHub id =
+    runExceptT (getRawGitHubFile id) >>= handleResult
