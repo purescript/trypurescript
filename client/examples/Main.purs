@@ -14,7 +14,7 @@ main =
       , h2 (text "Examples")
       , list (map fromExample examples)
       , h2 (text "Share Your Code")
-      , p (text "Code can be loaded from a GitHub Gist. To share code, simply include the Gist ID in the URL as follows:")
+      , p (text "Code can be loaded from a GitHub Gist . To share code, simply include the Gist ID in the URL as follows:")
       , indent (p (code (text "  try.purescript.org?gist=gist-id")))
       , p (fold
           [ text "The Gist should contain a file named "
@@ -23,35 +23,35 @@ main =
           ])
       ]
   where
-    fromExample { title, gist } =
-      link ("https://gist.github.com/" <> gist) (text title)
+    fromExample { title, source } =
+      link ("https://github.com/purescript/trypurescript/load-from-github/client/examples/" <> source) (text title)
 
     examples =
       [ { title: "Algebraic Data Types"
-        , gist: "387999a4467a39744ece236e69a442ec"
+        , source: "ADTs.purs"
         }
       , { title: "Loops"
-        , gist: "429eab1e957e807f9feeddbf4f573dd0"
+        , source: "Loops.purs"
         }
       , { title: "Operators"
-        , gist: "8395d2b421a5ca6d1056e301a6e12599"
+        , source: "Operators.purs"
         }
       , { title: "Records"
-        , gist: "170c3ca22f0141ed06a120a12b8243af"
+        , source: "Records.purs"
         }
       , { title: "Recursion"
-        , gist: "659ae8a085f1cf6e52fed2c35ad93643"
+        , source: "Recursion.purs"
         }
       , { title: "Do Notation"
-        , gist: "525cb36c147d3497f652028db1214ec8"
+        , source: "DoNotation.purs"
         }
       , { title: "Type Classes"
-        , gist: "b04463fd49cd4d7d385941b3b2fa226a"
+        , source: "TypeClasses.purs"
         }
       , { title: "Generic Programming"
-        , gist: "e3b6284959f65ac674d39aa981fcb8fb"
+        , source: "Generic.purs"
         }
       , { title: "QuickCheck"
-        , gist: "69f7f94fe4ff3bd47f4b"
+        , source: "QuickCheck.purs"
         }
       ]
