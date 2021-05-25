@@ -105,6 +105,16 @@ stack exec trypurescript 8081 $(spago sources)
 # then: Setting phasers to stun... (port 8081) (ctrl-c to quit)
 ```
 
+### 3. Choosing a Tag
+
+The built-in examples for Try PureScript are loaded from this GitHub repository. To change the tag that the examples are loaded from, you'll need to touch three files:
+
+* `client/config/dev/Try.Config.purs`
+* `client/config/prod/Try.Config.purs`
+* `client/examples/Main.purs`, in the `fromExample` function.
+
+If you are preparing a release or if you need to adjust examples in development, you should change the tag in these three places (and ensure you're using the same tag in each place!).
+
 ## Server API
 
 The server is a very basic web service which wraps the PureScript compiler, allowing clients to send PureScript code to be compiled and receiving either compiled JS or error messages in response.
