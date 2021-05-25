@@ -1,10 +1,15 @@
 module Try.Config where
 
+import Prelude
+
 loaderUrl :: String
 loaderUrl = "https://compile.purescript.org/output"
 
 compileUrl :: String
 compileUrl = "https://compile.purescript.org"
 
-mainGist :: String
-mainGist = "7ad2b2eef11ac7dcfd14aa1585dd8f69"
+tag :: String
+tag = "load-from-github"
+
+mainGitHubExample :: String
+mainGitHubExample = "/purescript/trypurescript/" <> tag <> "/client/examples/Main.purs"

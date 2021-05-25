@@ -7,7 +7,7 @@ import Control.Monad.Except (runExceptT)
 import Data.Array (fold)
 import Data.Array as Array
 import Data.Either (Either(..), hush)
-import Data.Foldable (for_)
+import Data.Foldable (for_, oneOf)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Maybe (Maybe(..), fromMaybe, isNothing)
 import Data.Symbol (SProxy(..))
@@ -27,6 +27,7 @@ import Try.Config as Config
 import Try.Editor (MarkerType(..), toStringMarkerType)
 import Try.Editor as Editor
 import Try.Gist (getGistById, tryLoadFileFromGist)
+import Try.GitHub (getRawGitHubFile)
 import Try.Loader (Loader, makeLoader, runLoader)
 import Try.QueryString (getQueryStringMaybe)
 import Try.Session (createSessionIdIfNecessary, storeSession, tryRetrieveSession)
@@ -35,6 +36,8 @@ import Web.HTML (window)
 import Web.HTML.Window (alert)
 
 type Slots = ( editor :: Editor.Slot Unit )
+
+data SourceFile = GitHub String | Gist String
 
 type Settings =
   { autoCompile :: Boolean
@@ -51,7 +54,7 @@ defaultSettings =
 
 type State =
   { settings :: Settings
-  , gistId :: Maybe String
+  , sourceFile :: Maybe SourceFile
   , compiled :: Maybe (Either String CompileResult)
   }
 
@@ -98,7 +101,7 @@ component = H.mkComponent
   initialState :: i -> State
   initialState _ =
     { settings: defaultSettings
-    , gistId: Nothing
+    , sourceFile: Nothing
     , compiled: Nothing
     }
 
@@ -106,7 +109,7 @@ component = H.mkComponent
   handleAction = case _ of
     Initialize -> do
       sessionId <- H.liftEffect $ createSessionIdIfNecessary
-      code <- H.liftAff $ withSession sessionId
+      { code, sourceFile } <- H.liftAff $ withSession sessionId
 
       -- Load parameters
       mbViewModeParam <- H.liftEffect $ getQueryStringMaybe "view"
@@ -118,11 +121,9 @@ component = H.mkComponent
       mbAutoCompile <- H.liftEffect $ getQueryStringMaybe "compile"
       let autoCompile = mbAutoCompile /= Just "false"
 
-      mbGistId <- H.liftEffect $ getQueryStringMaybe "gist"
-
       H.modify_ _
         { settings = { viewMode, showJs, autoCompile }
-        , gistId = mbGistId
+        , sourceFile = sourceFile
         }
 
       -- Set the editor contents. This will trigger a change event, causing a
@@ -260,16 +261,26 @@ component = H.mkComponent
                     , label: "Output"
                     , onClick: UpdateSettings (_ { viewMode = Output })
                     }
-                , maybeElem state.gistId \gistId ->
+                , maybeElem state.sourceFile \source ->
                     HH.li
-                      [ HP.class_ $ HH.ClassName "view_gist_li" ]
-                      [ renderGistLink gistId ]
+                      [ HP.class_ $ HH.ClassName "view_sourcefile_li" ]
+                      [ case source of
+                          GitHub githubId ->
+                            renderGitHubLink githubId
+                          Gist gistId ->
+                            renderGistLink gistId
+                      ]
                 ]
             ]
-        , maybeElem state.gistId \gistId ->
+        , maybeElem state.sourceFile \source ->
             HH.li
-              [ HP.class_ $ HH.ClassName "menu-item view_gist_li mobile-only" ]
-              [ renderGistLink gistId ]
+              [ HP.class_ $ HH.ClassName "menu-item view_sourcefile_li mobile-only" ]
+              [ case source of
+                  GitHub githubId ->
+                    renderGitHubLink githubId
+                  Gist gistId ->
+                    renderGistLink gistId
+              ]
         , HH.li
             [ HP.class_ $ HH.ClassName "menu-item no-mobile" ]
             [ HH.label
@@ -429,13 +440,23 @@ menuRadio props =
 renderGistLink :: forall w i. String -> HH.HTML w i
 renderGistLink gistId =
   HH.a
-    [ HP.class_ $ HH.ClassName "view_gist"
-    , HP.href $ "https://gist.github.com/" <> gistId
+    [ HP.href $ "https://gist.github.com/" <> gistId
     , HP.target "trypurs_gist"
     ]
     [ HH.label
         [ HP.title "Open the original gist in a new window." ]
         [ HH.text "Gist" ]
+    ]
+
+renderGitHubLink :: forall w i. String -> HH.HTML w i
+renderGitHubLink githubId =
+  HH.a
+    [ HP.href $  "https://github.com/" <> githubId
+    , HP.target "trypurs_github"
+    ]
+    [ HH.label
+        [ HP.title "Open the original source file in a new window." ]
+        [ HH.text "GitHub" ]
     ]
 
 toAnnotation
@@ -451,19 +472,32 @@ toAnnotation markerType { position, message } =
     , text: message
     }
 
-withSession :: String -> Aff String
+withSession :: String -> Aff { sourceFile :: Maybe SourceFile, code :: String }
 withSession sessionId = do
   state <- H.liftEffect $ tryRetrieveSession sessionId
-  case state of
-    Just state' -> pure state'.code
+  githubId <- H.liftEffect $ getQueryStringMaybe "github"
+  gistId <- H.liftEffect $ getQueryStringMaybe "gist"
+  code <- case state of
+    Just { code } -> pure code
     Nothing -> do
-      gist <- H.liftEffect $ fromMaybe Config.mainGist <$> getQueryStringMaybe "gist"
-      loadFromGist gist
+      let
+        action = oneOf
+          [ map loadFromGitHub githubId
+          , map loadFromGist gistId
+          ]
+      fromMaybe (loadFromGitHub Config.mainGitHubExample) action
+  let sourceFile = oneOf [ map GitHub githubId, map Gist gistId ]
+  pure { sourceFile, code }
   where
-  loadFromGist id = do
-    runExceptT (getGistById id >>= \gi -> tryLoadFileFromGist gi "Main.purs") >>= case _ of
-      Left err -> do
-        H.liftEffect $ window >>= alert err
-        pure ""
-      Right code ->
-        pure code
+  handleResult = case _ of
+    Left err -> do
+      H.liftEffect $ window >>= alert err
+      pure ""
+    Right code ->
+      pure code
+
+  loadFromGist id =
+    runExceptT (getGistById id >>= \gi -> tryLoadFileFromGist gi "Main.purs") >>= handleResult
+
+  loadFromGitHub id =
+    runExceptT (getRawGitHubFile id) >>= handleResult

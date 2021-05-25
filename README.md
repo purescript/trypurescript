@@ -12,9 +12,40 @@
 - Run and print output or show resulting JavaScript
 - Multiple view modes: code, output or both
 - Persistent session
-- Load PureScript code from Github Gists
+- Load PureScript code from GitHub Gists or repository files
 
-### Which Libraries are Available?
+### Control Features via the Query String
+
+Most of these features can be controlled not only from the toolbar, but also using the [query parameters](https://en.wikipedia.org/wiki/Query_string):
+
+- **Load From GitHub Repo**: Load a PureScript file from a GitHub repository using the `github` parameter
+    - Format: `github=/<owner>/<repo>/<branch or tag>/<file>.purs`
+    - Example: `github=/purescript/trypurescript/master/client/examples/Main.purs`.
+    - Notes: the file should be a single PureScript module with the module name `Main`.
+
+- **Load From Gist**: Load PureScript code from a gist using the `gist` parameter
+    - Format: `gist=<gist id>`
+    - Example: `gist=37c3c97f47a43f20c548`
+    - Notes: the file should be named `Main.purs` with the module name `Main`.
+
+- **View Mode**: Control the view mode using the `view` parameter
+    - Options are: `code`, `output`, `both` (default)
+    - Example: `view=output` will only display the output
+
+- **Auto Compile**: Automatic compilation can be turned off using the `compile` parameter
+    - Options are: `true` (default), `false`
+    - Example: `compile=false` will turn auto compilation off
+
+- **JavaScript Code Generation**: Print the resulting JavaScript code in the output window instead of the output of the program using the `js` parameter
+    - Options are: `true`, `false` (default)
+    - Example: `js=true` will print JavaScript code instead of the program's output
+
+- **Session**: Load code from a session which is stored with [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) using the `session` parameter
+    - Usually managed by Try PureScript
+    - Example: `session=9162f098-070f-4053-60ea-eba47021450d` (Note: will probably not work for you)
+    - When used with the `gist` or `github` query parameters the code will be loaded from the source file and not the session
+
+### Which Libraries Are Available?
 
 Try PureScript aims to provide a complete, recent package set from <https://github.com/purescript/package-sets>. The available libraries are those listed in `staging/spago.dhall`, at the versions in the package set mentioned in `staging/packages.dhall`.
 
@@ -40,30 +71,6 @@ $ spago ls packages | cut -f 1 -d ' ' | xargs spago install
 ```
 
 Before deploying an updated package set, someone (your reviewer) should check that the memory required to hold the package set's externs files does not exceed that of the try.purescript.org server.
-
-### Control Features via the Query String
-
-Most of these features can be controlled not only from the toolbar, but also using the [query parameters](https://en.wikipedia.org/wiki/Query_string):
-
-- **Load From Gist**: Load PureScript code from Gist id using the `gist` parameter
-    - Example: `gist=37c3c97f47a43f20c548` will load the code from this Gist if the file was named `Main.purs`
-
-- **View Mode**: Control the view mode using the `view` parameter
-    - Options are: `code`, `output`, `both` (default)
-    - Example: `view=output` will only display the output
-
-- **Auto Compile**: Automatic compilation can be turned off using the `compile` parameter
-    - Options are: `true` (default), `false`
-    - Example: `compile=false` will turn auto compilation off
-
-- **JavaScript Code Generation**: Print the resulting JavaScript code in the output window instead of the output of the program using the `js` parameter
-    - Options are: `true`, `false` (default)
-    - Example: `js=true` will print JavaScript code instead of the program's output
-
-- **Session**: Load code from a session which is stored with [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) using the `session` parameter
-    - Usually managed by Try PureScript
-    - Example: `session=9162f098-070f-4053-60ea-eba47021450d` (Note: will probably not work for you)
-    - When used with the `gist` query parameter the code will be loaded from the Gist and not the session
 
 ## Development
 
@@ -97,6 +104,16 @@ stack exec trypurescript 8081 $(spago sources)
 # should output that is is compiling the sources (first time)
 # then: Setting phasers to stun... (port 8081) (ctrl-c to quit)
 ```
+
+### 3. Choosing a Tag
+
+The built-in examples for Try PureScript are loaded from this GitHub repository. To change the tag that the examples are loaded from, you'll need to touch three files:
+
+* `client/config/dev/Try.Config.purs`
+* `client/config/prod/Try.Config.purs`
+* `client/examples/Main.purs`, in the `fromExample` function.
+
+If you are preparing a release or if you need to adjust examples in development, you should change the tag in these three places (and ensure you're using the same tag in each place!).
 
 ## Server API
 

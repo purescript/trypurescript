@@ -63,6 +63,12 @@
         window.addEventListener("message", function (event) {
           if (
             event.data &&
+            event.data.githubId
+          ) {
+            window.location.search = "github=" + event.data.githubId;
+          }
+          if (
+            event.data &&
             event.data.gistId &&
             /^[0-9a-f]+$/.test(event.data.gistId)
           ) {

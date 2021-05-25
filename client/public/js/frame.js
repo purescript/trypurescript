@@ -47,5 +47,11 @@
         gistId: event.target.pathname.split("/").slice(-1)[0]
       }, "*");
     }
+    if (parent && event.target.nodeName === "A" && event.target.hostname === "github.com") {
+      event.preventDefault();
+      parent.postMessage({
+        githubId: event.target.pathname
+      }, "*");
+    }
   }, false);
 })();
