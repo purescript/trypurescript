@@ -7,4 +7,4 @@ compileUrl :: String
 compileUrl = "http://localhost:8081"
 
 mainGitHubExample :: String
-mainGitHubExample = "purescript/trypurescript/master/client/examples/Main.purs"
+mainGitHubExample = "/purescript/trypurescript/load-from-github/client/examples/Main.purs"

@@ -109,7 +109,7 @@ component = H.mkComponent
   handleAction = case _ of
     Initialize -> do
       sessionId <- H.liftEffect $ createSessionIdIfNecessary
-      { code, githubId, gistId } <- H.liftAff $ withSession sessionId
+      { code, sourceFile } <- H.liftAff $ withSession sessionId
 
       -- Load parameters
       mbViewModeParam <- H.liftEffect $ getQueryStringMaybe "view"
@@ -123,7 +123,7 @@ component = H.mkComponent
 
       H.modify_ _
         { settings = { viewMode, showJs, autoCompile }
-        , sourceFile = oneOf [ map GitHub githubId, map Gist gistId ]
+        , sourceFile = sourceFile
         }
 
       -- Set the editor contents. This will trigger a change event, causing a
@@ -263,10 +263,10 @@ component = H.mkComponent
                     }
                 , maybeElem state.sourceFile \source ->
                     HH.li
-                      [ HP.class_ $ HH.ClassName "view_gist_li" ]
+                      [ HP.class_ $ HH.ClassName "view_sourcefile_li" ]
                       [ case source of
                           GitHub githubId ->
-                            renderGistLink githubId
+                            renderGitHubLink githubId
                           Gist gistId ->
                             renderGistLink gistId
                       ]
@@ -274,10 +274,10 @@ component = H.mkComponent
             ]
         , maybeElem state.sourceFile \source ->
             HH.li
-              [ HP.class_ $ HH.ClassName "menu-item view_gist_li mobile-only" ]
+              [ HP.class_ $ HH.ClassName "menu-item view_sourcefile_li mobile-only" ]
               [ case source of
                   GitHub githubId ->
-                    renderGistLink githubId
+                    renderGitHubLink githubId
                   Gist gistId ->
                     renderGistLink gistId
               ]
@@ -440,13 +440,23 @@ menuRadio props =
 renderGistLink :: forall w i. String -> HH.HTML w i
 renderGistLink gistId =
   HH.a
-    [ HP.class_ $ HH.ClassName "view_gist"
-    , HP.href $ "https://gist.github.com/" <> gistId
+    [ HP.href $ "https://gist.github.com/" <> gistId
     , HP.target "trypurs_gist"
     ]
     [ HH.label
         [ HP.title "Open the original gist in a new window." ]
         [ HH.text "Gist" ]
+    ]
+
+renderGitHubLink :: forall w i. String -> HH.HTML w i
+renderGitHubLink githubId =
+  HH.a
+    [ HP.href $  "https://github.com/" <> githubId
+    , HP.target "trypurs_github"
+    ]
+    [ HH.label
+        [ HP.title "Open the original source file in a new window." ]
+        [ HH.text "GitHub" ]
     ]
 
 toAnnotation
@@ -462,7 +472,7 @@ toAnnotation markerType { position, message } =
     , text: message
     }
 
-withSession :: String -> Aff { githubId :: Maybe String, gistId :: Maybe String, code :: String }
+withSession :: String -> Aff { sourceFile :: Maybe SourceFile, code :: String }
 withSession sessionId = do
   state <- H.liftEffect $ tryRetrieveSession sessionId
   githubId <- H.liftEffect $ getQueryStringMaybe "github"
@@ -476,7 +486,8 @@ withSession sessionId = do
           , map loadFromGist gistId
           ]
       fromMaybe (loadFromGitHub Config.mainGitHubExample) action
-  pure { githubId, gistId, code }
+  let sourceFile = oneOf [ map GitHub githubId, map Gist gistId ]
+  pure { sourceFile, code }
   where
   handleResult = case _ of
     Left err -> do

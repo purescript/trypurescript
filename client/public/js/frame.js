@@ -50,7 +50,7 @@
     if (parent && event.target.nodeName === "A" && event.target.hostname === "github.com") {
       event.preventDefault();
       parent.postMessage({
-        githubId: event.target.pathname.slice(1)
+        githubId: event.target.pathname
       }, "*");
     }
   }, false);
