@@ -14,11 +14,20 @@ main =
       , h2 (text "Examples")
       , list (map fromExample examples)
       , h2 (text "Share Your Code")
-      , p (text "Code can be loaded from a GitHub Gist . To share code, simply include the Gist ID in the URL as follows:")
+      , p (text "A PureScript file can be loaded from GitHub from a gist or a repository. To share code using a gist, simply include the gist ID in the URL as follows:")
       , indent (p (code (text "  try.purescript.org?gist=gist-id")))
       , p (fold
-          [ text "The Gist should contain a file named "
+          [ text "The Gist should contain PureScript modulenamed "
+          , code (text "Main")
+          , text "in a file named "
           , code (text "Main.purs")
+          , text " containing your PureScript code."
+          ])
+      , p (text "To share code from a repository, include the path to the source file the URL as follows:")
+      , indent (p (code (text "  try.purescript.org?github=/owner/repo/Source.purs")))
+      , p (fold
+          [ text "The file should be a PureScript module named "
+          , code (text "Main")
           , text " containing your PureScript code."
           ])
       ]
