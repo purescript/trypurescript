@@ -12,7 +12,7 @@
 - Run and print output or show resulting JavaScript
 - Multiple view modes: code, output or both
 - Persistent session
-- Load PureScript code from Github Gists
+- Load PureScript code from GitHub Gists or repository files
 
 ### Which Libraries are Available?
 
@@ -45,8 +45,11 @@ Before deploying an updated package set, someone (your reviewer) should check th
 
 Most of these features can be controlled not only from the toolbar, but also using the [query parameters](https://en.wikipedia.org/wiki/Query_string):
 
+- **Load From GitHub Repo**: Load PureScript code from a GitHub repository using the `github` parameter
+    - Example: `github=purescript/trypurescript/master/client/examples/Main.purs` will load the code from this file. Note: the file should be a single PureScript module with the module name `Main`.
+
 - **Load From Gist**: Load PureScript code from Gist id using the `gist` parameter
-    - Example: `gist=37c3c97f47a43f20c548` will load the code from this Gist if the file was named `Main.purs`
+    - Example: `gist=37c3c97f47a43f20c548` will load the code from this Gist if the file was named `Main.purs`.
 
 - **View Mode**: Control the view mode using the `view` parameter
     - Options are: `code`, `output`, `both` (default)

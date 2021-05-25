@@ -37,6 +37,8 @@ import Web.HTML.Window (alert)
 
 type Slots = ( editor :: Editor.Slot Unit )
 
+data SourceFile = GitHub String | Gist String
+
 type Settings =
   { autoCompile :: Boolean
   , showJs :: Boolean
@@ -52,7 +54,7 @@ defaultSettings =
 
 type State =
   { settings :: Settings
-  , gistId :: Maybe String
+  , sourceFile :: Maybe SourceFile
   , compiled :: Maybe (Either String CompileResult)
   }
 
@@ -99,7 +101,7 @@ component = H.mkComponent
   initialState :: i -> State
   initialState _ =
     { settings: defaultSettings
-    , gistId: Nothing
+    , sourceFile: Nothing
     , compiled: Nothing
     }
 
@@ -107,7 +109,7 @@ component = H.mkComponent
   handleAction = case _ of
     Initialize -> do
       sessionId <- H.liftEffect $ createSessionIdIfNecessary
-      code <- H.liftAff $ withSession sessionId
+      { code, githubId, gistId } <- H.liftAff $ withSession sessionId
 
       -- Load parameters
       mbViewModeParam <- H.liftEffect $ getQueryStringMaybe "view"
@@ -119,11 +121,9 @@ component = H.mkComponent
       mbAutoCompile <- H.liftEffect $ getQueryStringMaybe "compile"
       let autoCompile = mbAutoCompile /= Just "false"
 
-      mbGistId <- H.liftEffect $ getQueryStringMaybe "gist"
-
       H.modify_ _
         { settings = { viewMode, showJs, autoCompile }
-        , gistId = mbGistId
+        , sourceFile = oneOf [ map GitHub githubId, map Gist gistId ]
         }
 
       -- Set the editor contents. This will trigger a change event, causing a
@@ -261,16 +261,26 @@ component = H.mkComponent
                     , label: "Output"
                     , onClick: UpdateSettings (_ { viewMode = Output })
                     }
-                , maybeElem state.gistId \gistId ->
+                , maybeElem state.sourceFile \source ->
                     HH.li
                       [ HP.class_ $ HH.ClassName "view_gist_li" ]
-                      [ renderGistLink gistId ]
+                      [ case source of
+                          GitHub githubId ->
+                            renderGistLink githubId
+                          Gist gistId ->
+                            renderGistLink gistId
+                      ]
                 ]
             ]
-        , maybeElem state.gistId \gistId ->
+        , maybeElem state.sourceFile \source ->
             HH.li
               [ HP.class_ $ HH.ClassName "menu-item view_gist_li mobile-only" ]
-              [ renderGistLink gistId ]
+              [ case source of
+                  GitHub githubId ->
+                    renderGistLink githubId
+                  Gist gistId ->
+                    renderGistLink gistId
+              ]
         , HH.li
             [ HP.class_ $ HH.ClassName "menu-item no-mobile" ]
             [ HH.label
@@ -452,22 +462,21 @@ toAnnotation markerType { position, message } =
     , text: message
     }
 
-withSession :: String -> Aff String
+withSession :: String -> Aff { githubId :: Maybe String, gistId :: Maybe String, code :: String }
 withSession sessionId = do
   state <- H.liftEffect $ tryRetrieveSession sessionId
-  case state of
-    Just state' -> pure state'.code
+  githubId <- H.liftEffect $ getQueryStringMaybe "github"
+  gistId <- H.liftEffect $ getQueryStringMaybe "gist"
+  code <- case state of
+    Just { code } -> pure code
     Nothing -> do
-      mbGitHub <- H.liftEffect $ getQueryStringMaybe "github"
-      mbGist <- H.liftEffect $ getQueryStringMaybe "gist"
-
       let
         action = oneOf
-          [ map loadFromGitHub mbGitHub
-          , map loadFromGist mbGist
+          [ map loadFromGitHub githubId
+          , map loadFromGist gistId
           ]
-
       fromMaybe (loadFromGitHub Config.mainGitHubExample) action
+  pure { githubId, gistId, code }
   where
   handleResult = case _ of
     Left err -> do
