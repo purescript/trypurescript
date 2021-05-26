@@ -100,6 +100,11 @@ stack build
 cd staging
 spago install
 
+# Disable glob expansion to prevent 'ModuleNotFound' errors.
+# `purs` will handle that for us. See #220 for more contxt.
+#    Note: to re-enable, run `set +o noglob`
+set -o noglob
+
 stack exec trypurescript 8081 $(spago sources)
 # should output that is is compiling the sources (first time)
 # then: Setting phasers to stun... (port 8081) (ctrl-c to quit)
