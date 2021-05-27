@@ -9,7 +9,7 @@ compileUrl :: String
 compileUrl = "https://compile.purescript.org"
 
 tag :: String
-tag = "load-from-github"
+tag = "master"
 
 mainGitHubExample :: String
 mainGitHubExample = "/purescript/trypurescript/" <> tag <> "/client/examples/Main.purs"

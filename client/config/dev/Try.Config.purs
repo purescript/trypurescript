@@ -9,7 +9,7 @@ compileUrl :: String
 compileUrl = "http://localhost:8081"
 
 tag :: String
-tag = "load-from-github"
+tag = "master"
 
 mainGitHubExample :: String
 mainGitHubExample = "/purescript/trypurescript/" <> tag <> "/client/examples/Main.purs"

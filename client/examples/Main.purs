@@ -33,7 +33,7 @@ main =
     ]
   where
   fromExample { title, source } =
-    link ("https://github.com/purescript/trypurescript/load-from-github/client/examples/" <> source) (text title)
+    link ("https://github.com/purescript/trypurescript/master/client/examples/" <> source) (text title)
 
   examples =
     [ { title: "Algebraic Data Types"
