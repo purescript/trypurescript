@@ -124,7 +124,7 @@ npm install
 # Use `build:dev` if you are using a local Try PureScript server, e.g. you
 # followed the instructions in step 1.
 #
-# Use `build:prod` if you would like to test the client against the production
+# Use `build:production` if you would like to test the client against the production
 # Try PureScript server.
 npm run build:(dev|production)
 
