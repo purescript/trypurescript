@@ -74,41 +74,61 @@ Before deploying an updated package set, someone (your reviewer) should check th
 
 ## Development
 
-### 1. Client setup
+### 1. Shared setup
+
+These steps should be performed whether you are working on the server, the client, or both.
 
 ```sh
-git clone git@github.com:purescript/trypurescript.git
-cd trypurescript/client
-
-npm install
-npm run build
-
-cd public
-httpserver 8080 #eg with: alias httpserver='python -m SimpleHTTPServer'
-open http://localhost:8080
-```
-
-### 2. Local compile server setup
-
-```sh
+# Clone into the repository
 git clone git@github.com:purescript/trypurescript.git
 cd trypurescript
 
+
+```
+
+### 1. Local compile server setup
+
+This step sets up a local server for Try PureScript. You can skip this step if you just want to use the client with the production server.
+
+```sh
+# Build the trypurescript executable
 stack build
 
-# Install PureScript dependencies
+# Set up the PureScript environment for the server
 cd staging
-spago install
+spago build
 
-# Below, we disable glob expansion via `set -o noglob`
-# to prevent 'ModuleNotFound' errors. `purs` will handle
-# glob expansion correctly for us. See #220 for more contxt.
+# Ensure the compiled JavaScript is available to the client
+ln -s output ../client/public/js/output
+
+# Then, start the server.
 #
-# We run this in a subshell so the change doesn't persist after
-# running the below command
+# Below, we disable glob expansion via `set -o noglob` to ensure that globs are
+# passed to `purs` unchanged.
+#
+# We run this in a subshell so that setting noglob only lasts for the duration
+# of the command and no longer.
 (set -o noglob && stack exec trypurescript 8081 $(spago sources))
-# should output that is is compiling the sources (first time)
-# then: Setting phasers to stun... (port 8081) (ctrl-c to quit)
+
+# Should output that it is compiling the sources (first time)
+# Then: Setting phasers to stun... (port 8081) (ctrl-c to quit)
+```
+
+### 2. Client setup
+
+```sh
+# Install development dependencies
+npm install
+
+# Use `build:dev` if you are using a local Try PureScript server, e.g. you
+# followed the instructions in step 1.
+#
+# Use `build:prod` if you would like to test the client against the production
+# Try PureScript server.
+npm run build:(dev|prod)
+
+cd public
+npx http-server # Try PureScript is now available on localhost:8080
 ```
 
 ### 3. Choosing a Tag
