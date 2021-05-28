@@ -118,6 +118,7 @@ ln -s output ../client/public/js/output
 
 ```sh
 # Install development dependencies
+cd client
 npm install
 
 # Use `build:dev` if you are using a local Try PureScript server, e.g. you
