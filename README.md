@@ -126,7 +126,7 @@ npm install
 #
 # Use `build:prod` if you would like to test the client against the production
 # Try PureScript server.
-npm run build:(dev|prod)
+npm run build:(dev|production)
 
 cd public
 npx http-server # Try PureScript is now available on localhost:8080
