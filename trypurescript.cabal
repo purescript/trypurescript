@@ -20,7 +20,7 @@ executable trypurescript
                    directory -any,
                    filepath -any,
                    Glob -any,
-                   scotty -any,
+                   scotty ==0.12,
                    purescript,
                    purescript-cst,
                    containers -any,
@@ -29,7 +29,7 @@ executable trypurescript
                    mtl >=2.2.2 && <2.3,
                    text -any,
                    time -any,
-                   warp -any
+                   warp ==3.3.14
     hs-source-dirs: server
     main-is: Main.hs
     buildable: True
