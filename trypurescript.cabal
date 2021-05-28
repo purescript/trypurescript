@@ -13,23 +13,28 @@ author: Phil Freeman
 data-dir: ""
 
 executable trypurescript
-    build-depends: base ==4.*,
+    -- Since no one depends on this project as a library,
+    -- packages below are `-any` because their versions are determined
+    -- by the `stack.yml` file. Versions correspond to the ones
+    -- specified in the resolver (i.e. the package set)
+    -- unless it is a versioned library added via `extra-deps` field.
+    build-depends: base -any,
                    aeson -any,
-                   bytestring >=0.10.12.0 && <0.11,
+                   bytestring -any,
                    data-default -any,
                    directory -any,
                    filepath -any,
                    Glob -any,
-                   scotty ==0.12,
+                   scotty -any,
                    purescript,
                    purescript-cst,
                    containers -any,
-                   http-types >= 0.8.5,
-                   transformers >=0.5.6.2 && <0.6,
-                   mtl >=2.2.2 && <2.3,
+                   http-types -any,
+                   transformers -any,
+                   mtl -any,
                    text -any,
                    time -any,
-                   warp ==3.3.14
+                   warp -any,
     hs-source-dirs: server
     main-is: Main.hs
     buildable: True
