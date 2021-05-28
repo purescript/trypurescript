@@ -86,7 +86,7 @@ cd trypurescript
 
 ```
 
-### 1. Local compile server setup
+### 2. Local compile server setup
 
 This step sets up a local server for Try PureScript. You can skip this step if you just want to use the client with the production server.
 
@@ -114,7 +114,7 @@ ln -s output ../client/public/js/output
 # Then: Setting phasers to stun... (port 8081) (ctrl-c to quit)
 ```
 
-### 2. Client setup
+### 3. Client setup
 
 ```sh
 # Install development dependencies
@@ -131,7 +131,7 @@ cd public
 npx http-server # Try PureScript is now available on localhost:8080
 ```
 
-### 3. Choosing a Tag
+### 4. Choosing a Tag
 
 The built-in examples for Try PureScript are loaded from this GitHub repository. To change the tag that the examples are loaded from, you'll need to touch three files:
 
