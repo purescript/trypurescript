@@ -112,8 +112,8 @@ buildMakeActions codegenRef =
   outputPrimDocs :: Make.Make ()
   outputPrimDocs = pure ()
 
-server :: [P.ExternsFile] -> P.Env -> P.Environment -> Int -> IO ()
-server externs initNamesEnv initEnv port = do
+server :: [P.ExternsFile] -> P.Environment -> Int -> IO ()
+server externs initEnv port = do
   codegenRef <- IORef.newIORef Nothing
   let makeActions = buildMakeActions codegenRef
   let compile :: Text -> IO (Either Error ([P.JSONError], JS))
@@ -129,7 +129,7 @@ server externs initNamesEnv initEnv port = do
                 return $ Left $ toCompilerErrors parserErrors
 
               (parserWarnings, Right m) | P.getModuleName m == P.ModuleName "Main" -> do
-                (makeResult, warnings) <- Make.runMake P.defaultOptions $ Make.rebuildModule makeActions [] m
+                (makeResult, warnings) <- Make.runMake P.defaultOptions $ Make.rebuildModule makeActions externs m
                 codegenResult <- IORef.readIORef codegenRef
                 return $ case makeResult of
                   Left errors ->
@@ -146,6 +146,7 @@ server externs initNamesEnv initEnv port = do
   scottyOpts (getOpts port) $ do
     get "/" $
       Scotty.text "POST api.purescript.org/compile"
+
     post "/compile" $ do
       code <- T.decodeUtf8 . BL.toStrict <$> body
       response <- lift $ compile code
@@ -155,6 +156,7 @@ server externs initNamesEnv initEnv port = do
           Scotty.json $ A.object [ "error" .= err ]
         Right (warnings, comp) ->
           Scotty.json $ A.object [ "js" .= comp, "warnings" .= warnings ]
+
     get "/search" $ do
       query <- param "q"
       Scotty.setHeader "Access-Control-Allow-Origin" "*"
@@ -230,9 +232,7 @@ main = do
   inputFiles <- concat <$> traverse glob inputGlobs
   e <- runExceptT $ do
     modules <- ExceptT $ I.loadAllModules inputFiles
-    (exts, env) <- ExceptT . I.runMake . I.make $ map (second CST.pureResult) modules
-    namesEnv <- fmap fst . runWriterT $ foldM P.externsEnv P.primEnv exts
-    pure (exts, namesEnv, env)
+    ExceptT . I.runMake . I.make $ map (second CST.pureResult) modules
   case e of
     Left err -> print err >> exitFailure
-    Right (exts, namesEnv, env) -> server exts namesEnv env port
+    Right (exts, env) -> server exts env port
