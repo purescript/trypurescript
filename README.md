@@ -102,9 +102,7 @@ spago build
 # Note: due to the differences in the `ln` command between
 # MacOS (BSD ln) and Linux (GNU ln), the below code will work
 # on both operating systems:
-pushd ../client/public/js
-ln --symbolic ../../../staging/output/ .
-popd
+ln -s "$PWD/output" "$PWD/../client/public/js/output"
 
 # Then, start the server.
 #
