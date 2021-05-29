@@ -46,6 +46,7 @@ import qualified Network.Wai.Handler.Warp as Warp
 import           System.Environment (getArgs)
 import           System.Exit (exitFailure)
 import           System.FilePath.Glob (glob)
+import qualified System.IO as IO
 import           Web.Scotty
 import qualified Web.Scotty as Scotty
 
@@ -227,6 +228,8 @@ tryParseType = hush . fmap (CST.convertType "<file>") . runParser CST.parseTypeP
 
 main :: IO ()
 main = do
+  -- Stop mangled "Compiling ModuleName" text
+  IO.hSetBuffering IO.stderr IO.LineBuffering
   (portString : inputGlobs) <- getArgs
   let port = read portString
   inputFiles <- concat <$> traverse glob inputGlobs
