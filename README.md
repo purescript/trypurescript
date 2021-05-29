@@ -99,9 +99,6 @@ cd staging
 spago build
 
 # Ensure the compiled JavaScript is available to the client via symbolic link.
-# Note: due to the differences in the `ln` command between
-# MacOS (BSD ln) and Linux (GNU ln), the below code will work
-# on both operating systems:
 ln -s "$PWD/output" "$PWD/../client/public/js/output"
 
 # Then, start the server.
