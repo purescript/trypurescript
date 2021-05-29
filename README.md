@@ -99,7 +99,7 @@ cd staging
 spago build
 
 # Ensure the compiled JavaScript is available to the client
-ln -sr output ../client/public/js/output
+ln --symbolic --relative output ../client/public/js/output
 
 # Then, start the server.
 #
