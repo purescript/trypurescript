@@ -34,7 +34,7 @@ executable trypurescript
                    mtl -any,
                    text -any,
                    time -any,
-                   warp -any,
+                   warp -any
     hs-source-dirs: server
     main-is: Main.hs
     buildable: True
