@@ -98,15 +98,13 @@ stack build
 cd staging
 spago build
 
-# Ensure the compiled JavaScript is available to the client
-#   The `ln` command works differently between MacOS and Linux.
-#   Use the command below that corresponds to your operating system:
-
-#   MacOS users
-ln --symbolic output ../client/public/js/output
-
-#   Linux users (requires the `--relative` flag)
-ln --symbolic --relative output ../client/public/js/output
+# Ensure the compiled JavaScript is available to the client via symbolic link.
+# Note: due to the differences in the `ln` command between
+# MacOS (BSD ln) and Linux (GNU ln), the below code will work
+# on both operating systems:
+pushd ../client/public/js
+ln --symbolic ../../../staging/output/ .
+popd
 
 # Then, start the server.
 #
