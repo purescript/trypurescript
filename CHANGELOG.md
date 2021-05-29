@@ -11,6 +11,9 @@ New features:
 Bugfixes:
 
 Other improvements:
+- Stop mangled 'Compiled ModuleName' output (#228 by @JordanMartinez)
+- Update dev instructions: create valid symbolic link across OSes (#226 by @JordanMartinez)
+- Added a changelog (#x by @JordanMartinez)
 
 ## [v2021-05-29.1](https://github.com/purescript/trypurescript/releases/tag/v2021-05-29.1) - 2021-05-29
 
