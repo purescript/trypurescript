@@ -36,7 +36,7 @@ This release officially adds support for PureScript 0.14 to Try PureScript, amon
 
 ## [v2020-05-26.1](https://github.com/purescript/trypurescript/releases/tag/v2020-05-26.1) - 2020-05-26
 
-* Update to PureScript v0.13.8 (#175, @hdgarrood 
+* Update to PureScript v0.13.8 (#175, @hdgarrood
 * Make the whole package set available (#173, @hdgarrood, @thomashoneyman)
 * Do away with version numbers (#176, @hdgarrood)
 
@@ -129,4 +129,3 @@ New version using compiler v0.10.2
 ## [v0.8.2.0](https://github.com/purescript/trypurescript/releases/tag/v0.8.2.0) - 2016-03-11
 
 Updates for v0.8.2 compiler
-
