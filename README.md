@@ -98,8 +98,8 @@ stack build
 cd staging
 spago build
 
-# Ensure the compiled JavaScript is available to the client
-ln -s output ../client/public/js/output
+# Ensure the compiled JavaScript is available to the client via symbolic link.
+ln -s "$PWD/output" "$PWD/../client/public/js/output"
 
 # Then, start the server.
 #
