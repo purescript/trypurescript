@@ -14,3 +14,4 @@ cabal.sandbox.config
 *.chs.h
 *.lksh*
 bundle/
+client/public/js/output
