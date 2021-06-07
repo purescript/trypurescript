@@ -14,6 +14,8 @@ Other improvements:
 - Stop mangled 'Compiled ModuleName' output (#228 by @JordanMartinez)
 - Update dev instructions: create valid symbolic link across OSes (#226 by @JordanMartinez)
 - Added a changelog (#229 by @JordanMartinez)
+- Update PureScript dependency to v0.14.2 (#230 by @JordanMartinez)
+- Speed up server slightly by using `rebuildModule'` (#230 by @JordanMartinez)
 
 ## [v2021-05-29.1](https://github.com/purescript/trypurescript/releases/tag/v2021-05-29.1) - 2021-05-29
 

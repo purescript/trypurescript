@@ -113,8 +113,8 @@ buildMakeActions codegenRef =
   outputPrimDocs :: Make.Make ()
   outputPrimDocs = pure ()
 
-server :: [P.ExternsFile] -> P.Environment -> Int -> IO ()
-server externs initEnv port = do
+server :: [P.ExternsFile] -> P.Env -> P.Environment -> Int -> IO ()
+server externs initNamesEnv initEnv port = do
   codegenRef <- IORef.newIORef Nothing
   let makeActions = buildMakeActions codegenRef
   let compile :: Text -> IO (Either Error ([P.JSONError], JS))
@@ -130,7 +130,7 @@ server externs initEnv port = do
                 return $ Left $ toCompilerErrors parserErrors
 
               (parserWarnings, Right m) | P.getModuleName m == P.ModuleName "Main" -> do
-                (makeResult, warnings) <- Make.runMake P.defaultOptions $ Make.rebuildModule makeActions externs m
+                (makeResult, warnings) <- Make.runMake P.defaultOptions $ Make.rebuildModule' makeActions initNamesEnv externs m
                 codegenResult <- IORef.readIORef codegenRef
                 return $ case makeResult of
                   Left errors ->
@@ -235,7 +235,9 @@ main = do
   inputFiles <- concat <$> traverse glob inputGlobs
   e <- runExceptT $ do
     modules <- ExceptT $ I.loadAllModules inputFiles
-    ExceptT . I.runMake . I.make $ map (second CST.pureResult) modules
+    (exts, env) <- ExceptT . I.runMake . I.make $ map (second CST.pureResult) modules
+    namesEnv <- fmap fst . runWriterT $ foldM P.externsEnv P.primEnv exts
+    pure (exts, namesEnv, env)
   case e of
     Left err -> print err >> exitFailure
-    Right (exts, env) -> server exts env port
+    Right (exts, namesEnv, env) -> server exts namesEnv env port
