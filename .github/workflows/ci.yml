@@ -47,6 +47,7 @@ jobs:
         uses: actions/upload-artifact@v2
         # if: github.event_name == 'release' && github.event.action == 'created'
         with:
+          name: ${{ env.SERVER_ASSET }}.tar.gz
           path: ${{ env.SERVER_ASSET }}.tar.gz
           retention-days: 1
 
@@ -77,6 +78,7 @@ jobs:
         uses: actions/upload-artifact@v2
         # if: github.event_name == 'release' && github.event.action == 'created'
         with:
+          name: ${{ env.CLIENT_ASSET }}.tar.gz
           path: ${{ env.CLIENT_ASSET }}.tar.gz
           retention-days: 1
 
