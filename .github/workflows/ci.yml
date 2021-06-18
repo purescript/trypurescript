@@ -5,10 +5,11 @@ on:
     branches: [master]
   pull_request:
 
+env:
+  SERVER_ASSET: trypurescript-server
+  CLIENT_ASSET: trypurescript-client
+
 jobs:
-  env:
-    SERVER_ASSET: trypurescript-server
-    CLIENT_ASSET: trypurescript-client
   build_server:
     name: Build server
     runs-on: ubuntu-latest
