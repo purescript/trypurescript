@@ -34,7 +34,7 @@ jobs:
           timeout 45m stack --no-terminal -j1 build
 
       - name: Build server assets
-        # if: github.event_name == 'release' && github.event.action == 'created'
+        if: github.event_name == 'release' && github.event.action == 'created'
         run: |
           mkdir ${{ env.SERVER_ASSET }}
           cp $(stack path --dist-dir)/build/trypurescript/trypurescript ${{ env.SERVER_ASSET }}/
@@ -45,7 +45,7 @@ jobs:
 
       - name: Persist server assets
         uses: actions/upload-artifact@v2
-        # if: github.event_name == 'release' && github.event.action == 'created'
+        if: github.event_name == 'release' && github.event.action == 'created'
         with:
           name: ${{ env.SERVER_ASSET }}.tar.gz
           path: ${{ env.SERVER_ASSET }}.tar.gz
@@ -67,7 +67,7 @@ jobs:
           npm run build:production
 
       - name: Build client assets
-        # if: github.event_name == 'release' && github.event.action == 'created'
+        if: github.event_name == 'release' && github.event.action == 'created'
         run: |
           mkdir ${{ env.CLIENT_ASSET }}
           cp LICENSE ${{ env.CLIENT_ASSET }}/
@@ -76,7 +76,7 @@ jobs:
 
       - name: Persist client assets
         uses: actions/upload-artifact@v2
-        # if: github.event_name == 'release' && github.event.action == 'created'
+        if: github.event_name == 'release' && github.event.action == 'created'
         with:
           name: ${{ env.CLIENT_ASSET }}.tar.gz
           path: ${{ env.CLIENT_ASSET }}.tar.gz
@@ -85,7 +85,7 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    # if: github.event_name == 'release' && github.event.action == 'created'
+    if: github.event_name == 'release' && github.event.action == 'created'
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     needs:
