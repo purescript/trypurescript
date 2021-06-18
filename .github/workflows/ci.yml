@@ -1,0 +1,116 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+  release:
+    types: [published]
+
+
+env:
+  SERVER_ASSET: trypurescript-server
+  CLIENT_ASSET: trypurescript-client
+
+jobs:
+  build_server:
+    name: Build server
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - uses: haskell/actions/setup@v1
+        with:
+          enable-stack: true
+          stack-version: "2.5.1"
+          stack-no-global: true
+
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.stack
+            .stack-work
+          key: ${{ runner.os }}-stack-${{ hashFiles('stack.yaml.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-stack
+
+      - name: Build server code
+        run: |
+          stack --no-terminal -j1 build
+
+      - name: Build server assets
+        if: github.event_name == 'release'
+        run: |
+          mkdir ${{ env.SERVER_ASSET }}
+          cp $(stack path --dist-dir)/build/trypurescript/trypurescript ${{ env.SERVER_ASSET }}/
+          cp LICENSE ${{ env.SERVER_ASSET }}/
+          cp -r deploy/ ${{ env.SERVER_ASSET }}/
+          cp -r staging/ ${{ env.SERVER_ASSET}}/
+          tar czf ${{ env.SERVER_ASSET }}.tar.gz -C ${{ env.SERVER_ASSET }}/ .
+
+      - name: Persist server assets
+        uses: actions/upload-artifact@v2
+        if: github.event_name == 'release'
+        with:
+          name: ${{ env.SERVER_ASSET }}.tar.gz
+          path: ${{ env.SERVER_ASSET }}.tar.gz
+          retention-days: 1
+
+  build_client:
+    name: Build client
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+
+      - name: Build client code
+        run: |
+          cd client
+          npm install
+          npm run build
+          npm run test
+          npm run build:production
+
+      - name: Build client assets
+        if: github.event_name == 'release'
+        run: |
+          mkdir ${{ env.CLIENT_ASSET }}
+          cp LICENSE ${{ env.CLIENT_ASSET }}/
+          cp -r client/public/ ${{ env.CLIENT_ASSET }}/
+          tar czf ${{ env.CLIENT_ASSET }}.tar.gz -C ${{ env.CLIENT_ASSET }}/ .
+
+      - name: Persist client assets
+        uses: actions/upload-artifact@v2
+        if: github.event_name == 'release'
+        with:
+          name: ${{ env.CLIENT_ASSET }}.tar.gz
+          path: ${{ env.CLIENT_ASSET }}.tar.gz
+          retention-days: 1
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    needs:
+      - build_server
+      - build_client
+    steps:
+      - name: Retrieve server assets
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ env.SERVER_ASSET }}.tar.gz
+
+      - name: Retrieve client assets
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ env.CLIENT_ASSET }}.tar.gz
+
+      - name: Upload server and client assets
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ${{ env.SERVER_ASSET }}.tar.gz
+            ${{ env.CLIENT_ASSET }}.tar.gz
