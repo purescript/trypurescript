@@ -15,7 +15,17 @@ jobs:
         with:
           enable-stack: true
           stack-setup-ghc: true
-      - run: |
+
+      - name: Cache stack
+        uses: actions/cache@v1
+        with:
+          path: $HOME/.stack
+          key: ${{ runner.os }}-${{ hashFiles('stack.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-
+
+      - name: Build server code
+        run: |
           timeout 35m stack --no-terminal -j1 build
 
   build_client:
@@ -24,7 +34,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
-      - run: |
+
+      - name: Build client code
+        run: |
           cd client
           npm install
           npm run build
@@ -34,7 +46,7 @@ jobs:
   upload_server:
     name: Upload server asset
     runs-on: ubuntu-latest
-    if: github.event_name == 'release' && github.event.action == 'created'
+    # if: github.event_name == 'release' && github.event.action == 'created'
     needs: build_server
     steps:
       - uses: actions/checkout@v2
@@ -49,20 +61,21 @@ jobs:
           cp -r deploy/ server-bundle/
           cp -r staging/ server-bundle/
           tar czf trypurescript-server.tar.gz -C server-bundle/ .
+          ls
 
   upload_client:
     name: Upload client assets
     runs-on: ubuntu-latest
-    if: github.event_name == 'release' && github.event.action == 'created'
+    # if: github.event_name == 'release' && github.event.action == 'created'
     needs: build_client
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
       - run: |
           mkdir client-bundle
           cp LICENSE client-bundle/
           cp -r client/public/ client-bundle/
           tar czf trypurescript-client.tar.gz -C client-bundle/ .
+          ls
 
   release:
     name: Release
