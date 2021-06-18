@@ -14,7 +14,6 @@ jobs:
       - uses: haskell/actions/setup@v1
         with:
           enable-stack: true
-          stack-setup-ghc: true
 
       - name: Cache stack
         uses: actions/cache@v1
@@ -26,7 +25,7 @@ jobs:
 
       - name: Build server code
         run: |
-          timeout 35m stack --no-terminal -j1 build
+          timeout 45m stack --no-terminal -j1 build
 
   build_client:
     name: Build client
@@ -44,7 +43,7 @@ jobs:
           npm run build:production
 
   upload_server:
-    name: Upload server asset
+    name: Build server assets
     runs-on: ubuntu-latest
     # if: github.event_name == 'release' && github.event.action == 'created'
     needs: build_server
@@ -64,7 +63,7 @@ jobs:
           ls
 
   upload_client:
-    name: Upload client assets
+    name: Build client assets
     runs-on: ubuntu-latest
     # if: github.event_name == 'release' && github.event.action == 'created'
     needs: build_client
