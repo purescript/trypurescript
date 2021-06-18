@@ -12,6 +12,10 @@ Bugfixes:
 
 Other improvements:
 
+## [v2021-06-18.1](https://github.com/purescript/trypurescript/releases/tag/v2021-06-18.1) - 2021-06-18
+
+Other improvements:
+
 - Migrated CI to GitHub Actions (#232 by @thomashoneyman)
 - Fixed mangled 'Compiled ModuleName' output (#228 by @JordanMartinez)
 - Updated dev instructions: create valid symbolic link across OSes (#226 by @JordanMartinez)
