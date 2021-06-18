@@ -1,13 +1,18 @@
 name: CI
 
 on:
+  pull_request:
   push:
     branches: [master]
-  pull_request:
+  release:
+    types: [published]
+
 
 env:
   SERVER_ASSET: trypurescript-server
   CLIENT_ASSET: trypurescript-client
+  CI_RELEASE: "${{ github.event_name == 'release' }}"
+  
 
 jobs:
   build_server:
@@ -15,9 +20,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      
       - uses: haskell/actions/setup@v1
         with:
           enable-stack: true
+          stack-version: "2.5.1"
+          stack-no-global: true
 
       - name: Cache dependencies
         uses: actions/cache@v2
@@ -31,10 +39,10 @@ jobs:
 
       - name: Build server code
         run: |
-          timeout 45m stack --no-terminal -j1 build
+          stack --no-terminal -j1 build
 
       - name: Build server assets
-        if: github.event_name == 'release' && github.event.action == 'created'
+        if: "${{ env.CI_RELEASE == 'true' }}"
         run: |
           mkdir ${{ env.SERVER_ASSET }}
           cp $(stack path --dist-dir)/build/trypurescript/trypurescript ${{ env.SERVER_ASSET }}/
@@ -45,7 +53,7 @@ jobs:
 
       - name: Persist server assets
         uses: actions/upload-artifact@v2
-        if: github.event_name == 'release' && github.event.action == 'created'
+        if: "${{ env.CI_RELEASE == 'true' }}"
         with:
           name: ${{ env.SERVER_ASSET }}.tar.gz
           path: ${{ env.SERVER_ASSET }}.tar.gz
@@ -67,7 +75,7 @@ jobs:
           npm run build:production
 
       - name: Build client assets
-        if: github.event_name == 'release' && github.event.action == 'created'
+        if: "${{ env.CI_RELEASE == 'true' }}"
         run: |
           mkdir ${{ env.CLIENT_ASSET }}
           cp LICENSE ${{ env.CLIENT_ASSET }}/
@@ -76,7 +84,7 @@ jobs:
 
       - name: Persist client assets
         uses: actions/upload-artifact@v2
-        if: github.event_name == 'release' && github.event.action == 'created'
+        if: "${{ env.CI_RELEASE == 'true' }}"
         with:
           name: ${{ env.CLIENT_ASSET }}.tar.gz
           path: ${{ env.CLIENT_ASSET }}.tar.gz
@@ -85,7 +93,7 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    if: github.event_name == 'release' && github.event.action == 'created'
+    if: "${{ env.CI_RELEASE == 'true' }}"
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     needs:
