@@ -26,10 +26,9 @@ jobs:
       - uses: actions/setup-node@v2
       - run: |
           cd client
-          npm install -g bower
           npm install
-          bower install --production
-          npm run -s test
+          npm run build
+          npm run test
           npm run build:production
 
   upload_server:
