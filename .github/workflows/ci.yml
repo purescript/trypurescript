@@ -6,6 +6,9 @@ on:
   pull_request:
 
 jobs:
+  env:
+    SERVER_ASSET: trypurescript-server
+    CLIENT_ASSET: trypurescript-client
   build_server:
     name: Build server
     runs-on: ubuntu-latest
@@ -27,6 +30,22 @@ jobs:
         run: |
           timeout 45m stack --no-terminal -j1 build
 
+      - name: Build server assets
+        # if: github.event_name == 'release' && github.event.action == 'created'
+        run: |
+          mkdir ${{ env.SERVER_ASSET }}
+          cp $(stack path --dist-dir)/build/trypurescript/trypurescript ${{ env.SERVER_ASSET }}/
+          cp LICENSE ${{ env.SERVER_ASSET }}/
+          cp -r deploy/ ${{ env.SERVER_ASSET }}/
+          cp -r staging/ ${{ env.SERVER_ASSET}}/
+          tar czf ${{ env.SERVER_ASSET }}.tar.gz -C ${{ env.SERVER_ASSET }}/ .
+
+      - name: Persist server assets
+        uses: actions/upload-artifact@v2
+        # if: github.event_name == 'release' && github.event.action == 'created'
+        with:
+          path: ${{ env.SERVER_ASSET }}.tar.gz
+
   build_client:
     name: Build client
     runs-on: ubuntu-latest
@@ -42,39 +61,19 @@ jobs:
           npm run test
           npm run build:production
 
-  upload_server:
-    name: Build server assets
-    runs-on: ubuntu-latest
-    # if: github.event_name == 'release' && github.event.action == 'created'
-    needs: build_server
-    steps:
-      - uses: actions/checkout@v2
-      - uses: haskell/actions/setup@v1
-        with:
-          enable-stack: true
-          stack-setup-ghc: true
-      - run: |
-          mkdir server-bundle
-          cp $(stack path --dist-dir)/build/trypurescript/trypurescript server-bundle/
-          cp LICENSE server-bundle/
-          cp -r deploy/ server-bundle/
-          cp -r staging/ server-bundle/
-          tar czf trypurescript-server.tar.gz -C server-bundle/ .
-          ls
+      - name: Build client assets
+        # if: github.event_name == 'release' && github.event.action == 'created'
+        run: |
+          mkdir ${{ env.CLIENT_ASSET }}
+          cp LICENSE ${{ env.CLIENT_ASSET }}/
+          cp -r client/public/ ${{ env.CLIENT_ASSET }}/
+          tar czf ${{ env.CLIENT_ASSET }}.tar.gz -C ${{ env.CLIENT_ASSET }}/ .
 
-  upload_client:
-    name: Build client assets
-    runs-on: ubuntu-latest
-    # if: github.event_name == 'release' && github.event.action == 'created'
-    needs: build_client
-    steps:
-      - uses: actions/checkout@v2
-      - run: |
-          mkdir client-bundle
-          cp LICENSE client-bundle/
-          cp -r client/public/ client-bundle/
-          tar czf trypurescript-client.tar.gz -C client-bundle/ .
-          ls
+      - name: Persist client assets
+        uses: actions/upload-artifact@v2
+        # if: github.event_name == 'release' && github.event.action == 'created'
+        with:
+          path: ${{ env.CLIENT_ASSET }}.tar.gz
 
   release:
     name: Release
@@ -83,11 +82,22 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     needs:
-      - upload_server
-      - upload_client
+      - build_server
+      - build_client
     steps:
-      - uses: softprops/action-gh-release@v1
+      - name: Retrieve server assets
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ env.SERVER_ASSET }}.tar.gz
+
+      - name: Retrieve client assets
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ env.CLIENT_ASSET }}.tar.gz
+
+      - name: Upload server and client assets
+        uses: softprops/action-gh-release@v1
         with:
           files: |
-            trypurescript-server.tar.gz
-            trypurescript-client.tar.gz
+            ${{ env.SERVER_ASSET }}.tar.gz
+            ${{ env.CLIENT_ASSET }}.tar.gz
