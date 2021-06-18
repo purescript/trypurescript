@@ -43,12 +43,12 @@ jobs:
           enable-stack: true
           stack-setup-ghc: true
       - run: |
-          mkdir bundle
-          cp $(stack path --dist-dir)/build/trypurescript/trypurescript bundle/
-          cp LICENSE bundle/
-          cp -r deploy/ bundle/
-          cp -r staging/ bundle/
-          tar czf trypurescript-server.tar.gz -C bundle/ .
+          mkdir server-bundle
+          cp $(stack path --dist-dir)/build/trypurescript/trypurescript server-bundle/
+          cp LICENSE server-bundle/
+          cp -r deploy/ server-bundle/
+          cp -r staging/ server-bundle/
+          tar czf trypurescript-server.tar.gz -C server-bundle/ .
 
   upload_client:
     name: Upload client assets
@@ -59,10 +59,10 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
       - run: |
-          mkdir bundle
-          cp LICENSE bundle/
-          cp -r client/public/ bundle/
-          tar czf trypurescript-client.tar.gz -C bundle/ .
+          mkdir client-bundle
+          cp LICENSE client-bundle/
+          cp -r client/public/ client-bundle/
+          tar czf trypurescript-client.tar.gz -C client-bundle/ .
 
   release:
     name: Release
