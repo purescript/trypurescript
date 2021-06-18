@@ -45,6 +45,7 @@ jobs:
         # if: github.event_name == 'release' && github.event.action == 'created'
         with:
           path: ${{ env.SERVER_ASSET }}.tar.gz
+          retention-days: 1
 
   build_client:
     name: Build client
@@ -74,6 +75,7 @@ jobs:
         # if: github.event_name == 'release' && github.event.action == 'created'
         with:
           path: ${{ env.CLIENT_ASSET }}.tar.gz
+          retention-days: 1
 
   release:
     name: Release
