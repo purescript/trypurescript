@@ -11,7 +11,6 @@ on:
 env:
   SERVER_ASSET: trypurescript-server
   CLIENT_ASSET: trypurescript-client
-  CI_RELEASE: ${{ github.event_name == 'release' }}
 
 jobs:
   build_server:
@@ -41,7 +40,7 @@ jobs:
           stack --no-terminal -j1 build
 
       - name: Build server assets
-        if: ${{ env.CI_RELEASE == 'true' }}
+        if: github.event_name == 'release'
         run: |
           mkdir ${{ env.SERVER_ASSET }}
           cp $(stack path --dist-dir)/build/trypurescript/trypurescript ${{ env.SERVER_ASSET }}/
@@ -52,7 +51,7 @@ jobs:
 
       - name: Persist server assets
         uses: actions/upload-artifact@v2
-        if: ${{ env.CI_RELEASE == 'true' }}
+        if: github.event_name == 'release'
         with:
           name: ${{ env.SERVER_ASSET }}.tar.gz
           path: ${{ env.SERVER_ASSET }}.tar.gz
@@ -74,7 +73,7 @@ jobs:
           npm run build:production
 
       - name: Build client assets
-        if: ${{ env.CI_RELEASE == 'true' }}
+        if: github.event_name == 'release'
         run: |
           mkdir ${{ env.CLIENT_ASSET }}
           cp LICENSE ${{ env.CLIENT_ASSET }}/
@@ -83,7 +82,7 @@ jobs:
 
       - name: Persist client assets
         uses: actions/upload-artifact@v2
-        if: ${{ env.CI_RELEASE == 'true' }}
+        if: github.event_name == 'release'
         with:
           name: ${{ env.CLIENT_ASSET }}.tar.gz
           path: ${{ env.CLIENT_ASSET }}.tar.gz
@@ -92,7 +91,7 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    if: ${{ env.CI_RELEASE == 'true' }}
+    if: github.event_name == 'release'
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     needs:
