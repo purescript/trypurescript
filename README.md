@@ -1,6 +1,6 @@
 # Try PureScript
 
-[![Build Status](https://api.travis-ci.org/purescript/trypurescript.svg?branch=master)](http://travis-ci.org/purescript/trypurescript)
+[![Build Status](https://github.com/purescript/trypurescript/workflows/CI/badge.svg?branch=master)](https://github.com/purescript/trypurescript/actions?query=workflow%3ACI+branch%3Amaster)
 
 [Try PureScript](https://try.purescript.org) is an online PureScript code editor for quickly experimenting with PureScript code snippets and ideas. It consists of a client and a server component, both of which live within this repository.
 
