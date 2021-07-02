@@ -35,8 +35,7 @@ jobs:
           key: ${{ runner.os }}-stack-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('trypurescript.cabal') }}
 
       - name: Build server code
-        run: |
-          stack --no-terminal -j1 build
+        run: stack --no-terminal -j1 build
 
       - name: Build server assets
         if: github.event_name == 'release'
