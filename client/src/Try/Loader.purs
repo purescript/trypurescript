@@ -45,7 +45,7 @@ type Dependency =
   }
 
 requireRegex :: Regex
-requireRegex = unsafeRegex """^var\s+\S+\s*=\s*require\(["']([^"']*)["']\)""" noFlags
+requireRegex = unsafeRegex """^(?:const|var)\s+\S+\s*=\s*require\(["']([^"']*)["']\)""" noFlags
 
 dirname :: String -> String
 dirname path = fromMaybe "" do

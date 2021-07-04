@@ -9,6 +9,7 @@ Breaking changes:
 New features:
 
 Bugfixes:
+- Support use of JS `const` keyword in `requireRegex` (#237 by @ptrfrncsmrph)
 
 Other improvements:
 
