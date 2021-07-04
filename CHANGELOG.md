@@ -9,9 +9,13 @@ Breaking changes:
 New features:
 
 Bugfixes:
-- Support use of JS `const` keyword in `requireRegex` (#237 by @ptrfrncsmrph)
 
 Other improvements:
+
+## [v2021-07-04.1](https://github.com/purescript/trypurescript/releases/tag/v2021-07-04.1) - 2021-07-04
+
+Bugfixes:
+- Support use of JS `const` keyword in `requireRegex` (#237 by @ptrfrncsmrph)
 
 ## [v2021-06-18.1](https://github.com/purescript/trypurescript/releases/tag/v2021-06-18.1) - 2021-06-18
 
