@@ -12,6 +12,8 @@ Bugfixes:
 
 Other improvements:
 
+- Update to build against PureScript 0.14.3 (#237 by @thomashoneyman)
+
 ## [v2021-07-04.1](https://github.com/purescript/trypurescript/releases/tag/v2021-07-04.1) - 2021-07-04
 
 Bugfixes:

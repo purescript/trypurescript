@@ -82,8 +82,6 @@ These steps should be performed whether you are working on the server, the clien
 # Clone into the repository
 git clone git@github.com:purescript/trypurescript.git
 cd trypurescript
-
-
 ```
 
 ### 2. Local compile server setup
