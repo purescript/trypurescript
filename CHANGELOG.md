@@ -12,6 +12,11 @@ Bugfixes:
 
 Other improvements:
 
+## [v2021-08-23.1](https://github.com/purescript/trypurescript/releases/tag/v2021-08-23.1) - 2021-08-23
+
+Other improvements:
+- Update to the August 23, 2021 package set (#252 by @thomashoneyman)
+
 ## [v2021-07-07.1](https://github.com/purescript/trypurescript/releases/tag/v2021-07-07.1) - 2021-07-07
 
 Other improvements:
