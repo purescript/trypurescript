@@ -10,6 +10,8 @@ New features:
 
 Bugfixes:
 
+## [v2021-08-25.1](https://github.com/purescript/trypurescript/releases/tag/v2021-08-25.1) - 2021-08-25
+
 Other improvements:
 - Update `purescript` dependency to `0.14.4` (#253 by @JordanMartinez)
 
