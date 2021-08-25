@@ -11,6 +11,7 @@ New features:
 Bugfixes:
 
 Other improvements:
+- Update `purescript` dependency to `0.14.4` (#253 by @JordanMartinez)
 
 ## [v2021-08-23.1](https://github.com/purescript/trypurescript/releases/tag/v2021-08-23.1) - 2021-08-23
 
