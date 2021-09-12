@@ -20,7 +20,7 @@ module TryPureScript
 import Prelude
 import Data.Foldable (class Foldable, foldMap)
 import Data.String (joinWith)
-import Data.String.Common (replace)
+import Data.String.Common (replaceAll)
 import Data.String.Pattern (Pattern(..), Replacement(..))
 import Effect (Effect)
 
@@ -28,10 +28,10 @@ foreign import setInnerHTML :: String -> Effect Unit
 
 encode :: String -> String
 encode =
-  replace (Pattern "<") (Replacement "&lt;")
-  <<< replace (Pattern ">") (Replacement "&gt;")
-  <<< replace (Pattern "&") (Replacement "&amp;")
-  <<< replace (Pattern "\"") (Replacement "&quot;")
+  replaceAll (Pattern "<") (Replacement "&lt;")
+  <<< replaceAll (Pattern ">") (Replacement "&gt;")
+  <<< replaceAll (Pattern "&") (Replacement "&amp;")
+  <<< replaceAll (Pattern "\"") (Replacement "&quot;")
 
 foreign import withConsoleImpl
   :: forall a
