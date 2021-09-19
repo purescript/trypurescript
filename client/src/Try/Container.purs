@@ -12,9 +12,10 @@ import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Maybe (Maybe(..), fromMaybe, isNothing)
 import Data.Symbol (SProxy(..))
 import Effect (Effect)
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, makeAff)
+import Effect.Aff as Aff
 import Effect.Class.Console (error)
-import Effect.Uncurried (EffectFn1, runEffectFn1)
+import Effect.Uncurried (EffectFn3, runEffectFn3)
 import Foreign.Object (Object)
 import Foreign.Object as Object
 import Halogen as H
@@ -85,7 +86,9 @@ _editor = SProxy
 loader :: Loader
 loader = makeLoader Config.loaderUrl
 
-foreign import setupIFrame :: EffectFn1 (Object JS) Unit
+type LoadCb = Effect Unit
+type FailCb = Effect Unit
+foreign import setupIFrame :: EffectFn3 (Object JS) LoadCb FailCb Unit
 foreign import teardownIFrame :: Effect Unit
 
 component :: forall q i o. H.Component HH.HTML q i o Aff
@@ -182,7 +185,7 @@ component = H.mkComponent
                   pure unit
 
         Right (Right res@(CompileSuccess { js, warnings })) -> do
-          { settings } <- H.modify _ { compiled = Just (Right res) }
+          { settings } <- H.get
           if settings.showJs then
             H.liftEffect teardownIFrame
           else do
@@ -193,7 +196,10 @@ component = H.mkComponent
               pure unit
             for_ mbSources \sources -> do
               let eventData = Object.insert "<file>" (JS js) sources
-              H.liftEffect $ runEffectFn1 setupIFrame eventData
+              H.liftAff $ makeAff \f -> do 
+                runEffectFn3 setupIFrame eventData (f (Right unit)) (f (Left $ Aff.error "Could not load iframe"))
+                mempty
+            H.modify_ _ { compiled = Just (Right res) }
 
     HandleEditor (Editor.TextChanged text) -> do
       _ <- H.fork $ handleAction $ Cache text
