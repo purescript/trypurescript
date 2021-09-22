@@ -29,15 +29,14 @@
         $ctr.remove()
       }
 
-      function setupIFrame(data) {
+      function setupIFrame(data, loadCb, failCb) {
         var $ctr = $("#column2");
         var $iframe = $(
           '<iframe sandbox="allow-scripts allow-forms" id="output-iframe" src="frame.html">'
         );
-
         $ctr.empty().append($iframe);
-
         var tries = 0;
+        
         var sendSources = setInterval(function () {
           // Stop after 10 seconds
           if (tries >= 100) {
@@ -47,7 +46,9 @@
           var iframe = $iframe.get(0).contentWindow;
           if (iframe) {
             iframe.postMessage(data, "*");
+            loadCb();
           } else {
+            failCb();
             console.warn("Frame is not available");
           }
         }, 100);
