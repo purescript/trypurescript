@@ -10,6 +10,7 @@ New features:
 
 Bugfixes:
 - Fixed `encode` not replacing all instances of special characters (#254 by @jy14898)
+- Fixed up-to-five-second hangs between the loading icon disappearing and the content rendering (#256 @mikesol)
 
 ## [v2021-08-25.1](https://github.com/purescript/trypurescript/releases/tag/v2021-08-25.1) - 2021-08-25
 
