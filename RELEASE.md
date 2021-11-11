@@ -2,7 +2,7 @@
 
 ## Instructions for Redeploying Try PureScript
 
-After making a new compiler release, do the following to redeploy Pursuit using the new compiler.
+After making a new compiler release, do the following to redeploy Try PureScript using the new compiler.
 
 1. Submit a PR with the following changes:
     - In `stack.yaml`, update `purescript` (and possibly `purescript-cst`) to use its new version.
