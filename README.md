@@ -47,30 +47,7 @@ Most of these features can be controlled not only from the toolbar, but also usi
 
 ### Which Libraries Are Available?
 
-Try PureScript aims to provide a complete, recent package set from <https://github.com/purescript/package-sets>. The available libraries are those listed in `staging/spago.dhall`, at the versions in the package set mentioned in `staging/packages.dhall`.
-
-To update to a more recent package set, first update the `upstream` package set in `staging/packages.dhall`:
-
-```
-$ spago upgrade-set
-```
-
-Then, set the dependencies key in the `spago.dhall` file to be an empty list. This will require a type annotation of `List Text`:
-
-```dhall
-{ name = "try-purescript-server"
-, dependencies = [] : List Text
-, ...
-}
-```
-
-Finally, run this command to install every package in the package set:
-
-```
-$ spago ls packages | cut -f 1 -d ' ' | xargs spago install
-```
-
-Before deploying an updated package set, someone (your reviewer) should check that the memory required to hold the package set's externs files does not exceed that of the try.purescript.org server.
+Try PureScript aims to provide a complete, recent package set from <https://github.com/purescript/package-sets>. The available libraries are those listed in [`staging/spago.dhall`](./staging/spago.dhall), at the versions in the package set mentioned in [`staging/packages.dhall`](./staging/packages.dhall).
 
 ## Development
 
