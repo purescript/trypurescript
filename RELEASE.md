@@ -22,10 +22,10 @@ Update the package set by doing the following:
 1. Update the `upstream` package set in `staging/packages.dhall`:
 
         ```
-        $ pushd staging && spago upgrade-set && popd
+        $ cd staging && spago upgrade-set
         ```
 
-2. Set the `dependencies` key in the `spago.dhall` file to be an empty list. This will require a type annotation of `List Text`:
+2. Set the `dependencies` key in the `staging/spago.dhall` file to be an empty list. This will require a type annotation of `List Text`:
 
         ```dhall
         { name = "try-purescript-server"
@@ -38,4 +38,16 @@ Update the package set by doing the following:
 
         ```
         $ spago ls packages | cut -f 1 -d ' ' | xargs spago install
+        ```
+
+4. Compile all packages in the package set
+
+        ```
+        $ spago build
+        ```
+
+5. Calculate the size of the `staging/output` directory
+
+        ```
+        $ du --human-readable --max-depth=0 output/
         ```
