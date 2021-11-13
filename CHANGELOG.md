@@ -9,6 +9,17 @@ Breaking changes:
 New features:
 
 Bugfixes:
+
+Other improvements:
+- Update package set to `psc-0.14.5-20211111` (#259 by @JordanMartinez)
+
+## [v2021-11-11.1](https://github.com/purescript/trypurescript/releases/tag/v2021-11-11.1)
+
+Breaking changes:
+
+New features:
+
+Bugfixes:
 - Fixed `encode` not replacing all instances of special characters (#254 by @jy14898)
 - Fixed up-to-five-second hangs between the loading icon disappearing and the content rendering (#256 @mikesol)
 
