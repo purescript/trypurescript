@@ -30,8 +30,8 @@ encode :: String -> String
 encode =
   replaceAll (Pattern "<") (Replacement "&lt;")
   <<< replaceAll (Pattern ">") (Replacement "&gt;")
-  <<< replaceAll (Pattern "&") (Replacement "&amp;")
   <<< replaceAll (Pattern "\"") (Replacement "&quot;")
+  <<< replaceAll (Pattern "&") (Replacement "&amp;") -- must be replaced before all the others!
 
 foreign import withConsoleImpl
   :: forall a
