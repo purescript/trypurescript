@@ -11,7 +11,16 @@ New features:
 Bugfixes:
 
 Other improvements:
-- Update package set to `psc-0.14.5-20211111` (#260 by @JordanMartinez)
+
+## [v2021-11-30.1](https://github.com/purescript/trypurescript/releases/tag/v2021-11-11.1)
+
+Breaking changes:
+
+New features:
+
+Bugfixes:
+
+Other improvements:
 - Fix double-encoding of quotation marks (#261 by @rhendric)
 
 ## [v2021-11-11.1](https://github.com/purescript/trypurescript/releases/tag/v2021-11-11.1)
@@ -26,6 +35,7 @@ Bugfixes:
 
 Other improvements:
 - Update `purescript` dependency to `0.14.5` (#257 by @JordanMartinez)
+- Update package set to `psc-0.14.5-20211111` (#260 by @JordanMartinez)
 
 ## [v2021-08-25.1](https://github.com/purescript/trypurescript/releases/tag/v2021-08-25.1) - 2021-08-25
 
