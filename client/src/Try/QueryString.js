@@ -9,5 +9,5 @@ exports.setQueryParameters = function(params) {
     return key + '=' + encodeURIComponent(params[key].replace('/', ''));
   }).join('&');
 
-  window.location.search = '?' + encodedParams;
+  window.history.replaceState(null, '', '?' + encodedParams);
 };
