@@ -7,7 +7,6 @@ module Try.Loader
 import Prelude
 
 import Control.Bind (bindFlipped)
-import Control.Monad.Except (ExceptT)
 import Control.Parallel (parTraverse)
 import Data.Array as Array
 import Data.Array.NonEmpty as NonEmpty
@@ -21,7 +20,7 @@ import Data.String.Regex.Flags (noFlags)
 import Data.String.Regex.Unsafe (unsafeRegex)
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, throwError)
 import Effect.Class (liftEffect)
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
@@ -29,6 +28,7 @@ import Effect.Unsafe (unsafePerformEffect)
 import Foreign.Object (Object)
 import Foreign.Object as Object
 import Try.API as API
+import Try.App (AppT, Error(..))
 import Try.Shim (shims)
 import Try.Types (JS(..))
 
@@ -75,9 +75,9 @@ parseDeps current = Array.mapMaybe go <<< String.split (Pattern "\n") <<< unwrap
         , path: Nothing
         }
 
-newtype Loader = Loader (JS -> ExceptT String Aff (Object JS))
+newtype Loader = Loader (JS -> AppT Aff (Object JS))
 
-runLoader :: Loader -> JS -> ExceptT String Aff (Object JS)
+runLoader :: Loader -> JS -> AppT Aff (Object JS)
 runLoader (Loader k) = k
 
 makeLoader :: String -> Loader
@@ -92,7 +92,7 @@ makeLoader rootPath = Loader (go Object.empty <<< parseDeps "<file>")
   getModule :: String -> Effect (Maybe Module)
   getModule a = Object.lookup a <$> Ref.read moduleCache
 
-  load :: Dependency -> ExceptT String Aff Module
+  load :: Dependency -> AppT Aff Module
   load { name, path } = do
     cached <- liftEffect $ getModule name
     case cached of
@@ -112,11 +112,11 @@ makeLoader rootPath = Loader (go Object.empty <<< parseDeps "<file>")
                   deps = { name: _, path: Nothing } <$> shim.deps
                 pure { name, path, deps, src }
               Nothing ->
-                pure { name, path, deps: [], src: ffiDep name }
+                throwError (FFIErrors (NonEmpty.singleton name))
         liftEffect $ putModule name mod
         pure mod
 
-  go :: Object JS -> Array Dependency -> ExceptT String Aff (Object JS)
+  go :: Object JS -> Array Dependency -> AppT Aff (Object JS)
   go ms []   = pure ms
   go ms deps = do
     modules <- parTraverse load deps
@@ -130,6 +130,3 @@ makeLoader rootPath = Loader (go Object.empty <<< parseDeps "<file>")
       # bindFlipped _.deps
       # Array.nubBy (comparing _.name)
       # go ms'
-
-ffiDep :: String -> JS
-ffiDep name = JS $ "throw new Error('FFI dependency not provided: " <> name <> "');"

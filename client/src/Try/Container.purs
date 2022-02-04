@@ -6,10 +6,13 @@ import Ace (Annotation)
 import Control.Monad.Except (runExceptT)
 import Data.Array (fold)
 import Data.Array as Array
-import Data.Either (Either(..), hush)
-import Data.Foldable (for_, oneOf)
+import Data.Array.NonEmpty (NonEmptyArray)
+import Data.Array.NonEmpty as NonEmpty
+import Data.Either (Either(..))
+import Data.Foldable (for_, length, oneOf)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Maybe (Maybe(..), fromMaybe, isNothing)
+import Data.String (joinWith)
 import Data.Symbol (SProxy(..))
 import Effect (Effect)
 import Effect.Aff (Aff, makeAff)
@@ -24,6 +27,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Try.API (CompileError(..), CompileResult(..), CompilerError, ErrorPosition)
 import Try.API as API
+import Try.App (Error(..), runAppT)
 import Try.Config as Config
 import Try.Editor (MarkerType(..), toStringMarkerType)
 import Try.Editor as Editor
@@ -57,6 +61,7 @@ type State =
   { settings :: Settings
   , sourceFile :: Maybe SourceFile
   , compiled :: Maybe (Either String CompileResult)
+  , ffiErrors :: Maybe (NonEmptyArray String)
   }
 
 data ViewMode
@@ -106,6 +111,7 @@ component = H.mkComponent
     { settings: defaultSettings
     , sourceFile: Nothing
     , compiled: Nothing
+    , ffiErrors: Nothing
     }
 
   handleAction :: Action -> H.HalogenM State Action Slots o Aff Unit
@@ -160,10 +166,12 @@ component = H.mkComponent
           pure text
       _ <- H.query _editor unit $ H.tell $ Editor.SetAnnotations []
       _ <- H.query _editor unit $ H.tell $ Editor.RemoveMarkers
-      runExceptT (API.compile Config.compileUrl code) >>= case _ of
-        Left err -> do
+      runExceptT (runAppT (API.compile Config.compileUrl code)) >>= case _ of
+        Left (FetchError err) -> do
           H.liftEffect teardownIFrame
           H.modify_ _ { compiled = Just (Left err) }
+        
+        Left _ -> pure unit
 
         Right (Left err) -> do
           H.liftEffect teardownIFrame
@@ -189,16 +197,20 @@ component = H.mkComponent
           if settings.showJs then
             H.liftEffect teardownIFrame
           else do
-            mbSources <- H.liftAff $ map hush $ runExceptT $ runLoader loader (JS js)
             for_ warnings \warnings_ -> do
               let anns = Array.mapMaybe (toAnnotation MarkerWarning) warnings_
               _ <- H.query _editor unit $ H.tell $ Editor.SetAnnotations anns
               pure unit
-            for_ mbSources \sources -> do
-              let eventData = Object.insert "<file>" (JS js) sources
-              H.liftAff $ makeAff \f -> do 
-                runEffectFn3 setupIFrame eventData (f (Right unit)) (f (Left $ Aff.error "Could not load iframe"))
-                mempty
+            eitherSources <- H.liftAff $ runExceptT $ runAppT $ runLoader loader (JS js)
+            case eitherSources of
+              Left (FFIErrors errs) -> do
+                H.modify_ _ { ffiErrors = Just errs }
+              Left _ -> pure unit
+              Right sources -> do
+                let eventData = Object.insert "<file>" (JS js) sources
+                H.liftAff $ makeAff \f -> do 
+                  runEffectFn3 setupIFrame eventData (f (Right unit)) (f (Left $ Aff.error "Could not load iframe"))
+                  mempty
             H.modify_ _ { compiled = Just (Right res) }
 
     HandleEditor (Editor.TextChanged text) -> do
@@ -213,6 +225,7 @@ component = H.mkComponent
       [ HH.div
           [ HP.id_ "body" ]
           [ renderMenu
+          , renderFFIErrors
           , renderMobileBanner
           , renderEditor
           ]
@@ -352,6 +365,14 @@ component = H.mkComponent
       HH.div
         [ HP.class_ $ HH.ClassName "mobile-only mobile-banner" ]
         [ HH.text "Your screen size is too small. Code editing has been disabled." ]
+
+    renderFFIErrors = maybeElem state.ffiErrors \errs -> do
+      let dependencies
+            | length errs == 1 = "dependency" 
+            | otherwise = "dependencies"
+      HH.div
+        [ HP.class_ $ HH.ClassName "error-banner" ]
+        [ HH.text $ "FFI " <> dependencies <> " not provided: " <> joinWith ", " (NonEmpty.toArray errs) ]
 
     renderEditor =
       HH.div

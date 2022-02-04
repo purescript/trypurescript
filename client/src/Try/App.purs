@@ -1,14 +1,13 @@
 module Try.App
-  ( App(..)
+  ( AppT(..)
   , Error(..)
-  , Errors
-  , ParApp(..)
-  , runApp
-  , runParApp
+  , ParAppT
+  , runAppT
   ) where
 
 import Prelude
 
+import Control.Monad.Error.Class (class MonadThrow)
 import Control.Monad.Except (ExceptT(..))
 import Control.Monad.Except as ExceptT
 import Control.Parallel as Parallel
@@ -24,44 +23,48 @@ import Effect.Class (class MonadEffect)
 
 data Error
   = FetchError String
-  | FFIErrors String
+  | FFIErrors (NonEmptyArray String)
 
-type Errors = NonEmptyArray Error
+instance semigroupError :: Semigroup Error where
+  append (FetchError err) _ = FetchError err
+  append _ (FetchError err) = FetchError err
+  append (FFIErrors errs) (FFIErrors errs') = FFIErrors (errs <> errs')
 
-newtype App (m :: Type -> Type) a = App (ExceptT Errors m a)
+newtype AppT (m :: Type -> Type) a = AppT (ExceptT Error m a)
 
-derive newtype instance functorApp :: Functor m => Functor (App m)
-derive newtype instance applyApp :: Monad m => Apply (App m)
-derive newtype instance applicativeApp :: Monad m => Applicative (App m)
-derive newtype instance bindApp :: Monad m => Bind (App m)
-derive newtype instance monadApp :: Monad m => Monad (App m)
-derive newtype instance monadEffectApp :: MonadEffect m => MonadEffect (App m)
-derive newtype instance monadAffApp :: MonadAff m => MonadAff (App m)
+derive newtype instance functorApp :: Functor m => Functor (AppT m)
+derive newtype instance applyApp :: Monad m => Apply (AppT m)
+derive newtype instance applicativeApp :: Monad m => Applicative (AppT m)
+derive newtype instance bindApp :: Monad m => Bind (AppT m)
+derive newtype instance monadApp :: Monad m => Monad (AppT m)
+derive newtype instance monadEffectApp :: MonadEffect m => MonadEffect (AppT m)
+derive newtype instance monadAffApp :: MonadAff m => MonadAff (AppT m)
+derive newtype instance monadThrowApp :: Monad m => MonadThrow Error (AppT m)
 
-runApp :: forall m. App m ~> ExceptT Errors m
-runApp (App x) = x
+runAppT :: forall m. AppT m ~> ExceptT Error m
+runAppT (AppT x) = x
 
-newtype ParApp m a = ParApp (Compose m (V Errors) a)
+newtype ParAppT m a = ParAppT (Compose m (V Error) a)
 
-derive newtype instance functorParApp :: Functor m => Functor (ParApp m)
-derive newtype instance applyParApp :: Apply m => Apply (ParApp m)
-derive newtype instance applicativeParApp :: Applicative m => Applicative (ParApp m)
+derive newtype instance functorParApp :: Functor m => Functor (ParAppT m)
+derive newtype instance applyParApp :: Apply m => Apply (ParAppT m)
+derive newtype instance applicativeParApp :: Applicative m => Applicative (ParAppT m)
 
-runParApp :: forall f. ParApp f ~> Compose f (V Errors)
-runParApp (ParApp x) = x
+runParAppT :: forall f. ParAppT f ~> Compose f (V Error)
+runParAppT (ParAppT x) = x
 
-instance parallelParAppApp :: Parallel f m => Parallel (ParApp f) (App m) where
+instance parallelParAppApp :: Parallel f m => Parallel (ParAppT f) (AppT m) where
   parallel =
-    ParApp
+    ParAppT
       <<< Compose
       <<< map (Either.either V.invalid pure)
       <<< Parallel.parallel
       <<< ExceptT.runExceptT
-      <<< runApp
+      <<< runAppT
   sequential =
-    App
+    AppT
       <<< ExceptT
       <<< map (V.toEither)
       <<< Parallel.sequential
       <<< Newtype.unwrap
-      <<< runParApp
+      <<< runParAppT

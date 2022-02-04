@@ -19,13 +19,14 @@ import Affjax.RequestBody as AXRB
 import Affjax.ResponseFormat as AXRF
 import Affjax.StatusCode (StatusCode(..))
 import Control.Alt ((<|>))
-import Control.Monad.Except (ExceptT(..))
+import Control.Monad.Except (ExceptT(..), withExceptT)
 import Data.Argonaut.Decode (class DecodeJson, decodeJson, (.:))
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse)
 import Effect.Aff (Aff)
 import Effect.Aff.Class (class MonadAff, liftAff)
+import Try.App (AppT(..), Error(..))
 
 -- | The range of text associated with an error
 type ErrorPosition =
@@ -88,23 +89,28 @@ instance decodeJsonCompileResult :: DecodeJson CompileResult where
     map CompileSuccess (decodeJson json)
       <|> map CompileFailed (decodeJson json)
 
-get :: URL -> ExceptT String Aff String
-get url = ExceptT $ AX.get AXRF.string url >>= case _ of
-  Left e ->
-    pure $ Left $ printError e
-  Right { status } | status >= StatusCode 400 ->
-    pure $ Left $ "Received error status code: " <> show status
-  Right { body } ->
-    pure $ Right body
+get :: URL -> AppT Aff String
+get url = AppT $ withExceptT FetchError
+  $ ExceptT
+  $ AX.get AXRF.string url >>= case _ of
+      Left e ->
+        pure $ Left $ printError e
+      Right { status } | status >= StatusCode 400 ->
+        pure $ Left $ "Received error status code: " <> show status
+      Right { body } ->
+        pure $ Right body
 
 -- | POST the specified code to the Try PureScript API, and wait for a response.
-compile :: forall m. MonadAff m => String -> String -> ExceptT String m (Either String CompileResult)
-compile endpoint code = ExceptT $ liftAff $ AX.post AXRF.json (endpoint <> "/compile") requestBody >>= case _ of
-  Left e ->
-    pure $ Left $ printError e
-  Right { status } | status >= StatusCode 400 ->
-    pure $ Left $ "Received error status code: " <> show status
-  Right { body } ->
-    pure $ Right $ decodeJson body
+compile :: forall m. MonadAff m => String -> String -> AppT m (Either String CompileResult)
+compile endpoint code = AppT $ withExceptT FetchError
+  $ ExceptT
+  $ liftAff
+  $ AX.post AXRF.json (endpoint <> "/compile") requestBody >>= case _ of
+      Left e ->
+        pure $ Left $ printError e
+      Right { status } | status >= StatusCode 400 ->
+        pure $ Left $ "Received error status code: " <> show status
+      Right { body } ->
+        pure $ Right $ decodeJson body
   where
   requestBody = Just $ AXRB.string code
