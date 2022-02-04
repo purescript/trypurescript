@@ -19,7 +19,8 @@ import Data.Functor.Compose (Compose(..))
 import Data.Newtype as Newtype
 import Data.Validation.Semigroup (V)
 import Data.Validation.Semigroup as V
-import Effect.Aff (Aff, ParAff)
+import Effect.Aff.Class (class MonadAff)
+import Effect.Class (class MonadEffect)
 
 data Error
   = FetchError String
@@ -27,27 +28,29 @@ data Error
 
 type Errors = NonEmptyArray Error
 
-newtype App a = App (ExceptT Errors Aff a)
+newtype App (m :: Type -> Type) a = App (ExceptT Errors m a)
 
-derive newtype instance functorApp :: Functor App
-derive newtype instance applyApp :: Apply App
-derive newtype instance applicativeApp :: Applicative App
-derive newtype instance bindApp :: Bind App
-derive newtype instance monadApp :: Monad App
+derive newtype instance functorApp :: Functor m => Functor (App m)
+derive newtype instance applyApp :: Monad m => Apply (App m)
+derive newtype instance applicativeApp :: Monad m => Applicative (App m)
+derive newtype instance bindApp :: Monad m => Bind (App m)
+derive newtype instance monadApp :: Monad m => Monad (App m)
+derive newtype instance monadEffectApp :: MonadEffect m => MonadEffect (App m)
+derive newtype instance monadAffApp :: MonadAff m => MonadAff (App m)
 
-runApp :: App ~> ExceptT Errors Aff
+runApp :: forall m. App m ~> ExceptT Errors m
 runApp (App x) = x
 
-newtype ParApp a = ParApp (Compose ParAff (V Errors) a)
+newtype ParApp m a = ParApp (Compose m (V Errors) a)
 
-derive newtype instance functorParApp :: Functor ParApp
-derive newtype instance applyParApp :: Apply ParApp
-derive newtype instance applicativeParApp :: Applicative ParApp
+derive newtype instance functorParApp :: Functor m => Functor (ParApp m)
+derive newtype instance applyParApp :: Apply m => Apply (ParApp m)
+derive newtype instance applicativeParApp :: Applicative m => Applicative (ParApp m)
 
-runParApp :: ParApp ~> Compose ParAff (V Errors)
+runParApp :: forall f. ParApp f ~> Compose f (V Errors)
 runParApp (ParApp x) = x
 
-instance parallelParAppApp :: Parallel ParApp App where
+instance parallelParAppApp :: Parallel f m => Parallel (ParApp f) (App m) where
   parallel =
     ParApp
       <<< Compose
