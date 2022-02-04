@@ -38,6 +38,7 @@
   , "transformers"
   , "tuples"
   , "unfoldable"
+  , "validation"
   , "web-html"
   ]
 , packages = ./packages.dhall
