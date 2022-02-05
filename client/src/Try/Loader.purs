@@ -9,11 +9,12 @@ import Prelude
 import Control.Bind (bindFlipped)
 import Control.Monad.Except (ExceptT, throwError)
 import Control.Parallel (parTraverse)
+import Data.Array (foldMap)
 import Data.Array as Array
 import Data.Array.NonEmpty as NonEmpty
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Newtype (unwrap)
-import Data.String (Pattern(..))
+import Data.String (Pattern(..), joinWith)
 import Data.String as String
 import Data.String.Regex (Regex)
 import Data.String.Regex as Regex
@@ -112,9 +113,19 @@ makeLoader rootPath = Loader (go Object.empty <<< parseDeps "<file>")
                   deps = { name: _, path: Nothing } <$> shim.deps
                 pure { name, path, deps, src }
               Nothing ->
-                throwError ("FFI dependency not provided: " <> name)
+                throwError (missingFFIDep name)
         liftEffect $ putModule name mod
         pure mod
+
+  missingFFIDep :: String -> String
+  missingFFIDep name =
+    joinWith "\n" $
+      [ "Compilation succeeded, but the following FFI dependency is missing:"
+      , " - " <> name
+      , ""
+      , "We don't provide FFI shims for all libraries; for example, Node libraries are not supported on Try PureScript."
+      , "If you would like to suggest a new FFI shim be supported, please open an issue."
+      ]
 
   go :: Object JS -> Array Dependency -> ExceptT String Aff (Object JS)
   go ms []   = pure ms
