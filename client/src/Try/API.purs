@@ -19,7 +19,7 @@ import Affjax.RequestBody as AXRB
 import Affjax.ResponseFormat as AXRF
 import Affjax.StatusCode (StatusCode(..))
 import Control.Alt ((<|>))
-import Control.Monad.Except (ExceptT(..), withExceptT)
+import Control.Monad.Except (ExceptT(..), throwError, withExceptT)
 import Data.Argonaut.Decode (class DecodeJson, decodeJson, (.:))
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
@@ -101,16 +101,17 @@ get url = AppT $ withExceptT FetchError
         pure $ Right body
 
 -- | POST the specified code to the Try PureScript API, and wait for a response.
-compile :: forall m. MonadAff m => String -> String -> AppT m (Either String CompileResult)
-compile endpoint code = AppT $ withExceptT FetchError
-  $ ExceptT
-  $ liftAff
-  $ AX.post AXRF.json (endpoint <> "/compile") requestBody >>= case _ of
-      Left e ->
-        pure $ Left $ printError e
-      Right { status } | status >= StatusCode 400 ->
-        pure $ Left $ "Received error status code: " <> show status
-      Right { body } ->
-        pure $ Right $ decodeJson body
+compile :: forall m. MonadAff m => String -> String -> AppT m CompileResult
+compile endpoint code = do
+  result <- liftAff $ AX.post AXRF.json (endpoint <> "/compile") requestBody
+  case result of
+    Left e ->
+      throwError $ FetchError $ printError e
+    Right { status } | status >= StatusCode 400 ->
+      throwError $ FetchError $ "Received error status code: " <> show status
+    Right { body } ->
+      case decodeJson body of
+        Left err -> throwError $ FetchError ""
+        Right decoded -> pure decoded
   where
   requestBody = Just $ AXRB.string code

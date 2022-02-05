@@ -27,7 +27,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Try.API (CompileError(..), CompileResult(..), CompilerError, ErrorPosition)
 import Try.API as API
-import Try.App (Error(..), runAppT)
+import Try.App (Error(..), displayError, runAppT)
 import Try.Config as Config
 import Try.Editor (MarkerType(..), toStringMarkerType)
 import Try.Editor as Editor
@@ -171,14 +171,12 @@ component = H.mkComponent
           H.liftEffect teardownIFrame
           H.modify_ _ { compiled = Just (Left err) }
         
-        Left _ -> pure unit
-
-        Right (Left err) -> do
+        Left err -> do
           H.liftEffect teardownIFrame
-          H.liftEffect $ error err
-          H.modify_ _ { compiled = Just (Left err) }
+          H.liftEffect $ error $ displayError err
+          H.modify_ _ { compiled = Just (Left (displayError err)) }
 
-        Right (Right res@(CompileFailed { error })) -> do
+        Right (res@(CompileFailed { error })) -> do
           H.liftEffect teardownIFrame
           H.modify_ _ { compiled = Just (Right res) }
           case error of
@@ -192,7 +190,7 @@ component = H.mkComponent
                   _ <- H.query _editor unit $ H.tell $ Editor.AddMarker MarkerError pos
                   pure unit
 
-        Right (Right res@(CompileSuccess { js, warnings })) -> do
+        Right (res@(CompileSuccess { js, warnings })) -> do
           { settings } <- H.get
           if settings.showJs then
             H.liftEffect teardownIFrame
@@ -205,13 +203,14 @@ component = H.mkComponent
             case eitherSources of
               Left (FFIErrors errs) -> do
                 H.modify_ _ { ffiErrors = Just errs }
-              Left _ -> pure unit
+              Left err ->
+                H.modify_ _ { compiled = Just (Left (displayError err)) }
               Right sources -> do
                 let eventData = Object.insert "<file>" (JS js) sources
                 H.liftAff $ makeAff \f -> do 
                   runEffectFn3 setupIFrame eventData (f (Right unit)) (f (Left $ Aff.error "Could not load iframe"))
                   mempty
-            H.modify_ _ { compiled = Just (Right res) }
+                H.modify_ _ { compiled = Just (Right res) }
 
     HandleEditor (Editor.TextChanged text) -> do
       _ <- H.fork $ handleAction $ Cache text

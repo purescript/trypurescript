@@ -2,6 +2,7 @@ module Try.App
   ( AppT(..)
   , Error(..)
   , ParAppT
+  , displayError
   , runAppT
   ) where
 
@@ -13,9 +14,12 @@ import Control.Monad.Except as ExceptT
 import Control.Parallel as Parallel
 import Control.Parallel.Class (class Parallel)
 import Data.Array.NonEmpty (NonEmptyArray)
+import Data.Array.NonEmpty as NonEmpty
 import Data.Either as Either
+import Data.Foldable (length)
 import Data.Functor.Compose (Compose(..))
 import Data.Newtype as Newtype
+import Data.String (joinWith)
 import Data.Validation.Semigroup (V)
 import Data.Validation.Semigroup as V
 import Effect.Aff.Class (class MonadAff)
@@ -26,9 +30,17 @@ data Error
   | FFIErrors (NonEmptyArray String)
 
 instance semigroupError :: Semigroup Error where
-  append (FetchError err) _ = FetchError err
-  append _ (FetchError err) = FetchError err
   append (FFIErrors errs) (FFIErrors errs') = FFIErrors (errs <> errs')
+  append err _ = err
+  
+displayError :: Error -> String
+displayError = case _ of
+  FetchError err -> err
+  FFIErrors errs -> do
+    let dependencies
+          | length errs == 1 = "dependency" 
+          | otherwise = "dependencies"
+    "FFI " <> dependencies <> " not provided: " <> joinWith ", " (NonEmpty.toArray errs)
 
 newtype AppT (m :: Type -> Type) a = AppT (ExceptT Error m a)
 
