@@ -13,6 +13,7 @@ Bugfixes:
 Other improvements:
 
 - Use `replaceState` for setting query params (#266 by @ptrfrncsmrph)
+- Display missing FFI dependency error message to user (#268 by @ptrfrncsmrph)
 
 ## [v2021-11-30.1](https://github.com/purescript/trypurescript/releases/tag/v2021-11-11.1)
 
