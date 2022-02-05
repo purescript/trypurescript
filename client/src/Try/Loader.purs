@@ -7,7 +7,7 @@ module Try.Loader
 import Prelude
 
 import Control.Bind (bindFlipped)
-import Control.Monad.Except (ExceptT)
+import Control.Monad.Except (ExceptT, throwError)
 import Control.Parallel (parTraverse)
 import Data.Array as Array
 import Data.Array.NonEmpty as NonEmpty
@@ -112,7 +112,7 @@ makeLoader rootPath = Loader (go Object.empty <<< parseDeps "<file>")
                   deps = { name: _, path: Nothing } <$> shim.deps
                 pure { name, path, deps, src }
               Nothing ->
-                pure { name, path, deps: [], src: ffiDep name }
+                throwError ("FFI dependency not provided: " <> name)
         liftEffect $ putModule name mod
         pure mod
 
@@ -130,6 +130,3 @@ makeLoader rootPath = Loader (go Object.empty <<< parseDeps "<file>")
       # bindFlipped _.deps
       # Array.nubBy (comparing _.name)
       # go ms'
-
-ffiDep :: String -> JS
-ffiDep name = JS $ "throw new Error('FFI dependency not provided: " <> name <> "');"

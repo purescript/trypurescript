@@ -6,7 +6,7 @@ import Ace (Annotation)
 import Control.Monad.Except (runExceptT)
 import Data.Array (fold)
 import Data.Array as Array
-import Data.Either (Either(..), hush)
+import Data.Either (Either(..))
 import Data.Foldable (for_, oneOf)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Maybe (Maybe(..), fromMaybe, isNothing)
@@ -189,17 +189,22 @@ component = H.mkComponent
           if settings.showJs then
             H.liftEffect teardownIFrame
           else do
-            mbSources <- H.liftAff $ map hush $ runExceptT $ runLoader loader (JS js)
+            eitherSources <- H.liftAff $ runExceptT $ runLoader loader (JS js)
             for_ warnings \warnings_ -> do
               let anns = Array.mapMaybe (toAnnotation MarkerWarning) warnings_
               _ <- H.query _editor unit $ H.tell $ Editor.SetAnnotations anns
               pure unit
-            for_ mbSources \sources -> do
-              let eventData = Object.insert "<file>" (JS js) sources
-              H.liftAff $ makeAff \f -> do 
-                runEffectFn3 setupIFrame eventData (f (Right unit)) (f (Left $ Aff.error "Could not load iframe"))
-                mempty
-            H.modify_ _ { compiled = Just (Right res) }
+            case eitherSources of
+              Right sources -> do
+                let eventData = Object.insert "<file>" (JS js) sources
+                H.liftAff $ makeAff \f -> do 
+                  runEffectFn3 setupIFrame eventData (f (Right unit)) (f (Left $ Aff.error "Could not load iframe"))
+                  mempty
+                H.modify_ _ { compiled = Just (Right res) }
+              Left err -> do
+                H.liftEffect teardownIFrame
+                H.liftEffect $ error err
+                H.modify_ _ { compiled = Just (Left err) }
 
     HandleEditor (Editor.TextChanged text) -> do
       _ <- H.fork $ handleAction $ Cache text
@@ -383,7 +388,7 @@ component = H.mkComponent
 
     renderCompiled = case _ of
       Left err ->
-        renderPlaintext "Unable to parse the response from the server."
+        renderPlaintext err
       Right res -> case res of
         CompileFailed { error } -> case error of
           OtherError err ->
