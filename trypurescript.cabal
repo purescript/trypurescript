@@ -35,6 +35,7 @@ executable trypurescript
                    process -any,
                    text -any,
                    time -any,
+                   vector -any,
                    warp -any
     hs-source-dirs: server
     main-is: Main.hs

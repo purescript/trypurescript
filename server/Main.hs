@@ -18,7 +18,9 @@ import           Control.Monad.Writer.Strict (runWriterT)
 import qualified Data.Aeson as A
 import           Data.Aeson ((.=))
 import           Data.Bifunctor (first, second, bimap)
+import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
+import qualified Data.ByteString.Lazy.Char8 as Char8
 import           Data.Default (def)
 import           Data.Function (on, fix)
 import qualified Data.IORef as IORef
@@ -28,7 +30,9 @@ import qualified Data.Map as M
 import           Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
+import qualified Data.Text.Lazy as TL
 import           Data.Time.Clock (UTCTime)
+import qualified Data.Vector as V
 import           GHC.Generics (Generic)
 import qualified Language.PureScript as P
 import qualified Language.PureScript.CST as CST
@@ -43,7 +47,6 @@ import qualified Language.PureScript.Make as Make
 import qualified Language.PureScript.Make.Cache as Cache
 import qualified Language.PureScript.TypeChecker.TypeSearch as TS
 import qualified Network.Wai.Handler.Warp as Warp
-import qualified System.Directory as Directory
 import           System.Environment (getArgs)
 import           System.Exit (exitFailure)
 import           System.FilePath.Glob (glob)
@@ -115,53 +118,24 @@ buildMakeActions codegenRef =
   outputPrimDocs :: Make.Make ()
   outputPrimDocs = pure ()
 
-exampleQuery str = "\
-\{ \"command\": \"complete\",\
-  \\"currentModule\": \"Main\",\
-  \\"matcher\": {\
-    \\"matcher\": \"flex\",\
-    \\"params\": {\
-      \\"search\": \"" <> str <> "\",\
-      \\"maxResults\": 10\
-    \}\
-  \},\
-  \\"params\": {\
-    \\"filters\": [{\
-      \\"filter\": \"prefix\",\
-      \\"params\": {\
-        \\"search\": \"" <> str <> "\"\
-      \}\
-    \}],\
-    \\"options\": {\
-      \\"maxResults\": 20,\
-      \\"groupReexports\": true\
-    \}\
-  \}\
-\}\
-\"
+-- mkCommand :: String -> String
+-- mkCommand str = "\
+-- \{ \"command\": \"complete\",\
+--   \\"params\": {\
+--     \\"filters\": [{\
+--       \\"filter\": \"prefix\",\
+--       \\"params\": {\
+--         \\"search\": \"" <> str <> "\"\
+--       \}\
+--     \}],\
+--     \\"options\": {\
+--       \\"maxResults\": 20,\
+--       \\"groupReexports\": true\
+--     \}\
+--   \}\
+-- \}\
+-- \"
 
-ideProcess :: IO ()
-ideProcess = do
-  currentDirectory <- Directory.getCurrentDirectory
-  let ideServer =
-        (Process.proc "purs" ["ide", "server"])
-          { Process.cwd = Just (currentDirectory <> "/staging")
-          }
-      ideClient = 
-          Process.createProcess_ "purs-ide-client"
-            (Process.proc "purs" ["ide", "client"])
-              { Process.std_in = Process.CreatePipe
-              , Process.std_out = Process.CreatePipe
-              }
-  Process.withCreateProcess ideServer $
-    \_ _ _ _ -> fix $ \loop -> do
-      getLine >>= \case
-        "STOP" -> pure ()
-        arg -> do
-          (Just handleIn, Just handleOut, _, _) <- ideClient
-          IO.hPutStrLn handleIn (exampleQuery arg)
-          IO.hGetContents handleOut >>= putStrLn
-          loop
 
 server :: [P.ExternsFile] -> P.Env -> P.Environment -> Int -> IO ()
 server externs initNamesEnv initEnv port = do
@@ -207,6 +181,35 @@ server externs initNamesEnv initEnv port = do
           Scotty.json $ A.object [ "error" .= err ]
         Right (warnings, comp) ->
           Scotty.json $ A.object [ "js" .= comp, "warnings" .= warnings ]
+    
+    get "/complete" $ do
+      query <- param "q"
+      Scotty.setHeader "Access-Control-Allow-Origin" "*"
+      Scotty.setHeader "Content-Type" "application/json"
+      let ideClient = 
+            Process.createProcess_ "purs-ide-client"
+              (Process.proc "purs" ["ide", "client"])
+                { Process.std_in = Process.CreatePipe
+                , Process.std_out = Process.CreatePipe
+                }
+          mkCommand q = A.encode $ A.object
+                        [ "command" .= ("complete" :: Text)
+                        , "params" .= A.object 
+                          [ "filters" .= A.Array
+                            ( V.fromList 
+                              [ A.object
+                                [ "filter" .= ("prefix" :: Text) 
+                                , "params" .= A.object
+                                  [ "search" .= q ]
+                                ]
+                              ]
+                            )
+                          ]
+                        ]
+      (Just handleIn, Just handleOut, _, _) <- liftIO ideClient
+      liftIO $ Char8.hPutStrLn handleIn (mkCommand (query :: Text))
+      result <- liftIO $ BS.hGetContents handleOut
+      Scotty.text (TL.fromStrict (T.decodeUtf8 result))
 
     get "/search" $ do
       query <- param "q"
@@ -290,4 +293,7 @@ main = do
     pure (exts, namesEnv, env)
   case e of
     Left err -> print err >> exitFailure
-    Right (exts, namesEnv, env) -> server exts namesEnv env port
+    Right (exts, namesEnv, env) -> do
+      let ideServer = Process.proc "purs" ["ide", "server"]
+      Process.withCreateProcess ideServer $
+        \_ _ _ _ -> server exts namesEnv env port
