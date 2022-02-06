@@ -20,7 +20,7 @@ import           Data.Aeson ((.=))
 import           Data.Bifunctor (first, second, bimap)
 import qualified Data.ByteString.Lazy as BL
 import           Data.Default (def)
-import           Data.Function (on)
+import           Data.Function (on, fix)
 import qualified Data.IORef as IORef
 import           Data.List (nubBy)
 import qualified Data.List.NonEmpty as NE
@@ -43,10 +43,12 @@ import qualified Language.PureScript.Make as Make
 import qualified Language.PureScript.Make.Cache as Cache
 import qualified Language.PureScript.TypeChecker.TypeSearch as TS
 import qualified Network.Wai.Handler.Warp as Warp
+import qualified System.Directory as Directory
 import           System.Environment (getArgs)
 import           System.Exit (exitFailure)
 import           System.FilePath.Glob (glob)
 import qualified System.IO as IO
+import qualified System.Process as Process
 import           Web.Scotty
 import qualified Web.Scotty as Scotty
 
@@ -112,6 +114,54 @@ buildMakeActions codegenRef =
 
   outputPrimDocs :: Make.Make ()
   outputPrimDocs = pure ()
+
+exampleQuery str = "\
+\{ \"command\": \"complete\",\
+  \\"currentModule\": \"Main\",\
+  \\"matcher\": {\
+    \\"matcher\": \"flex\",\
+    \\"params\": {\
+      \\"search\": \"" <> str <> "\",\
+      \\"maxResults\": 10\
+    \}\
+  \},\
+  \\"params\": {\
+    \\"filters\": [{\
+      \\"filter\": \"prefix\",\
+      \\"params\": {\
+        \\"search\": \"" <> str <> "\"\
+      \}\
+    \}],\
+    \\"options\": {\
+      \\"maxResults\": 20,\
+      \\"groupReexports\": true\
+    \}\
+  \}\
+\}\
+\"
+
+ideProcess :: IO ()
+ideProcess = do
+  currentDirectory <- Directory.getCurrentDirectory
+  let ideServer =
+        (Process.proc "purs" ["ide", "server"])
+          { Process.cwd = Just (currentDirectory <> "/staging")
+          }
+      ideClient = 
+          Process.createProcess_ "purs-ide-client"
+            (Process.proc "purs" ["ide", "client"])
+              { Process.std_in = Process.CreatePipe
+              , Process.std_out = Process.CreatePipe
+              }
+  Process.withCreateProcess ideServer $
+    \_ _ _ _ -> fix $ \loop -> do
+      getLine >>= \case
+        "STOP" -> pure ()
+        arg -> do
+          (Just handleIn, Just handleOut, _, _) <- ideClient
+          IO.hPutStrLn handleIn (exampleQuery arg)
+          IO.hGetContents handleOut >>= putStrLn
+          loop
 
 server :: [P.ExternsFile] -> P.Env -> P.Environment -> Int -> IO ()
 server externs initNamesEnv initEnv port = do

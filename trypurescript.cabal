@@ -32,6 +32,7 @@ executable trypurescript
                    http-types -any,
                    transformers -any,
                    mtl -any,
+                   process -any,
                    text -any,
                    time -any,
                    warp -any
