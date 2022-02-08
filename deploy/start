@@ -4,4 +4,4 @@ set -ex
 set -o noglob
 export XDG_CACHE_HOME="$PWD/.spago-cache"
 spago install
-exec trypurescript +RTS -N2 -A128m -M3G -RTS 8081 $(spago sources)
+exec trypurescript +RTS -N2 -A128m -M3G -RTS 8081 8082 $(spago sources)

@@ -19,8 +19,9 @@ import qualified Data.Aeson as A
 import           Data.Aeson ((.=))
 import           Data.Bifunctor (first, second, bimap)
 import qualified Data.ByteString as BS
+import qualified Data.ByteString.Char8 as BS.Char8
 import qualified Data.ByteString.Lazy as BL
-import qualified Data.ByteString.Lazy.Char8 as Char8
+import qualified Data.ByteString.Lazy.Char8 as BL.Char8
 import           Data.Default (def)
 import           Data.Function (on, fix)
 import qualified Data.IORef as IORef
@@ -51,6 +52,7 @@ import           System.Environment (getArgs)
 import           System.Exit (exitFailure)
 import           System.FilePath.Glob (glob)
 import qualified System.IO as IO
+import           System.IO (BufferMode(NoBuffering))
 import qualified System.Process as Process
 import           Web.Scotty
 import qualified Web.Scotty as Scotty
@@ -118,27 +120,9 @@ buildMakeActions codegenRef =
   outputPrimDocs :: Make.Make ()
   outputPrimDocs = pure ()
 
--- mkCommand :: String -> String
--- mkCommand str = "\
--- \{ \"command\": \"complete\",\
---   \\"params\": {\
---     \\"filters\": [{\
---       \\"filter\": \"prefix\",\
---       \\"params\": {\
---         \\"search\": \"" <> str <> "\"\
---       \}\
---     \}],\
---     \\"options\": {\
---       \\"maxResults\": 20,\
---       \\"groupReexports\": true\
---     \}\
---   \}\
--- \}\
--- \"
 
-
-server :: [P.ExternsFile] -> P.Env -> P.Environment -> Int -> IO ()
-server externs initNamesEnv initEnv port = do
+server :: [P.ExternsFile] -> P.Env -> P.Environment -> Int -> String -> IO ()
+server externs initNamesEnv initEnv port pursIDEPortString = do
   codegenRef <- IORef.newIORef Nothing
   let makeActions = buildMakeActions codegenRef
   let compile :: Text -> IO (Either Error ([P.JSONError], JS))
@@ -182,33 +166,20 @@ server externs initNamesEnv initEnv port = do
         Right (warnings, comp) ->
           Scotty.json $ A.object [ "js" .= comp, "warnings" .= warnings ]
     
-    get "/complete" $ do
-      query <- param "q"
+    post "/complete" $ do
       Scotty.setHeader "Access-Control-Allow-Origin" "*"
       Scotty.setHeader "Content-Type" "application/json"
-      let ideClient = 
-            Process.createProcess_ "purs-ide-client"
-              (Process.proc "purs" ["ide", "client"])
-                { Process.std_in = Process.CreatePipe
-                , Process.std_out = Process.CreatePipe
-                }
-          mkCommand q = A.encode $ A.object
-                        [ "command" .= ("complete" :: Text)
-                        , "params" .= A.object 
-                          [ "filters" .= A.Array
-                            ( V.fromList 
-                              [ A.object
-                                [ "filter" .= ("prefix" :: Text) 
-                                , "params" .= A.object
-                                  [ "search" .= q ]
-                                ]
-                              ]
-                            )
-                          ]
-                        ]
-      (Just handleIn, Just handleOut, _, _) <- liftIO ideClient
-      liftIO $ Char8.hPutStrLn handleIn (mkCommand (query :: Text))
-      result <- liftIO $ BS.hGetContents handleOut
+      (Just handleIn, Just handleOut, _, _) <- liftIO $
+        Process.createProcess_
+          "purs-ide-client"
+          (Process.proc "purs" ["ide", "client", "-p", pursIDEPortString])
+            { Process.std_in = Process.CreatePipe
+            , Process.std_out = Process.CreatePipe
+            }
+      liftIO (IO.hSetBuffering handleIn NoBuffering)
+      command <- BL.Char8.toStrict <$> body
+      liftIO (BS.Char8.hPutStrLn handleIn command)
+      result <- liftIO (BS.hGetContents handleOut)
       Scotty.text (TL.fromStrict (T.decodeUtf8 result))
 
     get "/search" $ do
@@ -283,7 +254,7 @@ main :: IO ()
 main = do
   -- Stop mangled "Compiling ModuleName" text
   IO.hSetBuffering IO.stderr IO.LineBuffering
-  (portString : inputGlobs) <- getArgs
+  (portString : pursIDEPortString : inputGlobs) <- getArgs
   let port = read portString
   inputFiles <- concat <$> traverse glob inputGlobs
   e <- runExceptT $ do
@@ -294,6 +265,6 @@ main = do
   case e of
     Left err -> print err >> exitFailure
     Right (exts, namesEnv, env) -> do
-      let ideServer = Process.proc "purs" ["ide", "server"]
+      let ideServer = Process.proc "purs" ("ide":"server":"-p":pursIDEPortString:inputGlobs)
       Process.withCreateProcess ideServer $
-        \_ _ _ _ -> server exts namesEnv env port
+        \_ _ _ _ -> server exts namesEnv env port pursIDEPortString
