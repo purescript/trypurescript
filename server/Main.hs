@@ -19,11 +19,10 @@ import qualified Data.Aeson as A
 import           Data.Aeson ((.=))
 import           Data.Bifunctor (first, second, bimap)
 import qualified Data.ByteString as BS
-import qualified Data.ByteString.Char8 as BS.Char8
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Lazy.Char8 as BL.Char8
 import           Data.Default (def)
-import           Data.Function (on, fix)
+import           Data.Function (on)
 import qualified Data.IORef as IORef
 import           Data.List (nubBy)
 import qualified Data.List.NonEmpty as NE
@@ -52,7 +51,6 @@ import           System.Environment (getArgs)
 import           System.Exit (exitFailure)
 import           System.FilePath.Glob (glob)
 import qualified System.IO as IO
-import           System.IO (BufferMode(NoBuffering))
 import qualified System.Process as Process
 import           Web.Scotty
 import qualified Web.Scotty as Scotty
@@ -120,7 +118,6 @@ buildMakeActions codegenRef =
   outputPrimDocs :: Make.Make ()
   outputPrimDocs = pure ()
 
-
 server :: [P.ExternsFile] -> P.Env -> P.Environment -> Int -> String -> IO ()
 server externs initNamesEnv initEnv port pursIDEPortString = do
   codegenRef <- IORef.newIORef Nothing
@@ -166,9 +163,24 @@ server externs initNamesEnv initEnv port pursIDEPortString = do
         Right (warnings, comp) ->
           Scotty.json $ A.object [ "js" .= comp, "warnings" .= warnings ]
     
-    post "/complete" $ do
+    get "/complete" $ do
+      query <- param "q"
       Scotty.setHeader "Access-Control-Allow-Origin" "*"
       Scotty.setHeader "Content-Type" "application/json"
+      let mkCommand q = A.encode $ A.object
+                  [ "command" .= ("complete" :: Text)
+                  , "params" .= A.object 
+                    [ "filters" .= A.Array
+                      ( V.fromList 
+                        [ A.object
+                          [ "filter" .= ("prefix" :: Text) 
+                          , "params" .= A.object
+                            [ "search" .= q ]
+                          ]
+                        ]
+                      )
+                    ]
+                  ]
       (Just handleIn, Just handleOut, _, _) <- liftIO $
         Process.createProcess_
           "purs-ide-client"
@@ -176,9 +188,8 @@ server externs initNamesEnv initEnv port pursIDEPortString = do
             { Process.std_in = Process.CreatePipe
             , Process.std_out = Process.CreatePipe
             }
-      liftIO (IO.hSetBuffering handleIn NoBuffering)
-      command <- BL.Char8.toStrict <$> body
-      liftIO (BS.Char8.hPutStrLn handleIn command)
+      liftIO (IO.hSetBuffering handleIn IO.NoBuffering)
+      liftIO (BL.Char8.hPutStrLn handleIn (mkCommand (query :: Text)))
       result <- liftIO (BS.hGetContents handleOut)
       Scotty.text (TL.fromStrict (T.decodeUtf8 result))
 
@@ -265,6 +276,6 @@ main = do
   case e of
     Left err -> print err >> exitFailure
     Right (exts, namesEnv, env) -> do
-      let ideServer = Process.proc "purs" ("ide":"server":"-p":pursIDEPortString:inputGlobs)
-      Process.withCreateProcess ideServer $
+      let pursIDEServer = Process.proc "purs" ("ide":"server":"-p":pursIDEPortString:inputGlobs)
+      Process.withCreateProcess pursIDEServer $
         \_ _ _ _ -> server exts namesEnv env port pursIDEPortString
