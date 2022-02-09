@@ -83,7 +83,7 @@ ln -s "$PWD/output" "$PWD/../client/public/js/output"
 #
 # We run this in a subshell so that setting noglob only lasts for the duration
 # of the command and no longer.
-(set -o noglob && stack exec trypurescript 8081 $(spago sources))
+(set -o noglob && stack exec trypurescript 8081 8082 $(spago sources))
 
 # Should output that it is compiling the sources (first time)
 # Then: Setting phasers to stun... (port 8081) (ctrl-c to quit)
@@ -178,9 +178,10 @@ If the compiled JavaScript code in the response includes a `require` call such a
 
 The server application takes the following arguments on the command line:
 
-- port number
+- port number for the server
+- port number for the IDE server
 - a list of input source files
 
 #### Example
 
-    trypurescript 8081 'bower_components/purescript-*/src/**/*.purs'
+    trypurescript 8081 8082 'bower_components/purescript-*/src/**/*.purs'

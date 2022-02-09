@@ -18,7 +18,9 @@ import           Control.Monad.Writer.Strict (runWriterT)
 import qualified Data.Aeson as A
 import           Data.Aeson ((.=))
 import           Data.Bifunctor (first, second, bimap)
+import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
+import qualified Data.ByteString.Lazy.Char8 as BL.Char8
 import           Data.Default (def)
 import           Data.Function (on)
 import qualified Data.IORef as IORef
@@ -28,7 +30,9 @@ import qualified Data.Map as M
 import           Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
+import qualified Data.Text.Lazy as TL
 import           Data.Time.Clock (UTCTime)
+import qualified Data.Vector as V
 import           GHC.Generics (Generic)
 import qualified Language.PureScript as P
 import qualified Language.PureScript.CST as CST
@@ -47,6 +51,7 @@ import           System.Environment (getArgs)
 import           System.Exit (exitFailure)
 import           System.FilePath.Glob (glob)
 import qualified System.IO as IO
+import qualified System.Process as Process
 import           Web.Scotty
 import qualified Web.Scotty as Scotty
 
@@ -113,8 +118,8 @@ buildMakeActions codegenRef =
   outputPrimDocs :: Make.Make ()
   outputPrimDocs = pure ()
 
-server :: [P.ExternsFile] -> P.Env -> P.Environment -> Int -> IO ()
-server externs initNamesEnv initEnv port = do
+server :: [P.ExternsFile] -> P.Env -> P.Environment -> Int -> String -> IO ()
+server externs initNamesEnv initEnv port pursIDEPortString = do
   codegenRef <- IORef.newIORef Nothing
   let makeActions = buildMakeActions codegenRef
   let compile :: Text -> IO (Either Error ([P.JSONError], JS))
@@ -157,6 +162,36 @@ server externs initNamesEnv initEnv port = do
           Scotty.json $ A.object [ "error" .= err ]
         Right (warnings, comp) ->
           Scotty.json $ A.object [ "js" .= comp, "warnings" .= warnings ]
+    
+    get "/complete" $ do
+      query <- param "q"
+      Scotty.setHeader "Access-Control-Allow-Origin" "*"
+      Scotty.setHeader "Content-Type" "application/json"
+      let mkCommand q = A.encode $ A.object
+                  [ "command" .= ("complete" :: Text)
+                  , "params" .= A.object 
+                    [ "filters" .= A.Array
+                      ( V.fromList 
+                        [ A.object
+                          [ "filter" .= ("prefix" :: Text) 
+                          , "params" .= A.object
+                            [ "search" .= q ]
+                          ]
+                        ]
+                      )
+                    ]
+                  ]
+      (Just handleIn, Just handleOut, _, _) <- liftIO $
+        Process.createProcess_
+          "purs-ide-client"
+          (Process.proc "purs" ["ide", "client", "-p", pursIDEPortString])
+            { Process.std_in = Process.CreatePipe
+            , Process.std_out = Process.CreatePipe
+            }
+      liftIO (IO.hSetBuffering handleIn IO.NoBuffering)
+      liftIO (BL.Char8.hPutStrLn handleIn (mkCommand (query :: Text)))
+      result <- liftIO (BS.hGetContents handleOut)
+      Scotty.text (TL.fromStrict (T.decodeUtf8 result))
 
     get "/search" $ do
       query <- param "q"
@@ -230,7 +265,7 @@ main :: IO ()
 main = do
   -- Stop mangled "Compiling ModuleName" text
   IO.hSetBuffering IO.stderr IO.LineBuffering
-  (portString : inputGlobs) <- getArgs
+  (portString : pursIDEPortString : inputGlobs) <- getArgs
   let port = read portString
   inputFiles <- concat <$> traverse glob inputGlobs
   e <- runExceptT $ do
@@ -240,4 +275,7 @@ main = do
     pure (exts, namesEnv, env)
   case e of
     Left err -> print err >> exitFailure
-    Right (exts, namesEnv, env) -> server exts namesEnv env port
+    Right (exts, namesEnv, env) -> do
+      let pursIDEServer = Process.proc "purs" ("ide":"server":"-p":pursIDEPortString:inputGlobs)
+      Process.withCreateProcess pursIDEServer $
+        \_ _ _ _ -> server exts namesEnv env port pursIDEPortString

@@ -32,8 +32,10 @@ executable trypurescript
                    http-types -any,
                    transformers -any,
                    mtl -any,
+                   process -any,
                    text -any,
                    time -any,
+                   vector -any,
                    warp -any
     hs-source-dirs: server
     main-is: Main.hs
