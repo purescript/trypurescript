@@ -7,7 +7,7 @@ extra-deps:
   - purescript-0.14.6
   - purescript-cst-0.4.0.0
   - language-javascript-0.7.0.0
-  # Fix build plan when we upgraded to `lts-18.15` resolver
+  # Fix build plan when we upgraded to `lts-18.15` resolver.
   # When making a new release, try removing these lines to see
   # if `stack build` works without them.
   - ansi-terminal-0.10.3@sha256:e2fbcef5f980dc234c7ad8e2fa433b0e8109132c9e643bc40ea5608cd5697797,3226
