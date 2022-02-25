@@ -1,4 +1,4 @@
-resolver: lts-17.6
+resolver: lts-18.15
 
 packages:
   - "."
@@ -7,6 +7,13 @@ extra-deps:
   - purescript-0.14.5
   - purescript-cst-0.4.0.0
   - language-javascript-0.7.0.0
+  # Fix build plan when we upgraded to `lts-18.15` resolver
+  # When making a new release, try removing these lines to see
+  # if `stack build` works without them.
+  - ansi-terminal-0.10.3@sha256:e2fbcef5f980dc234c7ad8e2fa433b0e8109132c9e643bc40ea5608cd5697797,3226
+  - cryptonite-0.27@sha256:c3a9c8ce11e654a9d5bee827b089d4b50587272828d0c52a85362a58667a916c,18163
+  - dlist-0.8.0.8@sha256:90ca348bffdc62d7070bcf0e97c728f8d01b24fbc7ea08d2909157d0da76534c,2066
+  - optparse-applicative-0.15.1.0@sha256:29ff6146aabf54d46c4c8788e8d1eadaea27c94f6d360c690c5f6c93dac4b07e,4810
 
 flags:
   aeson-pretty:
