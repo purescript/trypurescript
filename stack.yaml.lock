@@ -5,19 +5,19 @@
 
 packages:
 - completed:
-    hackage: purescript-0.14.3@sha256:4b75604e86c335711e1b1f1f73ef381108d047c9277df1cdc71922ec7da7c181,18623
+    hackage: purescript-0.14.7@sha256:8ae1f75de055c63d9dc43e646c98b92cca860ac7fc74b65c11d8e5007abfc37c,18677
     pantry-tree:
-      size: 132222
-      sha256: e3957c9d2c96434fcf5e8f310b34f4ea696cc8e5f63e60958eae5c6e31aba4c6
+      size: 135286
+      sha256: 11941b228ff6e91d4c565a7bfb9a0aabe10797a3cbae9336a44798adb7aeb74f
   original:
-    hackage: purescript-0.14.3
+    hackage: purescript-0.14.7
 - completed:
-    hackage: purescript-cst-0.3.0.0@sha256:369317d52737c4fa8c74a875283ed6cc0ef68e7c64db13d6e5bb7a7f72b76572,3861
+    hackage: purescript-cst-0.5.0.0@sha256:ac1935d9aa9cd99ec388255b35943b277b08bb5e36bf72ebb781b70e50862b6d,3851
     pantry-tree:
       size: 3018
-      sha256: 38f94bcc121068215c6082bab39b6c555cadd3b88e786740c394a5c4b98c4100
+      sha256: 2ecc0a787d279fd0eb9e511cf1854d71c3ecc088054049614137fa27945bcd7f
   original:
-    hackage: purescript-cst-0.3.0.0
+    hackage: purescript-cst-0.5.0.0
 - completed:
     hackage: language-javascript-0.7.0.0@sha256:3eab0262b8ac5621936a4beab6a0f97d0e00a63455a8b0e3ac1547b4088dae7d,3898
     pantry-tree:
@@ -27,7 +27,7 @@ packages:
     hackage: language-javascript-0.7.0.0
 snapshots:
 - completed:
-    size: 565712
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/17/6.yaml
-    sha256: 4e5e581a709c88e3fe26a9ce8bf331435729bead762fb5c190064c6c5bb1b835
-  original: lts-17.6
+    size: 586286
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/18/15.yaml
+    sha256: 2c9cb11d7aa0656bf28672dcb2414ab21e3ba9ea83ca170c216b2c2fc7e55856
+  original: lts-18.15

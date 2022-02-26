@@ -5,12 +5,14 @@ Notable changes to this project are documented in this file. The format is based
 ## [Unreleased]
 
 Breaking changes:
+- Update compiler to v0.14.7 (#271 by @JordanMartinez)
 
 New features:
 
 Bugfixes:
 
 Other improvements:
+- Update package set to latest 0.14.5 one (#271 by @JordanMartinez)
 
 ## [v2022-02-05.1](https://github.com/purescript/trypurescript/releases/tag/v2022-02-05.1)
 
