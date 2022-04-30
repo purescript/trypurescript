@@ -1,13 +1,11 @@
-"use strict";
-
-exports.storeSession_ = function(sessionId, state) {
+export function storeSession_(sessionId, state) {
   if (window.localStorage) {
     localStorage.setItem(sessionId, state.code);
     localStorage.setItem(sessionId + 'backend', state.backend);
   }
-};
+}
 
-exports.tryRetrieveSession_ = function(sessionId) {
+export function tryRetrieveSession_(sessionId) {
   if (window.localStorage) {
     var code = localStorage.getItem(sessionId);
     var backend = localStorage.getItem(sessionId + 'backend');
@@ -15,4 +13,4 @@ exports.tryRetrieveSession_ = function(sessionId) {
       return { code: code, backend: backend };
     }
   }
-};
+}

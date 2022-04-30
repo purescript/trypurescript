@@ -1,4 +1,2 @@
-"use strict";
-
-exports.setupIFrame = setupIFrame;
-exports.teardownIFrame = teardownIFrame;
+export {setupIFrame};
+export {teardownIFrame};
