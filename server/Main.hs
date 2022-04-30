@@ -80,6 +80,7 @@ buildMakeActions codegenRef =
     progress
     readCacheDb
     writeCacheDb
+    writePackageJson
     outputPrimDocs
   where
   getInputTimestampsAndHashes :: P.ModuleName -> Make.Make (Either Make.RebuildPolicy (M.Map FilePath (UTCTime, Make.Make Cache.ContentHash)))
@@ -109,6 +110,9 @@ buildMakeActions codegenRef =
 
   writeCacheDb :: Cache.CacheDb -> Make.Make ()
   writeCacheDb _ = pure ()
+
+  writePackageJson :: Make.Make ()
+  writePackageJson = pure ()
 
   outputPrimDocs :: Make.Make ()
   outputPrimDocs = pure ()
