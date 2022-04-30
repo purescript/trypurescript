@@ -1,5 +1,3 @@
-"use strict";
-
 export function setInnerHTML(html) {
   return function() {
     document.body.innerHTML += html;
