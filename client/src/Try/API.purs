@@ -14,13 +14,15 @@ module Try.API
 import Prelude
 
 import Affjax (URL, printError)
-import Affjax as AX
+import Affjax.Web as AX
 import Affjax.RequestBody as AXRB
 import Affjax.ResponseFormat as AXRF
 import Affjax.StatusCode (StatusCode(..))
 import Control.Alt ((<|>))
 import Control.Monad.Except (ExceptT(..))
-import Data.Argonaut.Decode (class DecodeJson, decodeJson, (.:))
+import Data.Argonaut.Decode (class DecodeJson, decodeJson, (.:), JsonDecodeError(..), printJsonDecodeError)
+import Data.Argonaut.Encode (encodeJson)
+import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse)
@@ -53,8 +55,8 @@ instance decodeJsonCompileError :: DecodeJson CompileError where
         map OtherError $ decodeJson contents
       "CompilerErrors" ->
         map CompilerErrors $ traverse decodeJson =<< decodeJson contents
-      _ ->
-        Left "Tag must be one of: OtherError, CompilerErrors"
+      j ->
+        Left $ AtKey "tag" $ UnexpectedValue $ encodeJson j
 
 type Suggestion =
   { replacement :: String
@@ -105,6 +107,6 @@ compile endpoint code = ExceptT $ liftAff $ AX.post AXRF.json (endpoint <> "/com
   Right { status } | status >= StatusCode 400 ->
     pure $ Left $ "Received error status code: " <> show status
   Right { body } ->
-    pure $ Right $ decodeJson body
+    pure $ lmap printJsonDecodeError $ decodeJson body
   where
   requestBody = Just $ AXRB.string code

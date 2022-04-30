@@ -15,7 +15,13 @@ import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Uncurried (EffectFn1, runEffectFn1)
 import Foreign.Object as Object
-import Global.Unsafe (unsafeDecodeURIComponent)
+import JSURI (decodeURIComponent)
+import Partial.Unsafe (unsafeCrashWith)
+
+unsafeDecodeURIComponent :: String -> String
+unsafeDecodeURIComponent s = case decodeURIComponent s of
+  Just str -> str
+  Nothing -> unsafeCrashWith $ "unsafeDecodeURIComponent encountered errors when decoding '" <> s <> "'"
 
 foreign import getQueryString :: Effect String
 

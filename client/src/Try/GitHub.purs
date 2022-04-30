@@ -3,7 +3,7 @@ module Try.GitHub where
 import Prelude
 
 import Affjax (URL, printError)
-import Affjax as AX
+import Affjax.Web as AX
 import Affjax.ResponseFormat as AXRF
 import Affjax.StatusCode (StatusCode(..))
 import Control.Monad.Except (ExceptT(..))

@@ -31,7 +31,7 @@ import Effect.Timer (clearTimeout, setTimeout)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import Halogen.Query.EventSource as ES
+import Halogen.Subscription as HS
 import Try.API (ErrorPosition)
 import Web.HTML (HTMLElement)
 
@@ -72,7 +72,7 @@ data Action
   | ClearMarkers
   | HandleChange
 
-component :: forall i m. MonadAff m => H.Component HH.HTML Query i Output m
+component :: forall i m. MonadAff m => H.Component Query i Output m
 component = H.mkComponent
   { initialState
   , render
@@ -96,7 +96,7 @@ component = H.mkComponent
   render _ =
     HH.div
       [ HP.ref $ H.RefLabel "ace"
-      , HP.id_ "code"
+      , HP.id "code"
       ]
       [ ]
 
@@ -107,10 +107,11 @@ component = H.mkComponent
         editor <- H.liftEffect $ setupEditor element
         H.modify_ _ { editor = Just editor }
         session <- H.liftEffect $ Editor.getSession editor
-        void $ H.subscribe $ ES.effectEventSource \emitter -> do
-          emit <- debounce debounceTime \_ -> ES.emit emitter HandleChange
+        { emitter, listener } <- H.liftEffect HS.create
+        void $ H.subscribe emitter
+        H.liftEffect do
+          emit <- debounce debounceTime \_ -> HS.notify listener HandleChange
           EditSession.onChange session emit
-          pure mempty
 
     Finalize -> do
       handleAction ClearMarkers
