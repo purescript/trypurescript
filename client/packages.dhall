@@ -1,22 +1,14 @@
 let upstream =
-      https://github.com/purescript/package-sets/releases/download/psc-0.13.6-20200404/packages.dhall sha256:f239f2e215d0cbd5c203307701748581938f74c4c78f4aeffa32c11c131ef7b6
+      https://github.com/purescript/package-sets/releases/download/psc-0.15.0-20220429/packages.dhall
+        sha256:03c682bff56fc8f9d8c495ffcc6f524cbd3c89fe04778f965265c08757de8c9d
 
 let additions =
-    { ace =
-        { repo = "https://github.com/purescript-contrib/purescript-ace.git"
-        , version = "v7.0.0"
+      { debug =
+        { repo = "https://github.com/working-group-purescript-es/purescript-debug.git"
+        , version = "v0.15.0-update"
         , dependencies =
-          [ "arrays"
-          , "console"
-          , "effect"
-          , "foreign"
-          , "nullable"
-          , "prelude"
-          , "refs"
-          , "web-html"
-          , "web-uievents"
-          ]
+          [ "console", "effect", "functions", "prelude" ]
         }
-    }
+      }
 
 in  upstream // additions

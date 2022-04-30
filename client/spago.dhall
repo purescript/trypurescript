@@ -3,6 +3,7 @@
   [ "ace"
   , "aff"
   , "affjax"
+  , "affjax-web"
   , "argonaut-codecs"
   , "arrays"
   , "assert"
@@ -18,12 +19,11 @@
   , "foreign-object"
   , "functions"
   , "functors"
-  , "globals"
   , "halogen"
   , "identity"
   , "integers"
   , "js-timers"
-  , "math"
+  , "js-uri"
   , "maybe"
   , "node-fs"
   , "ordered-collections"
@@ -41,5 +41,5 @@
   , "web-html"
   ]
 , packages = ./packages.dhall
-, sources = [ "src/**/*.purs", "test/**/*.purs" ]
+, sources = [ "src/**/*.purs", "config/dev/**/*.purs", "test/**/*.purs" ]
 }
