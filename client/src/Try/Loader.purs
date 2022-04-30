@@ -9,7 +9,6 @@ import Prelude
 import Control.Bind (bindFlipped)
 import Control.Monad.Except (ExceptT, throwError)
 import Control.Parallel (parTraverse)
-import Data.Array (foldMap)
 import Data.Array as Array
 import Data.Array.NonEmpty as NonEmpty
 import Data.Maybe (Maybe(..), fromMaybe)
