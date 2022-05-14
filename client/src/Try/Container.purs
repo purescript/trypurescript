@@ -27,7 +27,6 @@ import Try.Editor (MarkerType(..), toStringMarkerType)
 import Try.Editor as Editor
 import Try.Gist (getGistById, tryLoadFileFromGist)
 import Try.GitHub (getRawGitHubFile)
-import Try.Loader (Loader, makeLoader, runLoader)
 import Try.QueryString (getQueryStringMaybe)
 import Try.Session (createSessionIdIfNecessary, storeSession, tryRetrieveSession)
 import Try.Types (JS(..))
@@ -81,9 +80,6 @@ data Action
 
 _editor :: Proxy "editor"
 _editor = Proxy
-
-loader :: Loader
-loader = makeLoader Config.loaderUrl
 
 type LoadCb = Effect Unit
 type FailCb = Effect Unit
@@ -183,27 +179,19 @@ component = H.mkComponent
                   H.tell _editor unit  $ Editor.AddMarker MarkerError pos
                   pure unit
 
-        Right (Right res@(CompileSuccess { js, warnings })) -> do
+        Right (Right (CompileSuccess { js, warnings })) -> do
           { settings } <- H.get
           if settings.showJs then
             H.liftEffect teardownIFrame
           else do
-            eitherSources <- H.liftAff $ runExceptT $ runLoader loader (JS js)
             for_ warnings \warnings_ -> do
               let anns = Array.mapMaybe (toAnnotation MarkerWarning) warnings_
               H.tell _editor unit $ Editor.SetAnnotations anns
               pure unit
-            case eitherSources of
-              Right sources -> do
-                let eventData = Object.insert "<file>" (JS js) sources
-                H.liftAff $ makeAff \f -> do 
-                  runEffectFn3 setupIFrame eventData (f (Right unit)) (f (Left $ Aff.error "Could not load iframe"))
-                  mempty
-                H.modify_ _ { compiled = Just (Right res) }
-              Left err -> do
-                H.liftEffect teardownIFrame
-                H.liftEffect $ error err
-                H.modify_ _ { compiled = Just (Left err) }
+            let eventData = Object.singleton "code" (JS js)
+            H.liftAff $ makeAff \f -> do
+              runEffectFn3 setupIFrame eventData (f (Right unit)) (f (Left $ Aff.error "Could not load iframe"))
+              mempty
 
     HandleEditor (Editor.TextChanged text) -> do
       _ <- H.fork $ handleAction $ Cache text
