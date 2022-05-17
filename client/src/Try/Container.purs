@@ -30,9 +30,9 @@ import Try.GitHub (getRawGitHubFile)
 import Try.QueryString (getQueryStringMaybe)
 import Try.Session (createSessionIdIfNecessary, storeSession, tryRetrieveSession)
 import Try.Types (JS(..))
+import Type.Proxy (Proxy(..))
 import Web.HTML (window)
 import Web.HTML.Window (alert)
-import Type.Proxy (Proxy(..))
 
 type Slots = ( editor :: Editor.Slot Unit )
 
