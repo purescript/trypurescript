@@ -8,3 +8,4 @@
 /.stack*
 /public/js/index.js
 .spago/
+.vscode/
