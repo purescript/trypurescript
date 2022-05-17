@@ -14,13 +14,13 @@ module Try.API
 import Prelude
 
 import Affjax (URL, printError)
-import Affjax.Web as AX
 import Affjax.RequestBody as AXRB
 import Affjax.ResponseFormat as AXRF
 import Affjax.StatusCode (StatusCode(..))
+import Affjax.Web as AX
 import Control.Alt ((<|>))
 import Control.Monad.Except (ExceptT(..))
-import Data.Argonaut.Decode (class DecodeJson, decodeJson, (.:), JsonDecodeError(..), printJsonDecodeError)
+import Data.Argonaut.Decode (class DecodeJson, JsonDecodeError(..), decodeJson, printJsonDecodeError, (.:))
 import Data.Argonaut.Encode (encodeJson)
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
@@ -107,6 +107,6 @@ compile endpoint code = ExceptT $ liftAff $ AX.post AXRF.json (endpoint <> "/com
   Right { status } | status >= StatusCode 400 ->
     pure $ Left $ "Received error status code: " <> show status
   Right { body } ->
-    pure $ lmap printJsonDecodeError $ decodeJson body
+    pure $ Right $ lmap printJsonDecodeError $ decodeJson body
   where
   requestBody = Just $ AXRB.string code
