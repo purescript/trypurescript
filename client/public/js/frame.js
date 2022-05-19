@@ -13,11 +13,12 @@
         .split("\n")
         .map((line) => line.replace(/^import (.+) from "..\/([^"]+)";$/, `import $1 from "${url}/$2";`))
         .join("\n");
+      const finalCode = codeFixedImports + "\n\nmain();"
       // See https://stackoverflow.com/a/6433770
       try {
-        scriptEl.appendChild(document.createTextNode(codeFixedImports));
+        scriptEl.appendChild(document.createTextNode(finalCode));
       } catch (e) {
-        scriptEl.text = codeFixedImports;
+        scriptEl.text = finalCode;
       } finally {
         document.body.appendChild(scriptEl);
       }
