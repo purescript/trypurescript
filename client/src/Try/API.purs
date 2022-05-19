@@ -6,6 +6,7 @@ module Try.API
   , Suggestion(..)
   , SuccessResult(..)
   , FailedResult(..)
+  , BundleResult
   , CompileResult(..)
   , get
   , compile
@@ -69,7 +70,8 @@ type CompileWarning =
   }
 
 type SuccessResult =
-  { js :: String
+  { unbundled :: String
+  , bundled :: String
   , warnings :: Maybe (Array CompileWarning)
   }
 
@@ -77,16 +79,22 @@ type FailedResult =
   { error :: CompileError
   }
 
+type BundleResult =
+  { bundleFailed :: String
+  }
+
 -- | The result of calling the compile API.
 data CompileResult
   = CompileSuccess SuccessResult
   | CompileFailed FailedResult
+  | BundleFailed BundleResult
 
 -- | Parse the result from the compile API and verify it
 instance decodeJsonCompileResult :: DecodeJson CompileResult where
   decodeJson json =
     map CompileSuccess (decodeJson json)
       <|> map CompileFailed (decodeJson json)
+      <|> map BundleFailed (decodeJson json)
 
 get :: URL -> ExceptT String Aff String
 get url = ExceptT $ AX.get AXRF.string url >>= case _ of
@@ -102,8 +110,8 @@ compile :: forall m. MonadAff m => String -> String -> ExceptT String m (Either 
 compile endpoint code = ExceptT $ liftAff $ AX.post AXRF.json (endpoint <> "/compile") requestBody >>= case _ of
   Left e ->
     pure $ Left $ printError e
-  Right { status } | status >= StatusCode 400 ->
-    pure $ Left $ "Received error status code: " <> show status
+  Right { status, statusText } | status >= StatusCode 400 ->
+    pure $ Left $ "Received error status code: " <> show status <> " | " <> statusText
   Right { body } ->
     pure $ Right $ decodeJson body
   where

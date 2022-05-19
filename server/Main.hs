@@ -3,6 +3,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternGuards #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module Main (main) where
 
@@ -28,6 +29,7 @@ import qualified Data.Map as M
 import           Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
+import qualified Data.Text.Lazy.Encoding as TLE
 import           Data.Time.Clock (UTCTime)
 import           GHC.Generics (Generic)
 import qualified Language.PureScript as P
@@ -44,11 +46,15 @@ import qualified Language.PureScript.Make.Cache as Cache
 import qualified Language.PureScript.TypeChecker.TypeSearch as TS
 import qualified Network.Wai.Handler.Warp as Warp
 import           System.Environment (getArgs)
-import           System.Exit (exitFailure)
+import           System.Exit (exitFailure, ExitCode (ExitSuccess))
 import           System.FilePath.Glob (glob)
 import qualified System.IO as IO
 import           Web.Scotty
 import qualified Web.Scotty as Scotty
+import           Text.RE.TDFA.Text (ed, (?=~/), compileSearchReplace)
+import           System.Process.Typed (readProcess, byteStringInput, byteStringOutput, setStdout, proc, setStdin)
+import           Data.Text.Encoding (encodeUtf8)
+import           Text.RE.TDFA (re, (*=~), matches)
 
 type JS = Text
 
@@ -159,8 +165,36 @@ server externs initNamesEnv initEnv port = do
       case response of
         Left err ->
           Scotty.json $ A.object [ "error" .= err ]
-        Right (warnings, comp) ->
-          Scotty.json $ A.object [ "js" .= comp, "warnings" .= warnings ]
+        Right (warnings, comp) -> do
+          regex <- compileSearchReplace "^import (.+) from \"../([^\"]+)\";$" "import $1 from \"./output/$2\";"
+          let
+            fixImports :: Text -> Text
+            fixImports s = s ?=~/ regex
+            callMainWrapper :: Text -> Text
+            callMainWrapper s = s <> "\n\nmain();"
+            codeWithImportsFixed = callMainWrapper $ T.unlines $ fixImports <$> T.lines comp
+            esbuild =
+              setStdin (byteStringInput $ BL.fromStrict $ T.encodeUtf8 codeWithImportsFixed)
+                $ setStdout byteStringOutput
+                $ proc "esbuild"
+                    [ "--bundle"
+                    , "--platform=browser"
+                    , "--format=esm"
+                    , "--external:big-integer"
+                    , "--external:decimal.js"
+                    , "--external:react"
+                    , "--external:react-dom"
+                    , "--external:react-dom/server"
+                    , "--external:uuid"
+                    ]
+
+          (exitCode, out, err) <- readProcess esbuild
+          case exitCode of
+            ExitSuccess -> do
+              let bundled = T.decodeUtf8 $ BL.toStrict out
+              Scotty.json $ A.object [ "unbundled" .= comp, "bundled" .= bundled, "warnings" .= warnings ]
+            _ -> do
+              Scotty.json $ A.object [ "bundleFailed" .= T.decodeUtf8 (BL.toStrict err) ]
 
     get "/search" $ do
       query <- param "q"
