@@ -1,11 +1,20 @@
 (function() {
   var parent;
 
+  // Ensures `main` is only called once.
+  this.window.runCount = 0;
+
   document.addEventListener("DOMContentLoaded", function() {
     window.addEventListener("message", function(event) {
       parent = event.source;
       parent.postMessage("trypurescript", "*");
-      const code = event.data.code;
+      const code = `
+      ${event.data.code}
+      if (window.runCount === 0) {
+        main();
+        // bump runCount to ensure we don't re-run this.
+        window.runCount = 1;
+      }`;
       const scriptEl = document.createElement("script");
       scriptEl.type = "module";
       // See https://stackoverflow.com/a/6433770

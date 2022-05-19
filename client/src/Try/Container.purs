@@ -192,7 +192,7 @@ component = H.mkComponent
               _ <- H.query _editor unit $ H.tell $ Editor.SetAnnotations anns
               pure unit
             let
-              eventData = { code: js <> "\n\nmain();" }
+              eventData = { code: js }
             H.liftEffect teardownIFrame
             H.liftAff $ makeAff \f -> do
               runEffectFn3 setupIFrame eventData (f (Right unit)) (f (Left $ Aff.error "Could not load iframe"))
