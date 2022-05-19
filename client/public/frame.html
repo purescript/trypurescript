@@ -5,7 +5,57 @@
   <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
   <meta content="utf-8" http-equiv="encoding">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="js/frame.js"></script>
+  <script noshim>
+    window.esmsInitOptions = {
+      // -- Hooks --
+      // Module load error
+      onerror: (e) => {
+        console.log("Error while loading module: ");
+        console.log(e);
+        throw e;
+      },
+    };
+  </script>
+  <!--
+    JSPM Generator Import Map
+    Edit URL: https://generator.jspm.io/#Y2NnYGCzD80rySzJSU1hSMpM183MK0lNTy1yMNQz0zM1ZEhJTc7MTczRyyp2MDTQM9YzZChKTUwu0U3Jz3UwNNMzxCqiX5xaVJZaBJGAKystzUxxsACaYQQAoBlP83cA
+  -->
+  <script type="importmap">
+  {
+    "imports": {
+      "big-integer": "https://ga.jspm.io/npm:big-integer@1.6.51/BigInteger.js",
+      "decimal.js": "https://ga.jspm.io/npm:decimal.js@10.3.1/decimal.js",
+      "react": "https://ga.jspm.io/npm:react@16.13.1/index.js",
+      "react-dom": "https://ga.jspm.io/npm:react-dom@16.13.1/index.js",
+      "react-dom/server": "https://ga.jspm.io/npm:react-dom@16.13.1/server.browser.js",
+      "uuid": "https://ga.jspm.io/npm:uuid@8.3.2/dist/esm-browser/index.js"
+    },
+    "scopes": {
+      "https://ga.jspm.io/": {
+        "object-assign": "https://ga.jspm.io/npm:object-assign@4.1.1/index.js",
+        "react": "https://ga.jspm.io/npm:react@16.14.0/index.js",
+        "scheduler": "https://ga.jspm.io/npm:scheduler@0.19.1/index.js"
+      }
+    }
+  }
+  </script>
+
+  <!-- ES Module Shims: Import maps polyfill for modules browsers without import maps support (all except Chrome 89+) -->
+  <script async src="https://ga.jspm.io/npm:es-module-shims@1.5.1/dist/es-module-shims.js" integrity="sha384-ZGtUNdKMtA2sSrO9dN9d2TOeiSlXlDSrOrasgO9YoKR4LsDV7RLdUvvX1M0gCkl2" crossorigin="anonymous"></script>
+
+  <link rel="modulepreload" href="https://ga.jspm.io/npm:big-integer@1.6.51/BigInteger.js" integrity="sha384-Lxn1K4ox8//F5O+uihYrTIJvbfM+UJaRL2SdFA2s/z0v6i5TrWg9B8RzfjM60R9y"/>
+  <link rel="modulepreload" href="https://ga.jspm.io/npm:decimal.js@10.3.1/decimal.js" integrity="sha384-camBDJB1KoavtyRdQfdzzR4mj+uAKnNlvseJIwqKYOaHWnjZmnXR+1vyBP1WlZd0"/>
+  <link rel="modulepreload" href="https://ga.jspm.io/npm:object-assign@4.1.1/index.js" integrity="sha384-iQp1zoaqIhfUYyYkz3UNk1QeFfmBGgt1Ojq0kZD5Prql1g7fgJVzVgsjDoR65lv8"/>
+  <link rel="modulepreload" href="https://ga.jspm.io/npm:react-dom@16.13.1/cjs/react-dom-server.browser.production.min.js" integrity="sha384-XL5bjsaJ5UPjTIPsyzUfscq41OFbVXsLojl53DCgFfdzKNNUL2MOSd0WM/upjd53"/>
+  <link rel="modulepreload" href="https://ga.jspm.io/npm:react-dom@16.13.1/cjs/react-dom.production.min.js" integrity="sha384-HDQjgsF+F2j5XuiiDtCiuLA1vgyHr9ONiNrBhKmJEVa43KqIZdAB7VN2+QjUGwvq"/>
+  <link rel="modulepreload" href="https://ga.jspm.io/npm:react-dom@16.13.1/index.js" integrity="sha384-zAu0L7n/xnRAG7+D/qd1K4E1/2tYK4hL3puH/5YEliHNnO3OOt5jUhnnemFTHmIG"/>
+  <link rel="modulepreload" href="https://ga.jspm.io/npm:react-dom@16.13.1/server.browser.js" integrity="sha384-dsW+4a3rjWELxqtR1rVEIeLNHGyMjRFwdBVz6OG30oBLs8tO2/dYUIxEvc515PSZ"/>
+  <link rel="modulepreload" href="https://ga.jspm.io/npm:react@16.13.1/index.js" integrity="sha384-T0mNrKFgmKBye+m7XrpShrh+7kfix2zQd9qrR8xytnppcxESpgzrb4IJXvE+uJcl"/>
+  <link rel="modulepreload" href="https://ga.jspm.io/npm:react@16.14.0/cjs/react.production.min.js" integrity="sha384-pTMZhybzHZ+1G029kWUmoGvTrBp1C+2oJAkZV48BBq7+e6Hk3bGuXtvxT2vQfBqj"/>
+  <link rel="modulepreload" href="https://ga.jspm.io/npm:react@16.14.0/index.js" integrity="sha384-jVagjV+2YtlseazU2byX6gMLPHaA5Ps2c6HhvsGDlWjn45YCCoU1q+QtQTOb1MjT"/>
+  <link rel="modulepreload" href="https://ga.jspm.io/npm:scheduler@0.19.1/index.js" integrity="sha384-HIW1B3OQdGPkUEgh29MiYoUKQp+mFTjw50hRVvGhZgUaNYrUFYN07a+3CqC0/I7L"/>
+  <link rel="modulepreload" href="https://ga.jspm.io/npm:uuid@8.3.2/dist/esm-browser/index.js" integrity="sha384-y7UmGnwe+/V/S4AD5T6MLU9dHjA3PLvuVGNhrqZApiNbq9Lf8s3aNRrcnzOa+qtR"/>
+  <script src="js/frame.js" crossorigin="anonymous" noshim></script>
 </head>
 <body>
 <main id="main"></main>

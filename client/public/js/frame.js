@@ -1,41 +1,25 @@
 (function() {
-  function evalSources(sources) {
-    var modules = {};
-    function dirname(str) {
-      var ix = str.lastIndexOf("/");
-      return ix < 0 ? "" : str.slice(0, ix);
-    }
-    function resolvePath(a, b) {
-      if (b[0] === "." && b[1] === "/") {
-        return dirname(a) + b.slice(1);
-      }
-      if (b[0] === "." && b[1] === "." && b[2] === "/") {
-        return dirname(dirname(a)) + b.slice(2);
-      }
-      return b;
-    }
-    return function load(name) {
-      if (modules[name]) {
-        return modules[name].exports;
-      }
-      function require(path) {
-        return load(resolvePath(name, path));
-      }
-      var module = modules[name] = { exports: {} };
-      new Function("module", "exports", "require", sources[name])(module, module.exports, require);
-      return module.exports;
-    };
-  }
-
   var parent;
 
   document.addEventListener("DOMContentLoaded", function() {
     window.addEventListener("message", function(event) {
       parent = event.source;
       parent.postMessage("trypurescript", "*");
-      var file = evalSources(event.data)("<file>");
-      if (file.main && typeof file.main === "function") {
-        file.main();
+      const scriptEl = document.createElement("script");
+      scriptEl.type = "module";
+      const code = event.data.code;
+      const url = event.data.url;
+      const codeFixedImports = code
+        .split("\n")
+        .map((line) => line.replace(/^import (.+) from "..\/([^"]+)";$/, `import $1 from "${url}/$2";`))
+        .join("\n");
+      // See https://stackoverflow.com/a/6433770
+      try {
+        scriptEl.appendChild(document.createTextNode(codeFixedImports));
+      } catch (e) {
+        scriptEl.text = codeFixedImports;
+      } finally {
+        document.body.appendChild(scriptEl);
       }
     }, { once: true });
   }, { once: true });

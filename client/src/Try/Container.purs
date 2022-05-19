@@ -29,10 +29,8 @@ import Try.Editor (MarkerType(..), toStringMarkerType)
 import Try.Editor as Editor
 import Try.Gist (getGistById, tryLoadFileFromGist)
 import Try.GitHub (getRawGitHubFile)
-import Try.Loader (Loader, makeLoader, runLoader)
 import Try.QueryString (getQueryStringMaybe)
 import Try.Session (createSessionIdIfNecessary, storeSession, tryRetrieveSession)
-import Try.Types (JS(..))
 import Web.HTML (window)
 import Web.HTML.Window (alert)
 
@@ -83,12 +81,9 @@ data Action
 _editor :: SProxy "editor"
 _editor = SProxy
 
-loader :: Loader
-loader = makeLoader Config.loaderUrl
-
 type LoadCb = Effect Unit
 type FailCb = Effect Unit
-foreign import setupIFrame :: EffectFn3 (Object JS) LoadCb FailCb Unit
+foreign import setupIFrame :: EffectFn3 { code :: String, url :: String } LoadCb FailCb Unit
 foreign import teardownIFrame :: Effect Unit
 
 component :: forall q i o. H.Component HH.HTML q i o Aff
@@ -189,22 +184,20 @@ component = H.mkComponent
           if settings.showJs then
             H.liftEffect teardownIFrame
           else do
-            eitherSources <- H.liftAff $ runExceptT $ runLoader loader (JS js)
             for_ warnings \warnings_ -> do
               let anns = Array.mapMaybe (toAnnotation MarkerWarning) warnings_
               _ <- H.query _editor unit $ H.tell $ Editor.SetAnnotations anns
               pure unit
-            case eitherSources of
-              Right sources -> do
-                let eventData = Object.insert "<file>" (JS js) sources
-                H.liftAff $ makeAff \f -> do 
-                  runEffectFn3 setupIFrame eventData (f (Right unit)) (f (Left $ Aff.error "Could not load iframe"))
-                  mempty
-                H.modify_ _ { compiled = Just (Right res) }
-              Left err -> do
-                H.liftEffect teardownIFrame
-                H.liftEffect $ error err
-                H.modify_ _ { compiled = Just (Left err) }
+            let
+              eventData =
+                { code: js
+                , url: Config.loaderUrl
+                }
+            H.liftEffect teardownIFrame
+            H.liftAff $ makeAff \f -> do
+              runEffectFn3 setupIFrame eventData (f (Right unit)) (f (Left $ Aff.error "Could not load iframe"))
+              mempty
+            H.modify_ _ { compiled = Just (Right res) }
 
     HandleEditor (Editor.TextChanged text) -> do
       _ <- H.fork $ handleAction $ Cache text
