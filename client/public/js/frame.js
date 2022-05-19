@@ -5,20 +5,14 @@
     window.addEventListener("message", function(event) {
       parent = event.source;
       parent.postMessage("trypurescript", "*");
+      const code = event.data.code;
       const scriptEl = document.createElement("script");
       scriptEl.type = "module";
-      const code = event.data.code;
-      const url = event.data.url;
-      const codeFixedImports = code
-        .split("\n")
-        .map((line) => line.replace(/^import (.+) from "..\/([^"]+)";$/, `import $1 from "${url}/$2";`))
-        .join("\n");
-      const finalCode = codeFixedImports + "\n\nmain();"
       // See https://stackoverflow.com/a/6433770
       try {
-        scriptEl.appendChild(document.createTextNode(finalCode));
+        scriptEl.appendChild(document.createTextNode(code));
       } catch (e) {
-        scriptEl.text = finalCode;
+        scriptEl.text = code;
       } finally {
         document.body.appendChild(scriptEl);
       }

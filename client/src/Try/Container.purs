@@ -6,22 +6,25 @@ import Ace (Annotation)
 import Control.Monad.Except (runExceptT)
 import Data.Array (fold)
 import Data.Array as Array
-import Data.Either (Either(..))
+import Data.Either (Either(..), either)
 import Data.Foldable (for_, oneOf)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Maybe (Maybe(..), fromMaybe, isNothing)
 import Data.Symbol (SProxy(..))
+import Data.String as String
+import Data.String (Pattern(..))
+import Data.String.Regex as Regex
+import Data.String.Regex.Flags as RegexFlags
 import Effect (Effect)
 import Effect.Aff (Aff, makeAff)
 import Effect.Aff as Aff
 import Effect.Class.Console (error)
 import Effect.Uncurried (EffectFn3, runEffectFn3)
-import Foreign.Object (Object)
-import Foreign.Object as Object
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import Partial.Unsafe (unsafeCrashWith)
 import Try.API (CompileError(..), CompileResult(..), CompilerError, ErrorPosition)
 import Try.API as API
 import Try.Config as Config
@@ -83,7 +86,7 @@ _editor = SProxy
 
 type LoadCb = Effect Unit
 type FailCb = Effect Unit
-foreign import setupIFrame :: EffectFn3 { code :: String, url :: String } LoadCb FailCb Unit
+foreign import setupIFrame :: EffectFn3 { code :: String } LoadCb FailCb Unit
 foreign import teardownIFrame :: Effect Unit
 
 component :: forall q i o. H.Component HH.HTML q i o Aff
@@ -189,10 +192,20 @@ component = H.mkComponent
               _ <- H.query _editor unit $ H.tell $ Editor.SetAnnotations anns
               pure unit
             let
-              eventData =
-                { code: js
-                , url: Config.loaderUrl
-                }
+              importRegex :: Regex.Regex
+              importRegex = either (\_ -> unsafeCrashWith "Invalid regex") identity
+                $ Regex.regex """^import (.+) from "../([^"]+)";$""" RegexFlags.noFlags
+              replacement = "import $1 from \"" <> Config.loaderUrl <> "/$2\";"
+              codeFixImports = js
+                # String.split (Pattern "\n")
+                # map (Regex.replace importRegex replacement)
+              finalCode = String.joinWith "\n" $ codeFixImports <>
+                [ ""
+                , ""
+                , "main();" -- actually call the `main` function
+                ]
+
+              eventData = { code: finalCode }
             H.liftEffect teardownIFrame
             H.liftAff $ makeAff \f -> do
               runEffectFn3 setupIFrame eventData (f (Right unit)) (f (Left $ Aff.error "Could not load iframe"))
