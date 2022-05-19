@@ -6,11 +6,15 @@ import Ace (Annotation)
 import Control.Monad.Except (runExceptT)
 import Data.Array (fold)
 import Data.Array as Array
-import Data.Either (Either(..))
+import Data.Either (Either(..), either)
 import Data.Foldable (for_, oneOf)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Maybe (Maybe(..), fromMaybe, isNothing)
 import Data.Symbol (SProxy(..))
+import Data.String as String
+import Data.String (Pattern(..))
+import Data.String.Regex as Regex
+import Data.String.Regex.Flags as RegexFlags
 import Effect (Effect)
 import Effect.Aff (Aff, makeAff)
 import Effect.Aff as Aff
@@ -20,6 +24,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import Partial.Unsafe (unsafeCrashWith)
 import Try.API (CompileError(..), CompileResult(..), CompilerError, ErrorPosition)
 import Try.API as API
 import Try.Config as Config
@@ -187,7 +192,16 @@ component = H.mkComponent
               _ <- H.query _editor unit $ H.tell $ Editor.SetAnnotations anns
               pure unit
             let
-              eventData = { code: js }
+              importRegex :: Regex.Regex
+              importRegex = either (\_ -> unsafeCrashWith "Invalid regex") identity
+                $ Regex.regex """^import (.+) from "../([^"]+)";$""" RegexFlags.noFlags
+              replacement = "import $1 from \"" <> Config.loaderUrl <> "/$2\";"
+              finalCode = js
+                # String.split (Pattern "\n")
+                # map (Regex.replace importRegex replacement)
+                # String.joinWith "\n"
+
+              eventData = { code: finalCode }
             H.liftEffect teardownIFrame
             H.liftAff $ makeAff \f -> do
               runEffectFn3 setupIFrame eventData (f (Right unit)) (f (Left $ Aff.error "Could not load iframe"))
