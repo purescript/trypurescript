@@ -103,8 +103,7 @@ npm install
 # Try PureScript server.
 npm run build:(dev|production)
 
-cd public
-npx http-server # Try PureScript is now available on localhost:8080
+npm run serve # Try PureScript is now available on localhost:8080
 ```
 
 ### 4. Choosing a Tag
