@@ -6,11 +6,15 @@ import Ace (Annotation)
 import Control.Monad.Except (runExceptT)
 import Data.Array (fold)
 import Data.Array as Array
-import Data.Either (Either(..))
+import Data.Either (Either(..), either)
 import Data.Foldable (for_, oneOf)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Maybe (Maybe(..), fromMaybe, isNothing)
 import Data.Symbol (SProxy(..))
+import Data.String as String
+import Data.String (Pattern(..))
+import Data.String.Regex as Regex
+import Data.String.Regex.Flags as RegexFlags
 import Effect (Effect)
 import Effect.Aff (Aff, makeAff)
 import Effect.Aff as Aff
@@ -20,6 +24,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import Partial.Unsafe (unsafeCrashWith)
 import Try.API (CompileError(..), CompileResult(..), CompilerError, ErrorPosition)
 import Try.API as API
 import Try.Config as Config
@@ -163,10 +168,6 @@ component = H.mkComponent
           H.liftEffect $ error err
           H.modify_ _ { compiled = Just (Left err) }
 
-        Right (Right res@(BundleFailed _)) -> do
-          H.liftEffect teardownIFrame
-          H.modify_ _ { compiled = Just (Right res) }
-
         Right (Right res@(CompileFailed { error })) -> do
           H.liftEffect teardownIFrame
           H.modify_ _ { compiled = Just (Right res) }
@@ -181,7 +182,7 @@ component = H.mkComponent
                   _ <- H.query _editor unit $ H.tell $ Editor.AddMarker MarkerError pos
                   pure unit
 
-        Right (Right res@(CompileSuccess { bundled, unbundled, warnings })) -> do
+        Right (Right res@(CompileSuccess { js, warnings })) -> do
           { settings } <- H.get
           if settings.showJs then
             H.liftEffect teardownIFrame
@@ -191,7 +192,20 @@ component = H.mkComponent
               _ <- H.query _editor unit $ H.tell $ Editor.SetAnnotations anns
               pure unit
             let
-              eventData = { code: bundled }
+              importRegex :: Regex.Regex
+              importRegex = either (\_ -> unsafeCrashWith "Invalid regex") identity
+                $ Regex.regex """^import (.+) from "../([^"]+)";$""" RegexFlags.noFlags
+              replacement = "import $1 from \"" <> Config.loaderUrl <> "/$2\";"
+              codeFixImports = js
+                # String.split (Pattern "\n")
+                # map (Regex.replace importRegex replacement)
+              finalCode = String.joinWith "\n" $ codeFixImports <>
+                [ ""
+                , ""
+                , "main();" -- actually call the `main` function
+                ]
+
+              eventData = { code: finalCode }
             H.liftEffect teardownIFrame
             H.liftAff $ makeAff \f -> do
               runEffectFn3 setupIFrame eventData (f (Right unit)) (f (Left $ Aff.error "Could not load iframe"))
@@ -382,16 +396,14 @@ component = H.mkComponent
       Left err ->
         renderPlaintext err
       Right res -> case res of
-        BundleFailed { bundleFailed } -> do
-            renderPlaintext bundleFailed
         CompileFailed { error } -> case error of
           OtherError err ->
             renderPlaintext err
           CompilerErrors errs ->
             HH.div_ $ renderCompilerErrors errs
-        CompileSuccess { unbundled } ->
+        CompileSuccess { js } ->
           whenElem state.settings.showJs \_ ->
-            renderPlaintext unbundled
+            renderPlaintext js
 
 whenElem :: forall w i. Boolean -> (Unit -> HH.HTML w i) -> HH.HTML w i
 whenElem cond f = if cond then f unit else HH.text ""
