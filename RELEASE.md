@@ -39,3 +39,13 @@ Update the package set by doing the following:
         ```
         $ spago ls packages | cut -f 1 -d ' ' | xargs spago install
         ```
+
+4. If any packages need NPM dependencies, you can try adding their shims to the import map in `client/public/frame.html`
+
+        - Open up the `generator.jspm.io` URL in the comment
+        - Use the 'Add Dependency' search bar to find the NPM dependency
+            - If it exists but doesn't exist in that CDN, you can try another one or [open an issue on `jspm/project`](https://github.com/jspm/project#issue-queue-for-the-jspm-cdn)
+        - Update the version to the one you need once added
+        - If needed, include other files from that dependency
+        - Copy and paste the content into the `client/public/frame.html` file
+        - Ensure `es-module-shims` has version `1.5.5` or greater.
