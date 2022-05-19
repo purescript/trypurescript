@@ -192,20 +192,7 @@ component = H.mkComponent
               _ <- H.query _editor unit $ H.tell $ Editor.SetAnnotations anns
               pure unit
             let
-              importRegex :: Regex.Regex
-              importRegex = either (\_ -> unsafeCrashWith "Invalid regex") identity
-                $ Regex.regex """^import (.+) from "../([^"]+)";$""" RegexFlags.noFlags
-              replacement = "import $1 from \"" <> Config.loaderUrl <> "/$2\";"
-              codeFixImports = js
-                # String.split (Pattern "\n")
-                # map (Regex.replace importRegex replacement)
-              finalCode = String.joinWith "\n" $ codeFixImports <>
-                [ ""
-                , ""
-                , "main();" -- actually call the `main` function
-                ]
-
-              eventData = { code: finalCode }
+              eventData = { code: js <> "\n\nmain();" }
             H.liftEffect teardownIFrame
             H.liftAff $ makeAff \f -> do
               runEffectFn3 setupIFrame eventData (f (Right unit)) (f (Left $ Aff.error "Could not load iframe"))
