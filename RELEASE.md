@@ -49,3 +49,12 @@ Update the package set by doing the following:
         - If needed, include other files from that dependency
         - Copy and paste the content into the `client/public/frame.html` file
         - Ensure `es-module-shims` has version `1.5.5` or greater.
+
+5. If `es-module-shims` releases a new version, you can calculate its SHA-384 via
+
+        ```console
+        $ ESM_VERSION=1.5.5
+        $ curl -L -o es-module-shims.js "https://ga.jspm.io/npm:es-module-shims@$ESM_VERSION/dist/es-module-shims.js"
+        $ echo "sha384-$(openssl dgst -sha384 -binary es-module-shims.js | openssl base64 -A)"
+        $ rm es-module-shims.js
+        ```
