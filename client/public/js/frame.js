@@ -17,14 +17,8 @@
       }`;
       const scriptEl = document.createElement("script");
       scriptEl.type = "module";
-      // See https://stackoverflow.com/a/6433770
-      try {
-        scriptEl.appendChild(document.createTextNode(code));
-      } catch (e) {
-        scriptEl.text = code;
-      } finally {
-        document.body.appendChild(scriptEl);
-      }
+      scriptEl.appendChild(document.createTextNode(code));
+      document.body.appendChild(scriptEl);
     }, { once: true });
   }, { once: true });
 
