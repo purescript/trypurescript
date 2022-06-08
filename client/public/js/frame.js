@@ -5,10 +5,7 @@
     window.addEventListener("message", function(event) {
       parent = event.source;
       parent.postMessage("trypurescript", "*");
-      const code = `
-      ${event.data.code}
-      main();
-      `;
+      const code = event.data.code;
       const scriptEl = document.createElement("script");
       scriptEl.type = "module";
       scriptEl.appendChild(document.createTextNode(code));

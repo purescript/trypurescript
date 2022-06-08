@@ -6,16 +6,21 @@ import Ace (Annotation)
 import Control.Monad.Except (runExceptT)
 import Data.Array (fold)
 import Data.Array as Array
-import Data.Either (Either(..))
+import Data.Either (Either(..), either)
 import Data.Foldable (for_, oneOf)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Maybe (Maybe(..), fromMaybe, isNothing)
 import Data.Symbol (SProxy(..))
+import Data.String as String
+import Data.String (Pattern(..))
+import Data.String.Regex as Regex
+import Data.String.Regex.Flags as RegexFlags
 import Effect (Effect)
 import Effect.Aff (Aff, makeAff)
 import Effect.Aff as Aff
 import Effect.Class.Console (error)
 import Effect.Uncurried (EffectFn3, runEffectFn3)
+import Partial.Unsafe (unsafeCrashWith)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -187,6 +192,18 @@ component = H.mkComponent
               _ <- H.query _editor unit $ H.tell $ Editor.SetAnnotations anns
               pure unit
             let
+              importRegex :: Regex.Regex
+              importRegex = either (\_ -> unsafeCrashWith "Invalid regex") identity
+                $ Regex.regex """^import (.+) from "../([^"]+)";$""" RegexFlags.noFlags
+              replacement = "import $1 from \"" <> Config.loaderUrl <> "/$2\";"
+              codeFixImports = js
+                # String.split (Pattern "\n")
+                # map (Regex.replace importRegex replacement)
+              finalCode = String.joinWith "\n" $ codeFixImports <>
+                [ ""
+                , ""
+                , "main();" -- actually call the `main` function
+                ]
               eventData = { code: js }
             H.liftEffect teardownIFrame
             H.liftAff $ makeAff \f -> do
