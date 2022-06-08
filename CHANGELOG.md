@@ -12,6 +12,12 @@ Bugfixes:
 
 Other improvements:
 
+## [v2022-06-08.1](https://github.com/purescript/trypurescript/releases/tag/v2022-06-08.1)
+
+Breaking changes:
+- update compiler to v0.15.2 (#275 by @JordanMartinez)
+- Update package set to latest `0.15.2` one (#275 by @JordanMartinez)
+
 ## [v2022-02-25.1](https://github.com/purescript/trypurescript/releases/tag/v2022-02-25.1)
 
 Breaking changes:
