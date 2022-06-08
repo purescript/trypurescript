@@ -27,7 +27,6 @@ executable trypurescript
                    Glob -any,
                    scotty -any,
                    purescript,
-                   purescript-cst,
                    containers -any,
                    http-types -any,
                    transformers -any,

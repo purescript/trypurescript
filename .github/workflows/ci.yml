@@ -72,6 +72,12 @@ jobs:
           npm run build
           npm run test
           npm run build:production
+          if [ "/output/ignored/" != "$(cat public/frame.html | grep '<base' | sed -E 's/ +<base href="([^"]+)">/\1/;')" ]; then
+            echo "client/public/frame.html's 'base' element refers to the wrong path"
+            echo "Run 'npm run base:production' in the 'client' dir, and push the update as a commit"
+            echo "CI will fail until then"
+            exit 1
+          fi
 
       - name: Build client assets
         if: github.event_name == 'release'

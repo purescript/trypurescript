@@ -5,19 +5,12 @@
 
 packages:
 - completed:
-    hackage: purescript-0.14.7@sha256:8ae1f75de055c63d9dc43e646c98b92cca860ac7fc74b65c11d8e5007abfc37c,18677
+    hackage: purescript-0.15.2@sha256:c269f5e8ca70a49e45345d9d1e60c47c32b5bd1e87073224cefd22f5273ce164,20150
     pantry-tree:
-      size: 135286
-      sha256: 11941b228ff6e91d4c565a7bfb9a0aabe10797a3cbae9336a44798adb7aeb74f
+      size: 148972
+      sha256: 4526fbe5158eedb966b56626873bdc5a46fd0ab9cd8835c35d48365f5e9caa87
   original:
-    hackage: purescript-0.14.7
-- completed:
-    hackage: purescript-cst-0.5.0.0@sha256:ac1935d9aa9cd99ec388255b35943b277b08bb5e36bf72ebb781b70e50862b6d,3851
-    pantry-tree:
-      size: 3018
-      sha256: 2ecc0a787d279fd0eb9e511cf1854d71c3ecc088054049614137fa27945bcd7f
-  original:
-    hackage: purescript-cst-0.5.0.0
+    hackage: purescript-0.15.2
 - completed:
     hackage: language-javascript-0.7.0.0@sha256:3eab0262b8ac5621936a4beab6a0f97d0e00a63455a8b0e3ac1547b4088dae7d,3898
     pantry-tree:
@@ -25,6 +18,27 @@ packages:
       sha256: b0f28d836cb3fbde203fd7318a896c3a20acd8653a905e1950ae2d9a64bccebf
   original:
     hackage: language-javascript-0.7.0.0
+- completed:
+    hackage: monoidal-containers-0.6.2.0@sha256:124941d70df5e2928b4c6db605a1d0464e68c2c6b02e426db24a40194d43821d,2219
+    pantry-tree:
+      size: 569
+      sha256: 07ceac751866bad09af45df7d0ae97420d659221e8a0d85407705dcda1f6e89b
+  original:
+    hackage: monoidal-containers-0.6.2.0
+- completed:
+    hackage: process-1.6.13.1@sha256:c8bb8b7c993ff72d771381b3b56852dd154bce51880a24789c11f57b0688d353,2963
+    pantry-tree:
+      size: 1543
+      sha256: 58117b15fa330c79b3bca6b29c65f815e45840f79cc0915d3434f25e54ac8fa5
+  original:
+    hackage: process-1.6.13.1
+- completed:
+    hackage: Cabal-3.2.1.0@sha256:8743076ec022296f9771d962000c9ca3a0fe02e68c37b992c63e382a675f791d,27482
+    pantry-tree:
+      size: 41224
+      sha256: 92682a2aab8d967de341acff88525376eb9a31f53f094e0878c51c2886564f3a
+  original:
+    hackage: Cabal-3.2.1.0
 snapshots:
 - completed:
     size: 586286

@@ -1,12 +1,14 @@
-"use strict";
-
-exports.setInnerHTML = function(html) {
+export function setInnerHTML(html) {
   return function() {
-    document.body.innerHTML += html;
+    const el = document.getElementById("main");
+    if (!el) {
+      throw new Error("Error with TryPureScript. The 'client/public/frame.html' file should have an element with id: \"main\"");
+    }
+    el.innerHTML += html;
   };
-};
+}
 
-exports.withConsoleImpl = function(f) {
+export function withConsoleImpl(f) {
   return function() {
     var oldLog = console.log;
     var oldError = console.error;
@@ -34,4 +36,4 @@ exports.withConsoleImpl = function(f) {
 
     return lines;
   };
-};
+}

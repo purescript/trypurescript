@@ -5,9 +5,49 @@
   <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
   <meta content="utf-8" http-equiv="encoding">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="js/frame.js"></script>
+  <!-- Do not edit the base element's 'href' manually. Use the 'base:dev' or 'base:production' script -->
+  <base href="/output/ignored/">
+  <script>
+    window.esmsInitOptions = {
+      // -- Hooks --
+      // Module load error
+      onerror: (e) => {
+        console.log("Error while loading module: ");
+        console.log(e);
+        throw e;
+      },
+    };
+  </script>
+  <!--
+    JSPM Generator Import Map
+    Edit URL: https://generator.jspm.io/#Y2NnYGCzD80rySzJSU1hSMpM183MK0lNTy1yMNQz0zM1ZEhJTc7MTczRyyp2MDTQM9YzZChKTUwu0U3Jz3UwNNMzxCqiX5xaVJZaBJGAKystzUxxsACaYQQAoBlP83cA
+  -->
+  <script type="importmap">
+  {
+    "imports": {
+      "big-integer": "https://ga.jspm.io/npm:big-integer@1.6.51/BigInteger.js",
+      "decimal.js": "https://ga.jspm.io/npm:decimal.js@10.3.1/decimal.js",
+      "react": "https://ga.jspm.io/npm:react@16.13.1/index.js",
+      "react-dom": "https://ga.jspm.io/npm:react-dom@16.13.1/index.js",
+      "react-dom/server": "https://ga.jspm.io/npm:react-dom@16.13.1/server.browser.js",
+      "uuid": "https://ga.jspm.io/npm:uuid@8.3.2/dist/esm-browser/index.js"
+    },
+    "scopes": {
+      "https://ga.jspm.io/": {
+        "object-assign": "https://ga.jspm.io/npm:object-assign@4.1.1/index.js",
+        "react": "https://ga.jspm.io/npm:react@16.14.0/index.js",
+        "scheduler": "https://ga.jspm.io/npm:scheduler@0.19.1/index.js"
+      }
+    }
+  }
+  </script>
+
+  <!-- ES Module Shims: Import maps polyfill for modules browsers without import maps support (all except Chrome 89+) -->
+  <script async src="https://ga.jspm.io/npm:es-module-shims@1.5.5/dist/es-module-shims.js" integrity="sha384-Zt+0efULC2q2dftjz0uNzXeTpPVuSLLekXQv9HoRuigkAyLPaUFvPVpYYhu2Xc/t" crossorigin="anonymous"></script>
+
+  <script src="/js/frame.js"></script>
 </head>
 <body>
-<main id="main"></main>
+  <main id="main"></main>
 </body>
 </html>
