@@ -102,7 +102,6 @@ npm install
 # Use `build:production` and `base:production` if you would like
 # to test the client against the production Try PureScript server.
 npm run build:(dev|production)
-npm run base:(dev|production)
 
 npm run serve # Try PureScript is now available on localhost:8080
 ```
