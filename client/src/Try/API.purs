@@ -56,7 +56,7 @@ instance decodeJsonCompileError :: DecodeJson CompileError where
       "CompilerErrors" ->
         map CompilerErrors $ traverse decodeJson =<< decodeJson contents
       j ->
-        Left $ AtKey "tag" $ UnexpectedValue $ encodeJson j
+        Left $ AtKey "tag" $ UnexpectedValue $ encodeJson $ "- Expected a value of `OtherError` or `CompilerErrors` but got '" <> j <> "'"
 
 type Suggestion =
   { replacement :: String
