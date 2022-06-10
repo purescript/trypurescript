@@ -2,6 +2,9 @@ module Try.Config where
 
 import Prelude
 
+loaderUrl :: String
+loaderUrl = "/js/output"
+
 compileUrl :: String
 compileUrl = "http://localhost:8081"
 

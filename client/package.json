@@ -3,15 +3,13 @@
   "private": true,
   "scripts": {
     "clean": "rimraf output",
-    "base:dev": "node setBase.mjs \"dev\"",
-    "base:production": "node setBase.mjs \"prod\"",
     "test": "spago test --path config/dev/Try.Config.purs",
     "build": "spago build --path config/dev/Try.Config.purs",
     "build:dev": "spago bundle-app --path config/dev/Try.Config.purs --to public/js/index.js",
     "build:production": "spago bundle-app --path config/prod/Try.Config.purs --purs-args '--censor-lib --strict' --to public/js/index.js",
     "serve": "http-server public/ -o / --cors=\"Access-Control-Allow-Origin: *\" -c-1",
-    "serve:dev": "npm run build:dev && npm run base:dev && npm run serve",
-    "serve:production": "npm run build:production && npm run base:production && npm run serve"
+    "serve:dev": "npm run build:dev && npm run serve",
+    "serve:production": "npm run build:production && npm run serve"
   },
   "devDependencies": {
     "http-server": "^14.1.0",
