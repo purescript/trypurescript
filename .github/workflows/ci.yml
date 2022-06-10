@@ -72,6 +72,7 @@ jobs:
           npm run build
           npm run test
           npm run build:production
+          npm run bundle
 
       - name: Build client assets
         if: github.event_name == 'release'
