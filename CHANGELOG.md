@@ -12,6 +12,12 @@ Bugfixes:
 
 Other improvements:
 
+## [v2022-06-10.1](https://github.com/purescript/trypurescript/releases/tag/v2022-06-10.1)
+
+Bugfixes:
+- Fix the URL used for getting module dependencies of `Main` (#277 by @JordanMartinez)
+- Update alias to refer to correct location on server (#277 by @JordanMartinez)
+
 ## [v2022-06-08.1](https://github.com/purescript/trypurescript/releases/tag/v2022-06-08.1)
 
 Breaking changes:
