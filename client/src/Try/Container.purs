@@ -196,15 +196,13 @@ component = H.mkComponent
               importRegex = either (\_ -> unsafeCrashWith "Invalid regex") identity
                 $ Regex.regex """^import (.+) from "../([^"]+)";$""" RegexFlags.noFlags
               replacement = "import $1 from \"" <> Config.loaderUrl <> "/$2\";"
-              codeFixImports = js
+              codeWithRemappedImports = js
                 # String.split (Pattern "\n")
                 # map (Regex.replace importRegex replacement)
-              finalCode = String.joinWith "\n" $ codeFixImports <>
-                [ ""
-                , ""
-                , "main();" -- actually call the `main` function
-                ]
-              eventData = { code: js }
+                # String.joinWith "\n"
+
+              -- Actually call the `main` function
+              eventData = { code: codeWithRemappedImports <> "\n\n" <> "main();" }
             H.liftEffect teardownIFrame
             H.liftAff $ makeAff \f -> do
               runEffectFn3 setupIFrame eventData (f (Right unit)) (f (Left $ Aff.error "Could not load iframe"))
