@@ -4,13 +4,11 @@ import Prelude
 
 import Ace (Annotation)
 import Control.Monad.Except (runExceptT)
-import Data.Array (fold)
 import Data.Array as Array
 import Data.Either (Either(..), either)
-import Data.Foldable (for_, oneOf)
+import Data.Foldable (for_, oneOf, fold)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Maybe (Maybe(..), fromMaybe, isNothing)
-import Data.Symbol (SProxy(..))
 import Data.String as String
 import Data.String (Pattern(..))
 import Data.String.Regex as Regex
@@ -34,6 +32,7 @@ import Try.Gist (getGistById, tryLoadFileFromGist)
 import Try.GitHub (getRawGitHubFile)
 import Try.QueryString (getQueryStringMaybe)
 import Try.Session (createSessionIdIfNecessary, storeSession, tryRetrieveSession)
+import Type.Proxy (Proxy(..))
 import Web.HTML (window)
 import Web.HTML.Window (alert)
 
@@ -81,15 +80,15 @@ data Action
   | Compile (Maybe String)
   | HandleEditor Editor.Output
 
-_editor :: SProxy "editor"
-_editor = SProxy
+_editor :: Proxy "editor"
+_editor = Proxy
 
 type LoadCb = Effect Unit
 type FailCb = Effect Unit
 foreign import setupIFrame :: EffectFn3 { code :: String } LoadCb FailCb Unit
 foreign import teardownIFrame :: Effect Unit
 
-component :: forall q i o. H.Component HH.HTML q i o Aff
+component :: forall q i o. H.Component q i o Aff
 component = H.mkComponent
   { initialState
   , render
@@ -129,7 +128,7 @@ component = H.mkComponent
 
       -- Set the editor contents. This will trigger a change event, causing a
       -- cache + compile step.
-      void $ H.query _editor unit $ H.tell $ Editor.SetEditorContent code
+      H.tell _editor unit $ Editor.SetEditorContent code
 
     UpdateSettings k -> do
       old <- H.get
@@ -152,12 +151,12 @@ component = H.mkComponent
       H.modify_ _ { compiled = Nothing }
       code <- case mbCode of
         Nothing -> do
-          mbText <- H.query _editor unit $ H.request $ Editor.GetEditorContent
+          mbText <- H.request _editor unit $ Editor.GetEditorContent
           pure $ fold $ join mbText
         Just text ->
           pure text
-      _ <- H.query _editor unit $ H.tell $ Editor.SetAnnotations []
-      _ <- H.query _editor unit $ H.tell $ Editor.RemoveMarkers
+      H.tell _editor unit $ Editor.SetAnnotations []
+      H.tell _editor unit $ Editor.RemoveMarkers
       runExceptT (API.compile Config.compileUrl code) >>= case _ of
         Left err -> do
           H.liftEffect teardownIFrame
@@ -176,21 +175,19 @@ component = H.mkComponent
               pure unit
             CompilerErrors errs -> do
               let anns = Array.mapMaybe (toAnnotation MarkerError) errs
-              _ <- H.query _editor unit $ H.tell $ Editor.SetAnnotations anns
+              H.tell _editor unit $ Editor.SetAnnotations anns
               for_ errs \{ position } ->
                 for_ position \pos -> do
-                  _ <- H.query _editor unit $ H.tell $ Editor.AddMarker MarkerError pos
-                  pure unit
+                  H.tell _editor unit $ Editor.AddMarker MarkerError pos
 
-        Right (Right res@(CompileSuccess { js, warnings })) -> do
+        Right res@(Right (CompileSuccess { js, warnings })) -> do
           { settings } <- H.get
           if settings.showJs then
             H.liftEffect teardownIFrame
           else do
             for_ warnings \warnings_ -> do
               let anns = Array.mapMaybe (toAnnotation MarkerWarning) warnings_
-              _ <- H.query _editor unit $ H.tell $ Editor.SetAnnotations anns
-              pure unit
+              H.tell _editor unit $ Editor.SetAnnotations anns
             let
               importRegex :: Regex.Regex
               importRegex = either (\_ -> unsafeCrashWith "Invalid regex") identity
@@ -207,7 +204,7 @@ component = H.mkComponent
             H.liftAff $ makeAff \f -> do
               runEffectFn3 setupIFrame eventData (f (Right unit)) (f (Left $ Aff.error "Could not load iframe"))
               mempty
-            H.modify_ _ { compiled = Just (Right res) }
+            H.modify_ _ { compiled = Just res }
 
     HandleEditor (Editor.TextChanged text) -> do
       _ <- H.fork $ handleAction $ Cache text
@@ -217,9 +214,9 @@ component = H.mkComponent
   render :: State -> H.ComponentHTML Action Slots Aff
   render state =
     HH.div
-      [ HP.id_ "wrapper" ]
+      [ HP.id "wrapper" ]
       [ HH.div
-          [ HP.id_ "body" ]
+          [ HP.id "body" ]
           [ renderMenu
           , renderMobileBanner
           , renderEditor
@@ -228,10 +225,10 @@ component = H.mkComponent
     where
     renderMenu =
       HH.ul
-        [ HP.id_ "menu" ]
+        [ HP.id "menu" ]
         [ HH.a
             [ HP.class_ $ HH.ClassName "menu-item"
-            , HP.id_ "home_link"
+            , HP.id "home_link"
             , HP.href "/"
             , HP.title "Try PureScript!"
             ]
@@ -247,7 +244,7 @@ component = H.mkComponent
                 [ HP.title "Select a view mode" ]
                 [ HH.text "View Mode" ]
             , let name = "view_mode" in HH.ul
-                [ HP.id_ name ]
+                [ HP.id name ]
                 [ menuRadio
                     { checked: state.settings.viewMode == SideBySide
                     , name
@@ -298,25 +295,25 @@ component = H.mkComponent
         , HH.li
             [ HP.class_ $ HH.ClassName "menu-item no-mobile" ]
             [ HH.label
-                [ HP.id_ "compile_label"
+                [ HP.id "compile_label"
                 , HP.title "Compile Now"
-                , HE.onClick \_ -> Just (Compile Nothing)
+                , HE.onClick \_ -> Compile Nothing
                 ]
                 [ HH.text "Compile" ]
             ]
         , HH.li
             [ HP.class_ $ HH.ClassName "menu-item nowrap no-mobile" ]
             [ HH.input
-                [ HP.id_ "auto_compile"
+                [ HP.id "auto_compile"
                 , HP.name "auto_compile"
                 , HP.title "Toggle auto-compilation of the file on code changes"
                 , HP.value "auto_compile"
                 , HP.type_ HP.InputCheckbox
                 , HP.checked state.settings.autoCompile
-                , HE.onChecked \bool -> Just $ UpdateSettings (_ { autoCompile = bool })
+                , HE.onChecked \bool -> UpdateSettings (_ { autoCompile = bool })
                 ]
             , HH.label
-                [ HP.id_ "auto_compile-label"
+                [ HP.id "auto_compile-label"
                 , HP.for "auto_compile"
                 , HP.title "Compile on code changes"
                 ]
@@ -325,16 +322,16 @@ component = H.mkComponent
         , HH.li
             [ HP.class_ $ HH.ClassName "menu-item nowrap" ]
             [ HH.input
-                [ HP.id_ "showjs"
+                [ HP.id "showjs"
                 , HP.name "showjs"
                 , HP.title "Show resulting JavaScript code instead of output"
                 , HP.value "showjs"
                 , HP.type_ HP.InputCheckbox
                 , HP.checked state.settings.showJs
-                , HE.onChecked \bool -> Just $ UpdateSettings (_ { showJs = bool })
+                , HE.onChecked \bool -> UpdateSettings (_ { showJs = bool })
                 ]
             , HH.label
-                [ HP.id_ "showjs_label"
+                [ HP.id "showjs_label"
                 , HP.for "showjs"
                 , HP.title "Show resulting JavaScript code instead of output"
                 ]
@@ -343,12 +340,12 @@ component = H.mkComponent
         , HH.li
             [ HP.class_ $ HH.ClassName "menu-item" ]
             [ HH.a
-                [ HP.id_ "helplink"
+                [ HP.id "helplink"
                 , HP.href "https://github.com/purescript/trypurescript/blob/master/README.md"
                 , HP.target "trypurs_readme"
                 ]
                 [ HH.label
-                    [ HP.id_ "help"
+                    [ HP.id "help"
                     , HP.title "Learn more about Try PureScript"
                     ]
                     [ HH.text "Help" ]
@@ -363,28 +360,28 @@ component = H.mkComponent
 
     renderEditor =
       HH.div
-        [ HP.id_ "editor_view"
+        [ HP.id "editor_view"
         , HP.attr (HH.AttrName "data-view-mode") case state.settings.viewMode of
             SideBySide -> "sidebyside"
             Code -> "code"
             Output -> "output"
         ]
         [ HH.div
-            [ HP.id_ "column1"
+            [ HP.id "column1"
             , HP.class_ $ HH.ClassName "no-mobile"
             ]
-            [ HH.slot _editor unit Editor.component unit (Just <<< HandleEditor) ]
+            [ HH.slot _editor unit Editor.component unit HandleEditor ]
         , HH.div
             [ HP.class_ $ HH.ClassName "separator" ]
             [ ]
         , HH.div
-            [ HP.id_ "column2_wrapper" ]
+            [ HP.id "column2_wrapper" ]
             [ HH.div
-                [ HP.id_ "column2" ]
+                [ HP.id "column2" ]
                 [ maybeElem state.compiled renderCompiled ]
             , whenElem (isNothing state.compiled) \_ ->
                 HH.div
-                  [ HP.id_ "loading" ]
+                  [ HP.id "loading" ]
                   [ ]
             ]
         ]
@@ -440,8 +437,8 @@ menuRadio props =
         [ HP.type_ HP.InputRadio
         , HP.name props.name
         , HP.value props.value
-        , HP.id_ props.id
-        , HE.onClick \_ -> Just props.onClick
+        , HP.id props.id
+        , HE.onClick \_ -> props.onClick
         , HP.checked props.checked
         ]
     , HH.label

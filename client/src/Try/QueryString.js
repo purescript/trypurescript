@@ -1,13 +1,11 @@
-"use strict";
-
-exports.getQueryString = function() {
+export function getQueryString() {
   return window.location.search;
-};
+}
 
-exports.setQueryParameters = function(params) {
+export function setQueryParameters(params) {
   var encodedParams = Object.keys(params).map(function(key) {
     return key + '=' + encodeURIComponent(params[key].replace('/', ''));
   }).join('&');
 
   window.history.replaceState(null, '', '?' + encodedParams);
-};
+}

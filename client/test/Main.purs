@@ -3,7 +3,7 @@ module Test.Main where
 import Prelude
 
 import Data.Argonaut.Core (Json)
-import Data.Argonaut.Decode (class DecodeJson, decodeJson)
+import Data.Argonaut.Decode (class DecodeJson, JsonDecodeError, decodeJson)
 import Data.Bitraversable (ltraverse)
 import Data.Either (Either, isRight)
 import Effect (Effect)
@@ -27,7 +27,7 @@ apiTests fixtures = do
 -- | Test that a JSON response decodes successfully.
 shouldDecode :: forall a. DecodeJson a => Proxy a -> Json -> Effect Unit
 shouldDecode _ fixture = do
-  result <- (decodeJson fixture :: Either String a) # ltraverse \errors -> do
+  result <- (decodeJson fixture :: Either JsonDecodeError a) # ltraverse \errors -> do
     log "Failed to decode fixture:\n"
     logShow errors
   assert (isRight result)
