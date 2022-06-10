@@ -9,6 +9,6 @@ import Halogen.VDom.Driver (runUI)
 import Try.Container as Container
 
 main :: Effect Unit
-main = launchAff_ do
+main = void $ launchAff_ do
   body <- HA.awaitBody
-  runUI Container.component unit body
+  void $ runUI Container.component unit body

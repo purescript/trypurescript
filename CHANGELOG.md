@@ -11,6 +11,7 @@ New features:
 Bugfixes:
 
 Other improvements:
+- Update client to 0.15.2; bundle via esbuild (#278 by @JordanMartinez)
 
 ## [v2022-06-10.1](https://github.com/purescript/trypurescript/releases/tag/v2022-06-10.1)
 

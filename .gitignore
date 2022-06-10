@@ -15,3 +15,4 @@ cabal.sandbox.config
 *.lksh*
 bundle/
 client/public/js/output
+client/client.js

@@ -8,10 +8,10 @@ module Try.Gist
 import Prelude
 
 import Affjax (printError)
-import Affjax as AX
 import Affjax.RequestBody as AXRB
 import Affjax.ResponseFormat as AXRF
 import Affjax.StatusCode (StatusCode(..))
+import Affjax.Web as AX
 import Control.Monad.Except.Trans (ExceptT(..))
 import Data.Argonaut.Core (Json, caseJsonObject, stringify, toString)
 import Data.Argonaut.Encode (encodeJson)

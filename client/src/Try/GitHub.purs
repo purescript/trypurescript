@@ -3,9 +3,9 @@ module Try.GitHub where
 import Prelude
 
 import Affjax (URL, printError)
-import Affjax as AX
 import Affjax.ResponseFormat as AXRF
 import Affjax.StatusCode (StatusCode(..))
+import Affjax.Web as AX
 import Control.Monad.Except (ExceptT(..))
 import Data.Either (Either(..))
 import Effect.Aff (Aff)
