@@ -7,6 +7,7 @@ Notable changes to this project are documented in this file. The format is based
 Breaking changes:
 
 New features:
+- Clearly indicate PureScript and package set version (#280 by @JordanMartinez)
 
 Bugfixes:
 - Stop double `main` invocation by updating `es-module-shims` to 1.5.6 (#279 by @JordanMartinez)

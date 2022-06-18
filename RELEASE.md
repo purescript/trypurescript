@@ -40,7 +40,13 @@ Update the package set by doing the following:
         $ spago ls packages | cut -f 1 -d ' ' | xargs spago install
         ```
 
-4. If any packages need NPM dependencies, you can try adding their shims to the import map in `client/public/frame.html`
+4. Update the `client/src/Try/SharedConfig.purs` file by running this command:
+
+        ```console
+        $ npm run updateConfigVersions
+        ```
+
+5. If any packages need NPM dependencies, you can try adding their shims to the import map in `client/public/frame.html`
     - Open up the `generator.jspm.io` URL in the comment
     - Use the 'Add Dependency' search bar to find the NPM dependency
         - If it exists but doesn't exist in that CDN, you can try another one or [open an issue on `jspm/project`](https://github.com/jspm/project#issue-queue-for-the-jspm-cdn)
@@ -49,7 +55,7 @@ Update the package set by doing the following:
     - Copy and paste the content into the `client/public/frame.html` file
     - Ensure `es-module-shims` has version `1.5.5` or greater.
 
-5. If `es-module-shims` releases a new version, you can calculate its SHA-384 via
+6. If `es-module-shims` releases a new version, you can calculate its SHA-384 via
 
         ```console
         $ ESM_VERSION=1.5.5

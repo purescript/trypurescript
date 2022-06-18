@@ -10,7 +10,8 @@
     "bundle": "esbuild --outfile=public/js/index.js --bundle --minify --platform=browser --format=iife --tree-shaking=true --footer:js=\"\n\nmain();\" client.js",
     "serve": "http-server public/ -o / --cors=\"Access-Control-Allow-Origin: *\" -c-1",
     "serve:dev": "npm run build:dev && npm run bundle && npm run serve",
-    "serve:production": "npm run build:production && npm run bundle && npm run serve"
+    "serve:production": "npm run build:production && npm run bundle && npm run serve",
+    "updateConfigVersions": "node updateSharedConfigVersions.mjs src/Try/SharedConfig.purs"
   },
   "devDependencies": {
     "esbuild": "^0.14.43",

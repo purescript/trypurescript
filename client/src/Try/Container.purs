@@ -32,6 +32,7 @@ import Try.Gist (getGistById, tryLoadFileFromGist)
 import Try.GitHub (getRawGitHubFile)
 import Try.QueryString (getQueryStringMaybe)
 import Try.Session (createSessionIdIfNecessary, storeSession, tryRetrieveSession)
+import Try.SharedConfig as SharedConfig
 import Type.Proxy (Proxy(..))
 import Web.HTML (window)
 import Web.HTML.Window (alert)
@@ -220,6 +221,7 @@ component = H.mkComponent
           [ renderMenu
           , renderMobileBanner
           , renderEditor
+          , renderFooter
           ]
       ]
     where
@@ -384,6 +386,25 @@ component = H.mkComponent
                   [ HP.id "loading" ]
                   [ ]
             ]
+        ]
+
+    renderFooter = do
+      let
+        footerLink linkPrefix linkText linkUrl =
+          HH.div
+            [ HP.class_ $ HH.ClassName "footer-link" ]
+            [ HH.span_
+              [ HH.text linkPrefix ]
+            , HH.a
+              [ HP.href linkUrl
+              , HP.target "_blank"
+              , HP.rel "noopener"
+              ]
+              [ HH.text linkText ]
+            ]
+      HH.footer_
+        [ footerLink "PureScript version:" SharedConfig.pursVersion SharedConfig.pursReleaseUrl
+        , footerLink "Package set version:" SharedConfig.packageSetVersion SharedConfig.packageSetPackageJsonUrl
         ]
 
     renderCompiled = case _ of
