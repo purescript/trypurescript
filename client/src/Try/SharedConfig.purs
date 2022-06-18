@@ -12,7 +12,7 @@ pursReleaseUrl :: String
 pursReleaseUrl = "https://github.com/purescript/purescript/releases/tag/" <> pursVersion
 
 packageSetVersion :: String
-packageSetVersion = "0.15.3-20220531"
+packageSetVersion = "0.15.2-20220531"
 
 packageSetPackageJsonUrl :: String
 packageSetPackageJsonUrl = "https://github.com/purescript/package-sets/blob/psc-" <> packageSetVersion <> "/packages.json"
