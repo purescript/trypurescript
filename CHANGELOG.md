@@ -9,6 +9,7 @@ Breaking changes:
 New features:
 
 Bugfixes:
+- Stop double `main` invocation by updating `es-module-shims` to 1.5.6 (#279 by @JordanMartinez)
 
 Other improvements:
 
