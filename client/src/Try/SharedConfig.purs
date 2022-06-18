@@ -6,7 +6,7 @@ module Try.SharedConfig where
 import Prelude
 
 pursVersion :: String
-pursVersion = "v0.15.2"
+pursVersion = "v0.15.3"
 
 pursReleaseUrl :: String
 pursReleaseUrl = "https://github.com/purescript/purescript/releases/tag/" <> pursVersion
