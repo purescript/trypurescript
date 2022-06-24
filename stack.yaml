@@ -3,7 +3,7 @@ packages:
   - "."
 
 extra-deps:
-  - purescript-0.15.2
+  - purescript-0.15.3
   - language-javascript-0.7.0.0
   - monoidal-containers-0.6.2.0
   - process-1.6.13.1
