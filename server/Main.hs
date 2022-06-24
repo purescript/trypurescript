@@ -41,6 +41,7 @@ import qualified Language.PureScript.Errors.JSON as P
 import qualified Language.PureScript.Interactive as I
 import qualified Language.PureScript.Make as Make
 import qualified Language.PureScript.Make.Cache as Cache
+import qualified Language.PureScript.Names as N
 import qualified Language.PureScript.TypeChecker.TypeSearch as TS
 import qualified Network.Wai.Handler.Warp as Warp
 import           System.Environment (getArgs)
@@ -192,13 +193,13 @@ getOpts port = def
 
 lookupAllConstructors :: P.Environment -> P.SourceType -> [P.SourceType]
 lookupAllConstructors env = P.everywhereOnTypesM $ \case
-    P.TypeConstructor ann (P.Qualified Nothing tyCon) -> P.TypeConstructor ann <$> lookupConstructor env tyCon
+    P.TypeConstructor ann (P.Qualified (N.BySourcePos _) tyCon) -> P.TypeConstructor ann <$> lookupConstructor env tyCon
     other -> pure other
   where
     lookupConstructor :: P.Environment -> P.ProperName 'P.TypeName -> [P.Qualified (P.ProperName 'P.TypeName)]
     lookupConstructor env nm =
       [ q
-      | (q@(P.Qualified (Just _) thisNm), _) <- M.toList (P.types env)
+      | (q@(P.Qualified (N.ByModuleName _) thisNm), _) <- M.toList (P.types env)
       , thisNm == nm
       ]
 
