@@ -11,6 +11,8 @@ New features:
 Bugfixes:
 
 Other improvements:
+- Update to PureScript 0.15.3 (#281 by @JordanMartinez)
+- Update codebase to GHC 9.2.3 (#281 by @JordanMartinez)
 
 ## [v2022-06-18.1](https://github.com/purescript/trypurescript/releases/tag/v2022-06-18.1)
 
