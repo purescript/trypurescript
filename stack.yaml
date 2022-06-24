@@ -1,13 +1,15 @@
-resolver: lts-18.15
+resolver: nightly-2022-06-09
 packages:
   - "."
 
 extra-deps:
   - purescript-0.15.3
   - language-javascript-0.7.0.0
-  - monoidal-containers-0.6.2.0
   - process-1.6.13.1
-  - Cabal-3.2.1.0
+  # The Cabal library is not in Stackage
+  - Cabal-3.6.3.0
+  # Protolude is not yet in resolver snapshot
+  - protolude-0.3.1
 
 flags:
   aeson-pretty:
