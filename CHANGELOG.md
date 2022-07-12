@@ -12,7 +12,7 @@ Bugfixes:
 
 Other improvements:
 
-## [v2022-07-01.1](https://github.com/purescript/trypurescript/releases/tag/v2022-07-01.1)
+## [v2022-07-12.1](https://github.com/purescript/trypurescript/releases/tag/v2022-07-12.1)
 
 Other improvements:
 - Update to PureScript 0.15.4 (#281 by @JordanMartinez)
