@@ -39,6 +39,7 @@ printf = printfWith ""
 debug :: String -> Int -> String -> String
 debug uri status msg = printf "[" uri "] " status ": " msg
 
+main :: Effect Unit
 main = render =<< withConsole do
   log $ debug "http://www.purescript.org" 200 "OK"
   log $ debug "http://bad.purescript.org" 404 "Not found"

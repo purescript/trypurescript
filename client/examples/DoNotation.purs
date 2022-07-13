@@ -5,7 +5,7 @@ import Control.MonadPlus (guard)
 import Effect.Console (logShow)
 import Data.Array ((..))
 import Data.Foldable (for_)
-import TryPureScript
+import TryPureScript (render, withConsole)
 
 -- Find Pythagorean triples using an array comprehension.
 triples :: Int -> Array (Array Int)
@@ -16,5 +16,6 @@ triples n = do
   guard $ x * x + y * y == z * z
   pure [x, y, z]
 
+main :: Effect Unit
 main = render =<< withConsole do
   for_ (triples 20) logShow
