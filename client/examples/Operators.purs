@@ -16,5 +16,6 @@ infixl 5 subdirectory as </>
 filepath :: FilePath
 filepath = "usr" </> "local" </> "bin"
 
+main :: Effect Unit
 main = render =<< withConsole do
   log filepath

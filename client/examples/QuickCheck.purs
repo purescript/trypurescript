@@ -5,6 +5,7 @@ import Data.Array (sort)
 import Test.QuickCheck (quickCheck, (===))
 import TryPureScript (render, withConsole, h1, h2, p, text)
 
+main :: Effect Unit
 main = do
   render $ h1 $ text "QuickCheck"
   render $ p $ text """QuickCheck is a Haskell library which allows us to assert properties

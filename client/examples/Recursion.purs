@@ -12,6 +12,7 @@ isEven :: Int -> Boolean
 isEven 0 = true
 isEven n = isOdd (n - 1)
 
+main :: Effect Unit
 main = render =<< withConsole do
   logShow $ isEven 1000
   logShow $ isEven 1001

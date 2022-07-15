@@ -12,6 +12,8 @@ Bugfixes:
 
 Other improvements:
 - Drop requirement that module name be `Main` (#285 by @JordanMartinez)
+- Fixes compiler warnings in examples (#286 by @JordanMartinez)
+- Support cookbook repo UI recipes by adding element to `frame.html` (#286 by @JordanMartinez)
 
 ## [v2022-07-12.1](https://github.com/purescript/trypurescript/releases/tag/v2022-07-12.1)
 

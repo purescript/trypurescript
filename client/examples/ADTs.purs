@@ -19,5 +19,6 @@ derive instance ordName :: Ord Name
 phoneBook :: Map Name String
 phoneBook = singleton (Name "John" "Smith") "555-555-1234"
 
+main :: Effect Unit
 main = render =<< withConsole do
   logShow (lookup (Name "John" "Smith") phoneBook)

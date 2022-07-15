@@ -45,6 +45,7 @@ instance eqPerson :: Eq Person where
 instance ordPerson :: Ord Person where
   compare = genericCompare
 
+main :: Effect Unit
 main = render =<< withConsole do
   logShow $ Person
     { first: "John"
