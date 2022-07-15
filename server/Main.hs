@@ -25,6 +25,8 @@ import qualified Data.IORef as IORef
 import           Data.List (nubBy)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
+import           Data.Set (Set)
+import qualified Data.Set as Set
 import           Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
@@ -118,10 +120,11 @@ buildMakeActions codegenRef =
   outputPrimDocs :: Make.Make ()
   outputPrimDocs = pure ()
 
-server :: [P.ExternsFile] -> P.Env -> P.Environment -> Int -> IO ()
-server externs initNamesEnv initEnv port = do
+server :: [N.ModuleName] -> [P.ExternsFile] -> P.Env -> P.Environment -> Int -> IO ()
+server allModuleNames externs initNamesEnv initEnv port = do
   codegenRef <- IORef.newIORef Nothing
   let makeActions = buildMakeActions codegenRef
+  let modNames = Set.fromList allModuleNames
   let compile :: Text -> IO (Either Error ([P.JSONError], JS))
       compile input
         | T.length input > 20000 = return $ Left $ OtherError "Please limit your input to 20000 characters"
@@ -134,20 +137,24 @@ server externs initNamesEnv initEnv port = do
               (_, Left parserErrors) ->
                 return $ Left $ toCompilerErrors parserErrors
 
-              (parserWarnings, Right m) | P.getModuleName m == P.ModuleName "Main" -> do
-                (makeResult, warnings) <- Make.runMake P.defaultOptions $ Make.rebuildModule' makeActions initNamesEnv externs m
-                codegenResult <- IORef.readIORef codegenRef
-                return $ case makeResult of
-                  Left errors ->
-                    Left $ CompilerErrors $ toJsonErrors errors
-                  Right _ | Just js <- codegenResult -> do
-                    let ws = warnings <> CST.toMultipleWarnings "<file>" parserWarnings
-                    Right (toJsonErrors ws, js)
-                  Right _ ->
-                    Left $ OtherError "Failed to read the results of codegen."
+              (parserWarnings, Right m)
+                | Set.notMember (P.getModuleName m) modNames -> do
+                    (makeResult, warnings) <- Make.runMake P.defaultOptions $ Make.rebuildModule' makeActions initNamesEnv externs m
+                    codegenResult <- IORef.readIORef codegenRef
+                    return $ case makeResult of
+                      Left errors ->
+                        Left $ CompilerErrors $ toJsonErrors errors
+                      Right _ | Just js <- codegenResult -> do
+                        let ws = warnings <> CST.toMultipleWarnings "<file>" parserWarnings
+                        Right (toJsonErrors ws, js)
+                      Right _ ->
+                        Left $ OtherError "Failed to read the results of codegen."
 
-              (_, Right _) ->
-                return $ Left $ OtherError "The name of the main module should be Main."
+                | otherwise -> do
+                    let
+                      modName = N.runModuleName $ P.getModuleName m
+                    return $ Left $ OtherError $
+                      "The name of the module you defined " <> modName <> " clashes with another module in the package set. Rename the module to something else (e.g. 'Main')."
 
   scottyOpts (getOpts port) $ do
     get "/" $
@@ -242,7 +249,9 @@ main = do
     modules <- ExceptT $ I.loadAllModules inputFiles
     (exts, env) <- ExceptT . I.runMake . I.make $ map (second CST.pureResult) modules
     namesEnv <- fmap fst . runWriterT $ foldM P.externsEnv P.primEnv exts
-    pure (exts, namesEnv, env)
+    let
+      allModuleNames = fmap (P.getModuleName . snd) modules
+    pure (allModuleNames, exts, namesEnv, env)
   case e of
     Left err -> print err >> exitFailure
-    Right (exts, namesEnv, env) -> server exts namesEnv env port
+    Right (allModuleNames, exts, namesEnv, env) -> server allModuleNames exts namesEnv env port

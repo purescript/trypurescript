@@ -11,6 +11,7 @@ New features:
 Bugfixes:
 
 Other improvements:
+- Drop requirement that module name be `Main` (#285 by @JordanMartinez)
 
 ## [v2022-07-12.1](https://github.com/purescript/trypurescript/releases/tag/v2022-07-12.1)
 
