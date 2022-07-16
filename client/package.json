@@ -7,7 +7,7 @@
     "build": "spago build --path config/dev/Try.Config.purs",
     "build:dev": "spago bundle-app --path config/dev/Try.Config.purs --to client.js",
     "build:production": "spago bundle-app --path config/prod/Try.Config.purs --purs-args '--censor-lib --strict' --to client.js",
-    "bundle": "esbuild --outfile=public/js/index.js --bundle --minify --platform=browser --format=iife --tree-shaking=true --footer:js=\"\n\nmain();\" client.js",
+    "bundle": "esbuild --outfile=public/js/index.js --bundle --minify --platform=browser --format=iife --tree-shaking=true client.js",
     "serve": "http-server public/ -o / --cors=\"Access-Control-Allow-Origin: *\" -c-1",
     "serve:dev": "npm run build:dev && npm run bundle && npm run serve",
     "serve:production": "npm run build:production && npm run bundle && npm run serve",
