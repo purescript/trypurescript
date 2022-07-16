@@ -11,6 +11,7 @@ New features:
 Bugfixes:
 - Fix `Reference Error: main is not defined` bug: (#288 by @JordanMartinez)
 - Fix NPM dependency shims on Firefox 100+ (#289 by @JordanMartinez)
+- Fix import maps for React deps by using development version (#289 by @JordanMartinez)
 
 Other improvements:
 - Update `es-module-shims` to 1.5.9 (#289 by @JordanMartinez)
