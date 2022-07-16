@@ -9,6 +9,7 @@ Breaking changes:
 New features:
 
 Bugfixes:
+- Fix `Reference Error: main is not defined` bug: (#288 by @JordanMartinez)
 
 Other improvements:
 
