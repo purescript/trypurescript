@@ -2,6 +2,7 @@ module Main where
 
 import Prelude
 import Data.Array (sort)
+import Effect (Effect)
 import Test.QuickCheck (quickCheck, (===))
 import TryPureScript (render, withConsole, h1, h2, p, text)
 
