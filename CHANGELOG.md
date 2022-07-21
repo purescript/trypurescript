@@ -11,8 +11,11 @@ New features:
 Bugfixes:
 - Fix `Reference Error: main is not defined` bug: (#288 by @JordanMartinez)
 - Fix `Unknown type Effect` bug in examples (#292 by @ptrfrncsmrph)
+- Fix NPM dependency shims on Firefox 100+ (#289 by @JordanMartinez)
+- Fix import maps for React deps by bumping version to 17.0.2 (#289 by @JordanMartinez)
 
 Other improvements:
+- Update `es-module-shims` to 1.5.9 (#289 by @JordanMartinez)
 
 ## [v2022-07-15.1](https://github.com/purescript/trypurescript/releases/tag/v2022-07-15.1)
 
