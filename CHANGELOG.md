@@ -10,6 +10,7 @@ New features:
 
 Bugfixes:
 - Fix `Reference Error: main is not defined` bug: (#288 by @JordanMartinez)
+- Fix `Unknown type Effect` bug in examples (#292 by @ptrfrncsmrph)
 
 Other improvements:
 
