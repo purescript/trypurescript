@@ -2,6 +2,7 @@ module Main where
 
 import Prelude
 import Control.MonadPlus (guard)
+import Effect (Effect)
 import Effect.Console (logShow)
 import Data.Array ((..))
 import Data.Foldable (for_)

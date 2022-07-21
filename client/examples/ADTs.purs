@@ -2,6 +2,7 @@ module Main where
 
 import Prelude
 
+import Effect (Effect)
 import Effect.Console (logShow)
 import Data.Map (Map, lookup, singleton)
 import TryPureScript (render, withConsole)

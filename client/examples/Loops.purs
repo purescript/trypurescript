@@ -2,6 +2,7 @@ module Main where
 
 import Prelude
 
+import Effect (Effect)
 import Effect.Console (log)
 import Data.Array ((..))
 import Data.Foldable (for_)
