@@ -9,6 +9,12 @@ Breaking changes:
 New features:
 
 Bugfixes:
+
+Other improvements:
+
+## [v2022-07-21.1](https://github.com/purescript/trypurescript/releases/tag/v2022-07-21.1)
+
+Bugfixes:
 - Fix `Reference Error: main is not defined` bug: (#288 by @JordanMartinez)
 - Fix `Unknown type Effect` bug in examples (#292 by @ptrfrncsmrph)
 - Fix NPM dependency shims on Firefox 100+ (#289 by @JordanMartinez)
