@@ -9,6 +9,7 @@ Breaking changes:
 New features:
 
 Bugfixes:
+- Fix double `main` invocation (#295 by @JordanMartinez)
 
 Other improvements:
 
