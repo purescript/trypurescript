@@ -183,8 +183,9 @@ component = H.mkComponent
 
         Right res@(Right (CompileSuccess { js, warnings })) -> do
           { settings } <- H.get
-          if settings.showJs then
+          if settings.showJs then do
             H.liftEffect teardownIFrame
+            H.modify_ _ { compiled = Just res }
           else do
             for_ warnings \warnings_ -> do
               let anns = Array.mapMaybe (toAnnotation MarkerWarning) warnings_
