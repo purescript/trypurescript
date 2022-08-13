@@ -9,9 +9,10 @@ Breaking changes:
 New features:
 
 Bugfixes:
+- Add missing `react-dom/client` shim (#294 by @andys8)
 
 Other improvements:
-- Update package set to latest `0.15.4` one (#??? by @andys8)
+- Update package set to latest `0.15.4` one (#294) by @andys8)
 
 ## [v2022-07-21.1](https://github.com/purescript/trypurescript/releases/tag/v2022-07-21.1)
 
