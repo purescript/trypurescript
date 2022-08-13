@@ -96,14 +96,15 @@ ln -s "$PWD/output" "$PWD/../client/public/js/output"
 cd client
 npm install
 
-# Use `build:dev` and `base:dev` if you are using a local Try PureScript server,
+# Use `serve:dev` if you are using a local Try PureScript server,
 # e.g. you followed the instructions in step 1.
 #
-# Use `build:production` and `base:production` if you would like
+# Use `serve:production` if you would like
 # to test the client against the production Try PureScript server.
-npm run build:(dev|production)
+# Note: the production server may not match the package set you have locally.
+npm run serve:(dev|production)
 
-npm run serve # Try PureScript is now available on localhost:8080
+# Try PureScript is now available on localhost:8080
 ```
 
 ### 4. Choosing a Tag
