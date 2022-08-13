@@ -10,6 +10,8 @@ New features:
 
 Bugfixes:
 - Add missing `react-dom/client` shim (#294 by @andys8)
+- Fix double `main` invocation (#295 by @JordanMartinez)
+- Stop loading hang when using query params to show compiled JS output (#296 by @JordanMartinez)
 
 Other improvements:
 - Update package set to latest `0.15.4` one (#294) by @andys8)
