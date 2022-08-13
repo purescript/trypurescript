@@ -9,6 +9,7 @@ Breaking changes:
 New features:
 
 Bugfixes:
+- Fix double `main` invocation (#295 by @JordanMartinez)
 - Stop loading hang when using query params to show compiled JS output (#296 by @JordanMartinez)
 
 Other improvements:
