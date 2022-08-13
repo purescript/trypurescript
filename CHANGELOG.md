@@ -9,6 +9,12 @@ Breaking changes:
 New features:
 
 Bugfixes:
+
+Other improvements:
+
+## [v2022-08-12.1](https://github.com/purescript/trypurescript/releases/tag/v2022-08-12.1)
+
+Bugfixes:
 - Add missing `react-dom/client` shim (#294 by @andys8)
 - Fix double `main` invocation (#295 by @JordanMartinez)
 - Stop loading hang when using query params to show compiled JS output (#296 by @JordanMartinez)
