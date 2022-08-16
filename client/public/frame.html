@@ -30,6 +30,8 @@
   </script>
 
   <!-- ES Module Shims: Import maps polyfill for modules browsers without import maps support (all except Chrome 89+) -->
+  <!-- While 1.5.12 is not the latest release (1.5.16) and still sometimes shows an error (head on null) it is currently the best option -->
+  <!-- See https://github.com/purescript/trypurescript/pull/297#issuecomment-1214194277 -->
   <script async src="https://ga.jspm.io/npm:es-module-shims@1.5.12/dist/es-module-shims.js" integrity="sha384-KpzeqocuAuGQvuaqG8NBwER/6UR/rFGoff/DdvgKT1OBZsR/GyQXTn6hrC5J+K2B" crossorigin="anonymous"></script>
 
   <script src="js/frame.js"></script>
