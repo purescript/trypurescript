@@ -11,6 +11,10 @@ New features:
 Bugfixes:
 
 Other improvements:
+
+## [v2022-08-16.1](https://github.com/purescript/trypurescript/releases/tag/v2022-08-16.1)
+
+Other improvements:
 - Update `es-module-shims` to 1.5.12 (#298 by @andys8)
 
 ## [v2022-08-12.1](https://github.com/purescript/trypurescript/releases/tag/v2022-08-12.1)
