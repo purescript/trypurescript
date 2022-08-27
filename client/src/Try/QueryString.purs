@@ -3,6 +3,8 @@ module Try.QueryString
   , getQueryStringMaybe
   , setQueryString
   , setQueryStrings
+  , compressToEncodedURIComponent
+  , decompressFromEncodedURIComponent
   ) where
 
 import Prelude
@@ -10,6 +12,7 @@ import Prelude
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Data.Newtype (wrap)
+import Data.Nullable (Nullable, toMaybe)
 import Data.String as String
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
@@ -58,3 +61,12 @@ setQueryStrings :: Object.Object String -> Effect Unit
 setQueryStrings ss = do
   params <- getQueryParams
   runEffectFn1 setQueryParameters (Object.union ss params)
+
+-- | Compress a string to a URI-encoded string using LZ-based compression algorithm
+foreign import compressToEncodedURIComponent :: String -> String
+
+foreign import decompressFromEncodedURIComponent_ :: String -> Nullable String
+
+-- | Decompress a string from a URI-encoded string using LZ-based compression algorithm
+decompressFromEncodedURIComponent :: String -> Maybe String
+decompressFromEncodedURIComponent = toMaybe <$> decompressFromEncodedURIComponent_

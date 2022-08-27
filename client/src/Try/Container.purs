@@ -30,8 +30,7 @@ import Try.Editor (MarkerType(..), toStringMarkerType)
 import Try.Editor as Editor
 import Try.Gist (getGistById, tryLoadFileFromGist)
 import Try.GitHub (getRawGitHubFile)
-import Try.QueryString (getQueryStringMaybe)
-import Try.Session (createSessionIdIfNecessary, storeSession, tryRetrieveSession)
+import Try.QueryString (compressToEncodedURIComponent, decompressFromEncodedURIComponent, getQueryStringMaybe, setQueryString)
 import Try.SharedConfig as SharedConfig
 import Type.Proxy (Proxy(..))
 import Web.HTML (window)
@@ -109,8 +108,7 @@ component = H.mkComponent
   handleAction :: Action -> H.HalogenM State Action Slots o Aff Unit
   handleAction = case _ of
     Initialize -> do
-      sessionId <- H.liftEffect $ createSessionIdIfNecessary
-      { code, sourceFile } <- H.liftAff $ withSession sessionId
+      { code, sourceFile } <- H.liftAff withSession
 
       -- Load parameters
       mbViewModeParam <- H.liftEffect $ getQueryStringMaybe "view"
@@ -141,12 +139,7 @@ component = H.mkComponent
           handleAction $ Compile Nothing
 
     Cache text -> H.liftEffect do
-      sessionId <- getQueryStringMaybe "session"
-      case sessionId of
-        Just sessionId_ -> do
-          storeSession sessionId_ { code: text }
-        Nothing ->
-          error "No session ID"
+      setQueryString "purs" $ compressToEncodedURIComponent text
 
     Compile mbCode -> do
       H.modify_ _ { compiled = Nothing }
@@ -505,13 +498,13 @@ toAnnotation markerType { position, message } =
     , text: message
     }
 
-withSession :: String -> Aff { sourceFile :: Maybe SourceFile, code :: String }
-withSession sessionId = do
-  state <- H.liftEffect $ tryRetrieveSession sessionId
-  githubId <- H.liftEffect $ getQueryStringMaybe "github"
+withSession :: Aff { sourceFile :: Maybe SourceFile, code :: String }
+withSession = do
+  state <- H.liftEffect $ getQueryStringMaybe "purs" 
+  githubId <- H.liftEffect $ getQueryStringMaybe "github" 
   gistId <- H.liftEffect $ getQueryStringMaybe "gist"
-  code <- case state of
-    Just { code } -> pure code
+  code <- case state >>= decompressFromEncodedURIComponent of
+    Just code -> pure code
     Nothing -> do
       let
         action = oneOf

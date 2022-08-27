@@ -1,3 +1,8 @@
+export {
+  compressToEncodedURIComponent,
+  decompressFromEncodedURIComponent as decompressFromEncodedURIComponent_,
+} from 'lz-string';
+
 export function getQueryString() {
   return window.location.search;
 }
