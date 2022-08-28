@@ -14,7 +14,7 @@ import Data.String (Pattern(..))
 import Data.String.Regex as Regex
 import Data.String.Regex.Flags as RegexFlags
 import Effect (Effect)
-import Effect.Aff (Aff, makeAff)
+import Effect.Aff (Aff, Milliseconds(..), delay, makeAff)
 import Effect.Aff as Aff
 import Effect.Class.Console (error)
 import Effect.Uncurried (EffectFn3, runEffectFn3)
@@ -34,9 +34,10 @@ import Try.QueryString (compressToEncodedURIComponent, decompressFromEncodedURIC
 import Try.SharedConfig as SharedConfig
 import Type.Proxy (Proxy(..))
 import Web.HTML (window)
-import Web.HTML.Window (alert)
+import Web.HTML.Location (href)
+import Web.HTML.Window (alert, location)
 
-type Slots = ( editor :: Editor.Slot Unit )
+type Slots = ( editor :: Editor.Slot Unit, shareButton :: forall q o. H.Slot q o Unit )
 
 data SourceFile = GitHub String | Gist String
 
@@ -83,10 +84,11 @@ data Action
 _editor :: Proxy "editor"
 _editor = Proxy
 
-type LoadCb = Effect Unit
+type SucceedCb = Effect Unit
 type FailCb = Effect Unit
-foreign import setupIFrame :: EffectFn3 { code :: String } LoadCb FailCb Unit
+foreign import setupIFrame :: EffectFn3 { code :: String } SucceedCb FailCb Unit
 foreign import teardownIFrame :: Effect Unit
+foreign import copyToClipboard :: EffectFn3 String SucceedCb FailCb Unit
 
 component :: forall q i o. H.Component q i o Aff
 component = H.mkComponent
@@ -333,6 +335,7 @@ component = H.mkComponent
                 ]
                 [ HH.text "Show JS" ]
             ]
+        , HH.slot_ (Proxy :: _ "shareButton") unit shareButton unit
         , HH.li
             [ HP.class_ $ HH.ClassName "menu-item" ]
             [ HH.a
@@ -434,6 +437,36 @@ renderCompilerErrors errors = do
         [ HH.text $ "Error " <> show (ix + 1) <> " of " <> show total ]
     , renderPlaintext message
     ]
+
+shareButton :: forall q i o. H.Component q i o Aff
+shareButton =  H.mkComponent
+  { initialState: \_ -> 0
+  , render
+  , eval: H.mkEval $ H.defaultEval
+      { handleAction = handleAction
+      }
+  }
+  where 
+  handleAction :: Unit -> H.HalogenM Int Unit () o Aff Unit
+  handleAction _ = do
+      url <- H.liftEffect $ window >>= location >>= href
+      H.liftAff $ makeAff \f -> do
+        runEffectFn3 copyToClipboard url (f (Right unit)) (f (Left $ Aff.error "Failed to copy to clipboard"))
+        mempty
+      H.modify_ (_ + 1)
+      H.liftAff $ delay (1_500.0 # Milliseconds) 
+      H.modify_ (_ - 1)
+  render :: Int -> H.ComponentHTML Unit () Aff
+  render n =
+    HH.li
+      [ HP.class_ $ HH.ClassName "menu-item no-mobile" ]
+      [ HH.label
+          [ HP.id "share_label"
+          , HP.title "Share URL"
+          , HE.onClick \_ -> unit
+          ]
+          [ HH.text (if n > 0 then "✔️ Copied to clipboard" else "Share URL") ]
+      ]
 
 menuRadio
   :: forall w

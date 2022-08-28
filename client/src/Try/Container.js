@@ -57,3 +57,10 @@ export function setupIFrame(data, loadCb, failCb) {
 
   return $iframe;
 }
+
+export function copyToClipboard(string, copyCb, failCb) {
+  navigator.clipboard.writeText(string).then(
+    () => copyCb(),
+    () => failCb()
+  );
+}
