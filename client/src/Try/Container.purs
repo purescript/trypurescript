@@ -6,7 +6,7 @@ import Ace (Annotation)
 import Control.Monad.Except (runExceptT)
 import Data.Array as Array
 import Data.Either (Either(..), either)
-import Data.Foldable (for_, oneOf, fold)
+import Data.Foldable (for_, oneOf, fold, traverse_)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Maybe (Maybe(..), fromMaybe, isNothing)
 import Data.String as String
@@ -76,7 +76,7 @@ parseViewModeParam = case _ of
 
 data Action
   = Initialize
-  | Cache String
+  | EncodeInURL String
   | UpdateSettings (Settings -> Settings)
   | Compile (Maybe String)
   | HandleEditor Editor.Output
@@ -140,7 +140,7 @@ component = H.mkComponent
         else
           handleAction $ Compile Nothing
 
-    Cache text -> H.liftEffect do
+    EncodeInURL text -> H.liftEffect do
       setQueryString "purs" $ compressToEncodedURIComponent text
 
     Compile mbCode -> do
@@ -204,7 +204,7 @@ component = H.mkComponent
             H.modify_ _ { compiled = Just res }
 
     HandleEditor (Editor.TextChanged text) -> do
-      _ <- H.fork $ handleAction $ Cache text
+      _ <- H.fork $ handleAction $ EncodeInURL text
       { autoCompile } <- H.gets _.settings
       when autoCompile $ handleAction $ Compile $ Just text
 
@@ -438,26 +438,39 @@ renderCompilerErrors errors = do
     , renderPlaintext message
     ]
 
+type ShareButtonState =
+  { forkId :: Maybe H.ForkId
+  , showCopySucceeded :: Maybe Boolean
+  }
+
 shareButton :: forall q i o. H.Component q i o Aff
 shareButton =  H.mkComponent
-  { initialState: \_ -> 0
+  { initialState: \_ -> { forkId: Nothing, showCopySucceeded: Nothing }
   , render
   , eval: H.mkEval $ H.defaultEval
       { handleAction = handleAction
       }
   }
   where 
-  handleAction :: Unit -> H.HalogenM Int Unit () o Aff Unit
+  handleAction :: Unit -> H.HalogenM ShareButtonState Unit () o Aff Unit
   handleAction _ = do
-      url <- H.liftEffect $ window >>= location >>= href
-      H.liftAff $ makeAff \f -> do
-        runEffectFn3 copyToClipboard url (f (Right unit)) (f (Left $ Aff.error "Failed to copy to clipboard"))
-        mempty
-      H.modify_ (_ + 1)
+    H.gets _.forkId >>= traverse_ H.kill
+    url <- H.liftEffect $ window >>= location >>= href
+    copySucceeded <- H.liftAff $ makeAff \f -> do
+      runEffectFn3 copyToClipboard url (f (Right true)) (f (Right false))
+      mempty
+    H.modify_ _ { showCopySucceeded = Just copySucceeded }
+    forkId <- H.fork do
       H.liftAff $ delay (1_500.0 # Milliseconds) 
-      H.modify_ (_ - 1)
-  render :: Int -> H.ComponentHTML Unit () Aff
-  render n =
+      H.modify_ _ { showCopySucceeded = Nothing }
+    H.modify_ _ { forkId = Just forkId }
+  render :: ShareButtonState -> H.ComponentHTML Unit () Aff
+  render { showCopySucceeded } = do
+    let
+      message = case showCopySucceeded of
+        Just true -> "️✅ Copied to clipboard" 
+        Just false -> "️❌ Failed to copy" 
+        Nothing -> "Share URL" 
     HH.li
       [ HP.class_ $ HH.ClassName "menu-item no-mobile" ]
       [ HH.label
@@ -465,7 +478,7 @@ shareButton =  H.mkComponent
           , HP.title "Share URL"
           , HE.onClick \_ -> unit
           ]
-          [ HH.text (if n > 0 then "✔️ Copied to clipboard" else "Share URL") ]
+          [ HH.text message ]
       ]
 
 menuRadio
