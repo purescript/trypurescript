@@ -59,8 +59,12 @@ export function setupIFrame(data, loadCb, failCb) {
 }
 
 export function copyToClipboard(string, copyCb, failCb) {
-  navigator.clipboard.writeText(string).then(
-    () => copyCb(),
-    () => failCb()
-  );
+  try {
+    navigator.clipboard.writeText(string).then(
+      () => copyCb(),
+      () => failCb()
+    );
+  } catch (_error) {
+    failCb();
+  }
 }
