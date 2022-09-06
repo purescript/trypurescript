@@ -459,11 +459,10 @@ shareButton =  H.mkComponent
     copySucceeded <- H.liftAff $ makeAff \f -> do
       runEffectFn3 copyToClipboard url (f (Right true)) (f (Right false))
       mempty
-    H.modify_ _ { showCopySucceeded = Just copySucceeded }
     forkId <- H.fork do
       H.liftAff $ delay (1_500.0 # Milliseconds) 
       H.modify_ _ { showCopySucceeded = Nothing }
-    H.modify_ _ { forkId = Just forkId }
+    H.put { showCopySucceeded: Just copySucceeded, forkId: Just forkId }
   render :: ShareButtonState -> H.ComponentHTML Unit () Aff
   render { showCopySucceeded } = do
     let
