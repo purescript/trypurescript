@@ -141,7 +141,7 @@ component = H.mkComponent
           handleAction $ Compile Nothing
 
     EncodeInURL text -> H.liftEffect do
-      setQueryString "purs" $ compressToEncodedURIComponent text
+      setQueryString "code" $ compressToEncodedURIComponent text
 
     Compile mbCode -> do
       H.modify_ _ { compiled = Nothing }
@@ -545,7 +545,7 @@ toAnnotation markerType { position, message } =
 
 withSession :: Aff { sourceFile :: Maybe SourceFile, code :: String }
 withSession = do
-  state <- H.liftEffect $ getQueryStringMaybe "purs" 
+  state <- H.liftEffect $ getQueryStringMaybe "code" 
   githubId <- H.liftEffect $ getQueryStringMaybe "github" 
   gistId <- H.liftEffect $ getQueryStringMaybe "gist"
   code <- case state >>= decompressFromEncodedURIComponent of

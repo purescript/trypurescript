@@ -28,10 +28,10 @@ Most of these features can be controlled not only from the toolbar, but also usi
     - Example: `gist=37c3c97f47a43f20c548`
     - Notes: the file should be named `Main.purs` with the module name `Main`.
 
-- **Load From URL**: Load compressed PureScript code using the `purs` parameter
+- **Load From URL**: Load compressed PureScript code using the `code` parameter
     - Managed by Try PureScript and updated on editor state change to create shareable URLs
-    - Format: `purs=<compressed string>`
-    - Example: `purs=LYewJgrgNgpgBAWQIYEsB2cDuALGAnGIA` will set the editor state to the single line `module Main where`
+    - Format: `code=<compressed string>`
+    - Example: `code=LYewJgrgNgpgBAWQIYEsB2cDuALGAnGIA` will set the editor state to the single line `module Main where`
 
 - **View Mode**: Control the view mode using the `view` parameter
     - Options are: `code`, `output`, `both` (default)
