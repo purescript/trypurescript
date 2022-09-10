@@ -11,7 +11,7 @@
 - PureScript syntax highlighting
 - Run and print output or show resulting JavaScript
 - Multiple view modes: code, output or both
-- Persistent session
+- Shareable code and editor state via URL
 - Load PureScript code from GitHub Gists or repository files
 
 ### Control Features via the Query String
@@ -28,6 +28,11 @@ Most of these features can be controlled not only from the toolbar, but also usi
     - Example: `gist=37c3c97f47a43f20c548`
     - Notes: the file should be named `Main.purs` with the module name `Main`.
 
+- **Load From URL**: Load compressed PureScript code using the `code` parameter
+    - Managed by Try PureScript and updated on editor state change to create shareable URLs
+    - Format: `code=<compressed string>`
+    - Example: `code=LYewJgrgNgpgBAWQIYEsB2cDuALGAnGIA` will set the editor state to the single line `module Main where`
+
 - **View Mode**: Control the view mode using the `view` parameter
     - Options are: `code`, `output`, `both` (default)
     - Example: `view=output` will only display the output
@@ -39,11 +44,6 @@ Most of these features can be controlled not only from the toolbar, but also usi
 - **JavaScript Code Generation**: Print the resulting JavaScript code in the output window instead of the output of the program using the `js` parameter
     - Options are: `true`, `false` (default)
     - Example: `js=true` will print JavaScript code instead of the program's output
-
-- **Session**: Load code from a session which is stored with [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) using the `session` parameter
-    - Usually managed by Try PureScript
-    - Example: `session=9162f098-070f-4053-60ea-eba47021450d` (Note: will probably not work for you)
-    - When used with the `gist` or `github` query parameters the code will be loaded from the source file and not the session
 
 ### Which Libraries Are Available?
 

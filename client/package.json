@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "ace-builds": "^1.5.0",
-    "jquery": "^1.12.4"
+    "jquery": "^1.12.4",
+    "lz-string": "^1.4.4"
   }
 }

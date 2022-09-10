@@ -6,7 +6,7 @@ import Ace (Annotation)
 import Control.Monad.Except (runExceptT)
 import Data.Array as Array
 import Data.Either (Either(..), either)
-import Data.Foldable (for_, oneOf, fold)
+import Data.Foldable (for_, oneOf, fold, traverse_)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Maybe (Maybe(..), fromMaybe, isNothing)
 import Data.String as String
@@ -14,7 +14,7 @@ import Data.String (Pattern(..))
 import Data.String.Regex as Regex
 import Data.String.Regex.Flags as RegexFlags
 import Effect (Effect)
-import Effect.Aff (Aff, makeAff)
+import Effect.Aff (Aff, Milliseconds(..), delay, makeAff)
 import Effect.Aff as Aff
 import Effect.Class.Console (error)
 import Effect.Uncurried (EffectFn3, runEffectFn3)
@@ -30,14 +30,14 @@ import Try.Editor (MarkerType(..), toStringMarkerType)
 import Try.Editor as Editor
 import Try.Gist (getGistById, tryLoadFileFromGist)
 import Try.GitHub (getRawGitHubFile)
-import Try.QueryString (getQueryStringMaybe)
-import Try.Session (createSessionIdIfNecessary, storeSession, tryRetrieveSession)
+import Try.QueryString (compressToEncodedURIComponent, decompressFromEncodedURIComponent, getQueryStringMaybe, setQueryString)
 import Try.SharedConfig as SharedConfig
 import Type.Proxy (Proxy(..))
 import Web.HTML (window)
-import Web.HTML.Window (alert)
+import Web.HTML.Location (href)
+import Web.HTML.Window (alert, location)
 
-type Slots = ( editor :: Editor.Slot Unit )
+type Slots = ( editor :: Editor.Slot Unit, shareButton :: forall q o. H.Slot q o Unit )
 
 data SourceFile = GitHub String | Gist String
 
@@ -76,7 +76,7 @@ parseViewModeParam = case _ of
 
 data Action
   = Initialize
-  | Cache String
+  | EncodeInURL String
   | UpdateSettings (Settings -> Settings)
   | Compile (Maybe String)
   | HandleEditor Editor.Output
@@ -84,10 +84,11 @@ data Action
 _editor :: Proxy "editor"
 _editor = Proxy
 
-type LoadCb = Effect Unit
+type SucceedCb = Effect Unit
 type FailCb = Effect Unit
-foreign import setupIFrame :: EffectFn3 { code :: String } LoadCb FailCb Unit
+foreign import setupIFrame :: EffectFn3 { code :: String } SucceedCb FailCb Unit
 foreign import teardownIFrame :: Effect Unit
+foreign import copyToClipboard :: EffectFn3 String SucceedCb FailCb Unit
 
 component :: forall q i o. H.Component q i o Aff
 component = H.mkComponent
@@ -109,8 +110,7 @@ component = H.mkComponent
   handleAction :: Action -> H.HalogenM State Action Slots o Aff Unit
   handleAction = case _ of
     Initialize -> do
-      sessionId <- H.liftEffect $ createSessionIdIfNecessary
-      { code, sourceFile } <- H.liftAff $ withSession sessionId
+      { code, sourceFile } <- H.liftAff withSession
 
       -- Load parameters
       mbViewModeParam <- H.liftEffect $ getQueryStringMaybe "view"
@@ -140,13 +140,8 @@ component = H.mkComponent
         else
           handleAction $ Compile Nothing
 
-    Cache text -> H.liftEffect do
-      sessionId <- getQueryStringMaybe "session"
-      case sessionId of
-        Just sessionId_ -> do
-          storeSession sessionId_ { code: text }
-        Nothing ->
-          error "No session ID"
+    EncodeInURL text -> H.liftEffect do
+      setQueryString "code" $ compressToEncodedURIComponent text
 
     Compile mbCode -> do
       H.modify_ _ { compiled = Nothing }
@@ -209,7 +204,7 @@ component = H.mkComponent
             H.modify_ _ { compiled = Just res }
 
     HandleEditor (Editor.TextChanged text) -> do
-      _ <- H.fork $ handleAction $ Cache text
+      _ <- H.fork $ handleAction $ EncodeInURL text
       { autoCompile } <- H.gets _.settings
       when autoCompile $ handleAction $ Compile $ Just text
 
@@ -340,6 +335,7 @@ component = H.mkComponent
                 ]
                 [ HH.text "Show JS" ]
             ]
+        , HH.slot_ (Proxy :: _ "shareButton") unit shareButton unit
         , HH.li
             [ HP.class_ $ HH.ClassName "menu-item" ]
             [ HH.a
@@ -442,6 +438,48 @@ renderCompilerErrors errors = do
     , renderPlaintext message
     ]
 
+type ShareButtonState =
+  { forkId :: Maybe H.ForkId
+  , showCopySucceeded :: Maybe Boolean
+  }
+
+shareButton :: forall q i o. H.Component q i o Aff
+shareButton =  H.mkComponent
+  { initialState: \_ -> { forkId: Nothing, showCopySucceeded: Nothing }
+  , render
+  , eval: H.mkEval $ H.defaultEval
+      { handleAction = handleAction
+      }
+  }
+  where 
+  handleAction :: Unit -> H.HalogenM ShareButtonState Unit () o Aff Unit
+  handleAction _ = do
+    H.gets _.forkId >>= traverse_ H.kill
+    url <- H.liftEffect $ window >>= location >>= href
+    copySucceeded <- H.liftAff $ makeAff \f -> do
+      runEffectFn3 copyToClipboard url (f (Right true)) (f (Right false))
+      mempty
+    forkId <- H.fork do
+      H.liftAff $ delay (1_500.0 # Milliseconds) 
+      H.modify_ _ { showCopySucceeded = Nothing }
+    H.put { showCopySucceeded: Just copySucceeded, forkId: Just forkId }
+  render :: ShareButtonState -> H.ComponentHTML Unit () Aff
+  render { showCopySucceeded } = do
+    let
+      message = case showCopySucceeded of
+        Just true -> "️✅ Copied to clipboard" 
+        Just false -> "️❌ Failed to copy" 
+        Nothing -> "Share URL" 
+    HH.li
+      [ HP.class_ $ HH.ClassName "menu-item no-mobile" ]
+      [ HH.label
+          [ HP.id "share_label"
+          , HP.title "Share URL"
+          , HE.onClick \_ -> unit
+          ]
+          [ HH.text message ]
+      ]
+
 menuRadio
   :: forall w
    . { name :: String
@@ -505,13 +543,13 @@ toAnnotation markerType { position, message } =
     , text: message
     }
 
-withSession :: String -> Aff { sourceFile :: Maybe SourceFile, code :: String }
-withSession sessionId = do
-  state <- H.liftEffect $ tryRetrieveSession sessionId
-  githubId <- H.liftEffect $ getQueryStringMaybe "github"
+withSession :: Aff { sourceFile :: Maybe SourceFile, code :: String }
+withSession = do
+  state <- H.liftEffect $ getQueryStringMaybe "code" 
+  githubId <- H.liftEffect $ getQueryStringMaybe "github" 
   gistId <- H.liftEffect $ getQueryStringMaybe "gist"
-  code <- case state of
-    Just { code } -> pure code
+  code <- case state >>= decompressFromEncodedURIComponent of
+    Just code -> pure code
     Nothing -> do
       let
         action = oneOf
