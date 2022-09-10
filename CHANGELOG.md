@@ -7,11 +7,15 @@ Notable changes to this project are documented in this file. The format is based
 Breaking changes:
 
 New features:
-- Remove `localStorage` for session storage, persist editor state in URL query param (#299 by @ptrfrncsmrph)
 
 Bugfixes:
 
 Other improvements:
+
+## [v2022-09-10.1](https://github.com/purescript/trypurescript/releases/tag/v2022-09-10.1)
+
+New features:
+- Remove `localStorage` for session storage, persist editor state in URL query param (#299 by @ptrfrncsmrph)
 
 ## [v2022-08-16.1](https://github.com/purescript/trypurescript/releases/tag/v2022-08-16.1)
 
