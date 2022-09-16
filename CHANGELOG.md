@@ -11,6 +11,7 @@ New features:
 Bugfixes:
 
 Other improvements:
+- Update main example to note that editor state is persisted in the URL (#300 by @thomashoneyman)
 
 ## [v2022-09-10.1](https://github.com/purescript/trypurescript/releases/tag/v2022-09-10.1)
 
