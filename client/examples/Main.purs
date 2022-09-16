@@ -14,7 +14,8 @@ main =
     , h2 (text "Examples")
     , list (map fromExample examples)
     , h2 (text "Share Your Code")
-    , p (text "A PureScript file can be loaded from GitHub from a gist or a repository. To share code using a gist, simply include the gist ID in the URL as follows:")
+    , p (text "The contents of the text editor are stored in the URL. To share your code you can simply copy the URL.")
+    , p (text "Additionally, a PureScript file can be loaded from GitHub from a gist or a repository. To share code using a gist, include the gist ID in the URL as follows:")
     , indent (p (code (text "  try.purescript.org?gist=<gist id>")))
     , p (fold
         [ text "The gist should contain PureScript module named "
