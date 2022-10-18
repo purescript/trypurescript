@@ -11,7 +11,13 @@ New features:
 Bugfixes:
 
 Other improvements:
+
+## [v2022-10-18.1](https://github.com/purescript/trypurescript/releases/tag/v2022-10-18.1)
+
+Other improvements:
 - Update main example to note that editor state is persisted in the URL (#300 by @thomashoneyman)
+- Update PureScript to `0.15.6` (#302 by @JordanMartinez)
+- Update to latest package set (#302 by @JordanMartinez)
 
 ## [v2022-09-10.1](https://github.com/purescript/trypurescript/releases/tag/v2022-09-10.1)
 
