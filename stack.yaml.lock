@@ -5,43 +5,43 @@
 
 packages:
 - completed:
-    hackage: purescript-0.15.4@sha256:29fcb37f227a475a4357de52962f3564da6c881c146a679a514086d9883b1599,20642
+    hackage: purescript-0.15.7@sha256:fbf49910576377332e202d7fac73c7904dff7357508f702c7c68d7c59c83d41e,21420
     pantry-tree:
-      size: 151335
-      sha256: 6432cafb3d7b3334654d3e5c584eeada632e4c767403ede43953f2d3f33aa8ee
+      sha256: 3487b12981c52d188684f42c58585f27d77f7365758a99ade0b28af06522c130
+      size: 154992
   original:
-    hackage: purescript-0.15.4
+    hackage: purescript-0.15.7
 - completed:
     hackage: language-javascript-0.7.0.0@sha256:3eab0262b8ac5621936a4beab6a0f97d0e00a63455a8b0e3ac1547b4088dae7d,3898
     pantry-tree:
-      size: 2244
       sha256: b0f28d836cb3fbde203fd7318a896c3a20acd8653a905e1950ae2d9a64bccebf
+      size: 2244
   original:
     hackage: language-javascript-0.7.0.0
 - completed:
     hackage: process-1.6.13.1@sha256:c8bb8b7c993ff72d771381b3b56852dd154bce51880a24789c11f57b0688d353,2963
     pantry-tree:
-      size: 1543
       sha256: 58117b15fa330c79b3bca6b29c65f815e45840f79cc0915d3434f25e54ac8fa5
+      size: 1543
   original:
     hackage: process-1.6.13.1
 - completed:
     hackage: Cabal-3.6.3.0@sha256:ff97c442b0c679c1c9876acd15f73ac4f602b973c45bde42b43ec28265ee48f4,12459
     pantry-tree:
-      size: 19757
       sha256: b250a53bdb56844f047a2927833bb565b936a289abfa85dfc2a63148d776368a
+      size: 19757
   original:
     hackage: Cabal-3.6.3.0
 - completed:
     hackage: protolude-0.3.1@sha256:1cc9e5a5c26c33a43c52b554443dd9779fef13974eaa0beec7ca6d2551b400da,2647
     pantry-tree:
-      size: 1645
       sha256: 6452a6ca8d395f7d810139779bb0fd16fc1dbb00f1862630bc08ef5a100430f9
+      size: 1645
   original:
     hackage: protolude-0.3.1
 snapshots:
 - completed:
-    size: 607265
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2022/6/9.yaml
-    sha256: 819ac07621dac5b2c320c45cb8c27f141f95114a1749b19b06d2c3606c79e839
-  original: nightly-2022-06-09
+    sha256: 5cacb39a2c21842535dc0a31e2005d3b1eb18e451a89d58c28381e1efdb9520f
+    size: 647983
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2022/11/12.yaml
+  original: nightly-2022-11-12

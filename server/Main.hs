@@ -66,7 +66,7 @@ toCompilerErrors :: NE.NonEmpty CST.ParserError -> Error
 toCompilerErrors = CompilerErrors . toJsonErrors . CST.toMultipleErrors "<file>"
 
 toJsonErrors :: P.MultipleErrors -> [P.JSONError]
-toJsonErrors = P.toJSONErrors False P.Error
+toJsonErrors = P.toJSONErrors False P.Error []
 
 -- As of PureScript 0.14 we only need the `codegen` part of `MakeActions` to run
 -- Try PureScript, because we already know all dependencies are compiled, we're
