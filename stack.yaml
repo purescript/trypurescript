@@ -1,9 +1,9 @@
-resolver: nightly-2022-06-09
+resolver: nightly-2022-11-12
 packages:
   - "."
 
 extra-deps:
-  - purescript-0.15.6
+  - purescript-0.15.7
   - language-javascript-0.7.0.0
   - process-1.6.13.1
   # The Cabal library is not in Stackage
@@ -12,7 +12,5 @@ extra-deps:
   - protolude-0.3.1
 
 flags:
-  aeson-pretty:
-    lib-only: true
   these:
     assoc: false
