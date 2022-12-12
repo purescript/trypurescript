@@ -388,7 +388,6 @@
   , "variant"
   , "vectorfield"
   , "versions"
-  , "visx"
   , "web-clipboard"
   , "web-cssom"
   , "web-dom"
