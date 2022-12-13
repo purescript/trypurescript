@@ -5,11 +5,15 @@
 After making a new compiler release, do the following to redeploy Try PureScript using the new compiler.
 
 1. Submit a PR with the following changes:
-    - In `stack.yaml`, update `purescript` (and possibly `purescript-cst`) to use its new version.
-    - If you are updating the package set, see the next section for instructions.
-1. Once the PR is merged, create a new GitHub tagged release using `vYYYY-MM-DD.X` (where `X` is usually `1` or the release attempt) as the version schema. The release will trigger a GitHub Actions build.
-2. Wait for the GitHub Actions build to finish (it builds the assets)
-3. Run `./deploy/run.sh vX-X-X.1`, replacing `vX-X-X.1` with the version you created.
+    - In `stack.yaml`,
+      - update the `resolver` to match the same one used in the PureScript repo
+      - update `purescript` to use its new version.
+    - Update the package set (see next section's instructions).
+    - Update the shared config by running `cd client && npm run updateConfigVersions`.
+    - Update the changelog to include the next release's date.
+2. Once the PR is merged, create a new GitHub tagged release using `vYYYY-MM-DD.X` (where `X` is usually `1` or the release attempt) as the version schema. The release will trigger a GitHub Actions build.
+3. Wait for the GitHub Actions build to finish (it builds the assets)
+4. Run `./deploy/run.sh vX-X-X.1`, replacing `vX-X-X.1` with the version you created.
 
 ## Updating the Package Set
 
