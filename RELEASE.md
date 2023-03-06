@@ -34,7 +34,8 @@ Update the package set by doing the following:
         ```dhall
         { name = "try-purescript-server"
         , dependencies = [] : List Text
-        , ...
+        , packages = ./packages.dhall
+        , sources = [ "src/**/*.purs" ]
         }
         ```
 
