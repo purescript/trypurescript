@@ -6,13 +6,13 @@ module Try.SharedConfig where
 import Prelude
 
 pursVersion :: String
-pursVersion = "v0.15.7"
+pursVersion = "v0.15.8"
 
 pursReleaseUrl :: String
 pursReleaseUrl = "https://github.com/purescript/purescript/releases/tag/" <> pursVersion
 
 packageSetVersion :: String
-packageSetVersion = "0.15.4-20221212"
+packageSetVersion = "0.15.7-20230306"
 
 packageSetPackageJsonUrl :: String
 packageSetPackageJsonUrl = "https://github.com/purescript/package-sets/blob/psc-" <> packageSetVersion <> "/packages.json"
