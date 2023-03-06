@@ -12,6 +12,12 @@ Bugfixes:
 
 Other improvements:
 
+## [v2023-03-06.1](https://github.com/purescript/trypurescript/releases/tag/v2023-03-06.1)
+
+Other improvements:
+- Bump PureScript to `0.15.8` (#305 by @JordanMartinez)
+- Update to latest package set (#305 by @JordanMartinez)
+
 ## [v2022-12-12.1](https://github.com/purescript/trypurescript/releases/tag/v2022-12-12.1)
 
 Other improvements:

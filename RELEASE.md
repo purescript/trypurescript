@@ -21,7 +21,30 @@ The try.purescript.org server only has a limited amount of memory. If the packag
 
 Before deploying an updated package set, someone (your reviewer) should check that the memory required to hold the package set's externs files does not exceed that of the try.purescript.org server.
 
-Update the package set by doing the following:
+Update the package set by doing the following. Each step is explained below:
+
+### Summary
+
+```sh
+pushd staging
+spago upgrade-set
+cat > spago.dhall << EOF
+{ name = "try-purescript-server"
+, dependencies = [] : List Text
+, packages = ./packages.dhall
+, sources = [ "src/**/*.purs" ]
+}
+EOF
+spago ls packages | cut -f 1 -d ' ' | xargs spago install
+popd
+pushd client
+npm run updateConfigVersions
+popd
+# add any new shims
+# update ES Module Shims (if needed)
+```
+
+### Step-by-Step Explanation
 
 1. Update the `upstream` package set in `staging/packages.dhall`:
 
@@ -34,17 +57,18 @@ Update the package set by doing the following:
         ```dhall
         { name = "try-purescript-server"
         , dependencies = [] : List Text
-        , ...
+        , packages = ./packages.dhall
+        , sources = [ "src/**/*.purs" ]
         }
         ```
 
-3. Install all packages in the package set by running this command:
+3. For `staging/spago.dhall`, install all packages in the package set by running this command:
 
         ```
         $ spago ls packages | cut -f 1 -d ' ' | xargs spago install
         ```
 
-4. Update the `client/src/Try/SharedConfig.purs` file by running this command:
+4. Update the `client/src/Try/SharedConfig.purs` file by running this command in `client`:
 
         ```console
         $ npm run updateConfigVersions
