@@ -14,6 +14,7 @@ After making a new compiler release, do the following to redeploy Try PureScript
 2. Once the PR is merged, create a new GitHub tagged release using `vYYYY-MM-DD.X` (where `X` is usually `1` or the release attempt) as the version schema. The release will trigger a GitHub Actions build.
 3. Wait for the GitHub Actions build to finish (it builds the assets)
 4. Run `./deploy/run.sh vX-X-X.1`, replacing `vX-X-X.1` with the version you created.
+    - Note: if you're updating the compiler, be sure to push the corresponding tag to []`purescript-metadata`](https://github.com/purescript/purescript-metadata). Otherwise, `spago install` will fail on the server and prevent the server from starting.
 
 ## Updating the Package Set
 
