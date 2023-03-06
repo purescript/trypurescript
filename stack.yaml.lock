@@ -5,12 +5,12 @@
 
 packages:
 - completed:
-    hackage: purescript-0.15.7@sha256:fbf49910576377332e202d7fac73c7904dff7357508f702c7c68d7c59c83d41e,21420
+    hackage: purescript-0.15.8@sha256:5d7c19e5a49f83acbe8ecc43bf93feb0e075bb11992df9b83af4467aea0bf41d,21427
     pantry-tree:
-      sha256: 3487b12981c52d188684f42c58585f27d77f7365758a99ade0b28af06522c130
-      size: 154992
+      sha256: 79dde609e3b525e30234fd76b0901f72d48dea47a879d547864d959f85b81760
+      size: 156457
   original:
-    hackage: purescript-0.15.7
+    hackage: purescript-0.15.8
 - completed:
     hackage: language-javascript-0.7.0.0@sha256:3eab0262b8ac5621936a4beab6a0f97d0e00a63455a8b0e3ac1547b4088dae7d,3898
     pantry-tree:
@@ -41,7 +41,7 @@ packages:
     hackage: protolude-0.3.1
 snapshots:
 - completed:
-    sha256: 5cacb39a2c21842535dc0a31e2005d3b1eb18e451a89d58c28381e1efdb9520f
-    size: 647983
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2022/11/12.yaml
-  original: nightly-2022-11-12
+    sha256: c11fcbeb1aa12761044755b1109d16952ede2cb6147ebde777dd5cb38f784501
+    size: 649333
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/20/9.yaml
+  original: lts-20.9
