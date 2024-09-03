@@ -116,12 +116,12 @@ jobs:
       - build_client
     steps:
       - name: Retrieve server assets
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4.1.7
         with:
           name: ${{ env.SERVER_ASSET }}.tar.gz
 
       - name: Retrieve client assets
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4.1.7
         with:
           name: ${{ env.CLIENT_ASSET }}.tar.gz
 
