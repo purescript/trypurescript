@@ -12,6 +12,12 @@ Bugfixes:
 
 Other improvements:
 
+## [v2026-05-11.1](https://github.com/purescript/trypurescript/releases/tag/v2026-05-11.1)
+
+Other improvements:
+- Bump PureScript to `0.15.15`
+- Update to latest package set (`psc-0.15.15-20260506`)
+
 ## [v2023-12-22.1](https://github.com/purescript/trypurescript/releases/tag/v2023-12-22.1)
 
 Other improvements:
