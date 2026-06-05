@@ -109,13 +109,12 @@ npm run serve:(dev|production)
 
 ### 4. Choosing a Tag
 
-The built-in examples for Try PureScript are loaded from this GitHub repository. To change the tag that the examples are loaded from, you'll need to touch three files:
+The built-in examples for Try PureScript are loaded from this GitHub repository. To change the tag that the examples are loaded from, you'll need to touch two files:
 
-* `client/config/dev/Try.Config.purs`
-* `client/config/prod/Try.Config.purs`
+* `client/src/Try/Config.js`
 * `client/examples/Main.purs`, in the `fromExample` function.
 
-If you are preparing a release or if you need to adjust examples in development, you should change the tag in these three places (and ensure you're using the same tag in each place!).
+If you are preparing a release or if you need to adjust examples in development, you should change the tag in these two places (and ensure you're using the same tag in each place!).
 
 ## Server API
 
