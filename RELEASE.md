@@ -28,15 +28,17 @@ Update the package set by doing the following. Each step is explained below:
 
 ```sh
 pushd staging
-spago upgrade-set
-cat > spago.dhall << EOF
-{ name = "try-purescript-server"
-, dependencies = [] : List Text
-, packages = ./packages.dhall
-, sources = [ "src/**/*.purs" ]
-}
+cat > spago.yaml << EOF
+package:
+  name: try-purescript-server
+  dependencies: []
+workspace:
+  packageSet:
+    registry: 0.0.1
+  extraPackages: {}
 EOF
-spago ls packages | cut -f 1 -d ' ' | xargs spago install
+spago upgrade
+spago install $(spago ls packages --json --quiet | jq -r 'to_entries[] | select(.value.type == "registry") | .key')
 popd
 pushd client
 npm run updateConfigVersions
@@ -47,27 +49,35 @@ popd
 
 ### Step-by-Step Explanation
 
-1. Update the `upstream` package set in `staging/packages.dhall`:
+1. Overwrite `staging/spago.yaml` with a placeholder config: an empty
+   `dependencies` list and any valid registry package set as a seed (the exact
+   version doesn't matter — the next step overwrites it). Starting from a clean
+   file ensures packages dropped from the new set don't linger.
 
-        ```
-        $ pushd staging && spago upgrade-set && popd
-        ```
+2. Upgrade to the latest package set:
 
-2. Set the `dependencies` key in the `spago.dhall` file to be an empty list. This will require a type annotation of `List Text`:
-
-        ```dhall
-        { name = "try-purescript-server"
-        , dependencies = [] : List Text
-        , packages = ./packages.dhall
-        , sources = [ "src/**/*.purs" ]
-        }
+        ```console
+        $ spago upgrade
         ```
 
-3. For `staging/spago.dhall`, install all packages in the package set by running this command:
+    This rewrites `workspace.packageSet.registry` to the newest available set,
+    replacing the seed version. Each set's JSON at
+    <https://github.com/purescript/registry/tree/main/package-sets> records the
+    `compiler` version it targets, which should line up with the `purescript`
+    version in `stack.yaml` — pin the set explicitly in step 1 instead if the
+    latest set targets a compiler you don't want.
 
+3. Install every package in the new set so they're all available in the
+   playground. This overwrites the empty `dependencies` list in
+   `staging/spago.yaml`, then downloads, compiles, and locks them — so there's
+   no separate `spago fetch`/`spago build` needed:
+
+        ```console
+        $ spago install $(spago ls packages --json --quiet | jq -r 'to_entries[] | select(.value.type == "registry") | .key')
         ```
-        $ spago ls packages | cut -f 1 -d ' ' | xargs spago install
-        ```
+
+    If a package fails to compile, remove it from `package.dependencies` in
+    `staging/spago.yaml` and run `spago install` again.
 
 4. Update the `client/src/Try/SharedConfig.purs` file by running this command in `client`:
 

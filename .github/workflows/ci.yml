@@ -80,7 +80,7 @@ jobs:
           node updateSharedConfigVersions.mjs sharedConfig.out
           diff src/Try/SharedConfig.purs sharedConfig.out || {
             echo 'PureScript and/or package set versions in "client/src/Try/SharedConfig.purs"'
-            echo 'do not match the versions extracted from "stack.yaml" and "staging/packages.dhall".'
+            echo 'do not match the versions extracted from "stack.yaml" and "staging/spago.yaml".'
             echo 'Please run "cd client && npm run updateConfigVersions". CI will fail until then.'
             exit 1
           }

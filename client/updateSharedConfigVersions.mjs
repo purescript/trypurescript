@@ -3,6 +3,16 @@
 // This script expects the current working directory to be `client`.
 // Call it using:
 //   node updateSharedConfigVersions.mjs src/Try/SharedConfig.purs
+//
+// It keeps `SharedConfig.purs` in sync with the two sources of truth:
+//   - the PureScript compiler version, taken from the server's `stack.yaml`
+//     (the `purescript-X.Y.Z` extra-dep, i.e. the compiler that actually
+//     compiles user snippets);
+//   - the registry package set version, taken from `staging/spago.yaml`
+//     (the `registry:` field). With Spago v1 the package set is a registry
+//     version and no longer encodes a purs version, so the two are read
+//     independently. The footer URLs are derived from these values inside
+//     `SharedConfig.purs`, so only the version strings are written here.
 
 import fs from "fs";
 import path from "path";
@@ -15,9 +25,9 @@ if (process.argv.length <= 2) {
 const sharedConfigPath = process.argv[2];
 
 const stackYamlPath = path.join("..", "stack.yaml");
-const stagingPackagesDhallPath = path.join("..", "staging", "packages.dhall");
+const stagingSpagoYamlPath = path.join("..", "staging", "spago.yaml");
 const stackYamlContent = fs.readFileSync(stackYamlPath, "utf-8");
-const packagesContent = fs.readFileSync(stagingPackagesDhallPath, "utf-8");
+const stagingSpagoYamlContent = fs.readFileSync(stagingSpagoYamlPath, "utf-8");
 
 const pursVersion = stackYamlContent.split("\n")
   .reduce((acc, nextLine) => {
@@ -29,15 +39,15 @@ const pursVersion = stackYamlContent.split("\n")
   }, { found: false })
   .value;
 
-const packageSetVersion = packagesContent
-  .match(/https:\/\/github.com\/purescript\/package-sets\/releases\/download\/psc-([^\/]+)\/packages.dhall/)[1];
+const packageSetVersionMatch = stagingSpagoYamlContent.match(/registry:\s*(\S+)/);
+const packageSetVersion = packageSetVersionMatch ? packageSetVersionMatch[1] : undefined;
 
 if (!pursVersion) {
   throw new Error("Failed to extract the PureScript version from the stack.yaml file. Cannot update SharedConfig.purs file.");
 }
 
 if (!packageSetVersion) {
-  throw new Error("Failed to extract the Package Set version from the staging/packages.dhall file. Cannot update SharedConfig.purs file.");
+  throw new Error("Failed to extract the registry package set version (the 'registry:' field) from the staging/spago.yaml file. Cannot update SharedConfig.purs file.");
 }
 
 const sharedConfigContent = fs.readFileSync(sharedConfigPath, "utf-8");
