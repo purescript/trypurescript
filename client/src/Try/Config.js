@@ -1,4 +1,7 @@
 const tag = "master";
+
+// NOTE: __DEVELOPMENT__ will be replaced with either `true` or `false` by
+// esbuild commands in package.json
 const config = __DEVELOPMENT__
   ? {
       loaderUrl: "/js/output",
