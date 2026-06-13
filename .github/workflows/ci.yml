@@ -71,7 +71,7 @@ jobs:
           npm run build
           npm run test
           npm run build:production
-          npm run bundle
+          npm run bundle:production
 
       - name: Check SharedConfig.purs versions
         run: |
