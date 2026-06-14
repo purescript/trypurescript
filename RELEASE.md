@@ -56,9 +56,9 @@ popd
 
 2. Upgrade to the latest package set:
 
-        ```console
-        $ spago upgrade
-        ```
+    ```console
+    $ spago upgrade
+    ```
 
     This rewrites `workspace.packageSet.registry` to the newest available set,
     replacing the seed version. Each set's JSON at
@@ -69,21 +69,17 @@ popd
 
 3. Install every package in the new set so they're all available in the
    playground. This overwrites the empty `dependencies` list in
-   `staging/spago.yaml`, then downloads, compiles, and locks them — so there's
-   no separate `spago fetch`/`spago build` needed:
+   `staging/spago.yaml`, then downloads, compiles, and locks them.
 
-        ```console
-        $ spago install $(spago ls packages --json --quiet | jq -r 'to_entries[] | select(.value.type == "registry") | .key')
-        ```
-
-    If a package fails to compile, remove it from `package.dependencies` in
-    `staging/spago.yaml` and run `spago install` again.
+    ```console
+    $ spago install $(spago ls packages --json --quiet | jq -r 'to_entries[] | select(.value.type == "registry") | .key')
+    ```
 
 4. Update the `client/src/Try/SharedConfig.purs` file by running this command in `client`:
 
-        ```console
-        $ npm run updateConfigVersions
-        ```
+    ```console
+    $ npm run updateConfigVersions
+    ```
 
 5. If any packages need NPM dependencies, you can try adding their shims to the import map in `client/public/frame.html`
     - Open up the `generator.jspm.io` URL in the comment
@@ -96,9 +92,9 @@ popd
 
 6. If `es-module-shims` releases a new version, you can calculate its SHA-384 via
 
-        ```console
-        $ ESM_VERSION=1.5.5
-        $ curl -L -o es-module-shims.js "https://ga.jspm.io/npm:es-module-shims@$ESM_VERSION/dist/es-module-shims.js"
-        $ echo "sha384-$(openssl dgst -sha384 -binary es-module-shims.js | openssl base64 -A)"
-        $ rm es-module-shims.js
-        ```
+    ```console
+    $ ESM_VERSION=1.5.5
+    $ curl -L -o es-module-shims.js "https://ga.jspm.io/npm:es-module-shims@$ESM_VERSION/dist/es-module-shims.js"
+    $ echo "sha384-$(openssl dgst -sha384 -binary es-module-shims.js | openssl base64 -A)"
+    $ rm es-module-shims.js
+    ```
