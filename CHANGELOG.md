@@ -11,6 +11,12 @@ New features:
 Bugfixes:
 
 Other improvements:
+- Update the PureScript compiler to [0.15.16](https://github.com/purescript/purescript/releases/tag/v0.15.16) and the package set to `psc-0.15.15-20260701` (#320 by @thomashoneyman)
+  - Since 0.15.16 was not published to Hackage, `stack.yaml` now pins the `v0.15.16` release tag on GitHub instead of a Hackage version.
+- Modernize the Haskell toolchain from Stackage `lts-20.9` (GHC 9.2.5) to `lts-23.18` (GHC 9.8.4), matching the upstream `purescript` repository (#320 by @thomashoneyman)
+- Modernize the server for scotty 0.22 and GHC 9.8, build with `-Wall`, prune unused dependencies, and update the cabal file to `cabal-version: 2.4` (#320 by @thomashoneyman)
+- Update the CI client build to Node 22, as Node 20 reached end of life in April 2026 (#320 by @thomashoneyman)
+- Raise the server's RTS heap cap from 3G to 6G to accommodate the larger package set; deploying this requires resizing the try.purescript.org droplet beyond 4GB of RAM (#320 by @thomashoneyman)
 
 ## [v2026-07-03.1](https://github.com/purescript/trypurescript/releases/tag/v2026-07-03.1)
 
