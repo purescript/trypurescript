@@ -18,18 +18,18 @@ jobs:
     # Note that this must be kept in sync with the version of Ubuntu which the
     # Try PureScript server is running, otherwise the server binary may fail to
     # run.
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - uses: haskell/actions/setup@v1
+      - uses: haskell-actions/setup@v2
         with:
           enable-stack: true
-          stack-version: "2.5.1"
+          stack-version: "latest"
           stack-no-global: true
 
       - name: Cache dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ~/.stack
           key: ${{ runner.os }}-stack-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('trypurescript.cabal') }}
@@ -48,7 +48,7 @@ jobs:
           tar czf ${{ env.SERVER_ASSET }}.tar.gz -C ${{ env.SERVER_ASSET }}/ .
 
       - name: Persist server assets
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         if: github.event_name == 'release'
         with:
           name: ${{ env.SERVER_ASSET }}.tar.gz
@@ -57,13 +57,12 @@ jobs:
 
   build_client:
     name: Build client
-    # Note that this must be kept in sync with the version of Ubuntu which the
-    # Try PureScript server is running, otherwise the server binary may fail to
-    # run.
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
 
       - name: Build client code
         run: |
@@ -95,7 +94,7 @@ jobs:
           tar czf ${{ env.CLIENT_ASSET }}.tar.gz -C ${{ env.CLIENT_ASSET }}/ .
 
       - name: Persist client assets
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         if: github.event_name == 'release'
         with:
           name: ${{ env.CLIENT_ASSET }}.tar.gz
@@ -104,10 +103,7 @@ jobs:
 
   release:
     name: Release
-    # Note that this must be kept in sync with the version of Ubuntu which the
-    # Try PureScript server is running, otherwise the server binary may fail to
-    # run.
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     if: github.event_name == 'release'
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -116,17 +112,17 @@ jobs:
       - build_client
     steps:
       - name: Retrieve server assets
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: ${{ env.SERVER_ASSET }}.tar.gz
 
       - name: Retrieve client assets
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: ${{ env.CLIENT_ASSET }}.tar.gz
 
       - name: Upload server and client assets
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             ${{ env.SERVER_ASSET }}.tar.gz
