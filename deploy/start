@@ -4,4 +4,7 @@ set -ex
 set -o noglob
 export XDG_CACHE_HOME="$PWD/.spago-cache"
 spago install
-exec trypurescript +RTS -N2 -A128m -M3G -RTS 8081 $(spago sources)
+# Note: the heap cap below must fit within the droplet's RAM; the package set
+# as of psc-0.15.15-20260701 (641 packages) needs more than the 3G that
+# sufficed for psc-0.15.13-20231219 (459 packages).
+exec trypurescript +RTS -N2 -A128m -M6G -RTS 8081 $(spago sources)
