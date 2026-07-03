@@ -1,16 +1,24 @@
-resolver: lts-20.9
+resolver: lts-23.18
+
 packages:
   - "."
 
 extra-deps:
-  - purescript-0.15.13
+  # purescript 0.15.16 was not uploaded to Hackage, so we pin its release tag
+  # on GitHub instead. Note that `client/updateSharedConfigVersions.mjs`
+  # derives the compiler version from the `commit` value below.
+  - github: purescript/purescript
+    commit: v0.15.16
+
+  # The extra dependencies below mirror the `extra-deps` listed in the
+  # purescript repository's stack.yaml at the version pinned above.
   - language-javascript-0.7.0.0
-  - process-1.6.13.1
-  # The Cabal library is not in Stackage
-  - Cabal-3.6.3.0
-  # Protolude is not yet in resolver snapshot
-  - protolude-0.3.1
+  - bower-json-1.1.0.0
+  - these-1.2.1
+  - aeson-better-errors-0.9.1.3
+  - github: purescript/cheapskate
+    commit: 633c69024e061ad956f1aecfc137fb99a7a7a20b
 
 flags:
-  these:
-    assoc: false
+  aeson-pretty:
+    lib-only: true

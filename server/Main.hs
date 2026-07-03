@@ -6,26 +6,20 @@
 
 module Main (main) where
 
-import           Control.Monad (unless, foldM)
-import           Control.Monad.Error.Class (throwError)
-import           Control.Monad.IO.Class (liftIO)
-import           Control.Monad.Logger (runLogger')
+import           Control.Monad (foldM)
 import qualified Control.Monad.State as State
 import           Control.Monad.Trans (lift)
 import           Control.Monad.Trans.Except (ExceptT(..), runExceptT)
-import           Control.Monad.Trans.Reader (runReaderT)
 import           Control.Monad.Writer.Strict (runWriterT)
 import qualified Data.Aeson as A
 import           Data.Aeson ((.=))
-import           Data.Bifunctor (first, second, bimap)
+import           Data.Bifunctor (second, bimap)
 import qualified Data.ByteString.Lazy as BL
-import           Data.Default (def)
 import           Data.Function (on)
 import qualified Data.IORef as IORef
 import           Data.List (nubBy)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
-import           Data.Set (Set)
 import qualified Data.Set as Set
 import           Data.Text (Text)
 import qualified Data.Text as T
@@ -50,6 +44,7 @@ import           System.Environment (getArgs)
 import           System.Exit (exitFailure)
 import           System.FilePath.Glob (glob)
 import qualified System.IO as IO
+import           Text.Read (readMaybe)
 import           Web.Scotty
 import qualified Web.Scotty as Scotty
 
@@ -162,7 +157,7 @@ server allModuleNames externs initNamesEnv initEnv port = do
 
     post "/compile" $ do
       code <- T.decodeUtf8 . BL.toStrict <$> body
-      response <- lift $ compile code
+      response <- liftIO $ compile code
       Scotty.setHeader "Access-Control-Allow-Origin" "*"
       case response of
         Left err ->
@@ -171,7 +166,7 @@ server allModuleNames externs initNamesEnv initEnv port = do
           Scotty.json $ A.object [ "js" .= comp, "warnings" .= warnings ]
 
     get "/search" $ do
-      query <- param "q"
+      query <- queryParam "q"
       Scotty.setHeader "Access-Control-Allow-Origin" "*"
       Scotty.setHeader "Content-Type" "application/json"
       case tryParseType query of
@@ -191,7 +186,7 @@ server allModuleNames externs initNamesEnv initEnv port = do
                                  ]
 
 getOpts :: Int -> Scotty.Options
-getOpts port = def
+getOpts port = Scotty.defaultOptions
   { settings =
       Warp.setHost "127.0.0.1"
       $ Warp.setPort port
@@ -204,9 +199,9 @@ lookupAllConstructors env = P.everywhereOnTypesM $ \case
     other -> pure other
   where
     lookupConstructor :: P.Environment -> P.ProperName 'P.TypeName -> [P.Qualified (P.ProperName 'P.TypeName)]
-    lookupConstructor env nm =
+    lookupConstructor env' nm =
       [ q
-      | (q@(P.Qualified (N.ByModuleName _) thisNm), _) <- M.toList (P.types env)
+      | (q@(P.Qualified (N.ByModuleName _) thisNm), _) <- M.toList (P.types env')
       , thisNm == nm
       ]
 
@@ -216,15 +211,15 @@ lookupAllConstructors env = P.everywhereOnTypesM $ \case
 replaceTypeVariablesAndDesugar :: (Text -> Int -> P.SourceType) -> P.SourceType -> P.SourceType
 replaceTypeVariablesAndDesugar f ty = State.evalState (P.everywhereOnTypesM go ty) (0, M.empty) where
   go = \case
-    P.ParensInType _ ty -> pure ty
+    P.ParensInType _ inner -> pure inner
     P.TypeVar _ s -> do
-      (next, m) <- State.get
+      (n, m) <- State.get
       case M.lookup s m of
         Nothing -> do
-          let ty = f s next
-          State.put (next + 1, M.insert s ty m)
-          pure ty
-        Just ty -> pure ty
+          let unknown = f s n
+          State.put (n + 1, M.insert s unknown m)
+          pure unknown
+        Just unknown -> pure unknown
     other -> pure other
 
 tryParseType :: Text -> Maybe P.SourceType
@@ -242,16 +237,24 @@ main :: IO ()
 main = do
   -- Stop mangled "Compiling ModuleName" text
   IO.hSetBuffering IO.stderr IO.LineBuffering
-  (portString : inputGlobs) <- getArgs
-  let port = read portString
-  inputFiles <- concat <$> traverse glob inputGlobs
-  e <- runExceptT $ do
-    modules <- ExceptT $ I.loadAllModules inputFiles
-    (exts, env) <- ExceptT . I.runMake . I.make $ map (second CST.pureResult) modules
-    namesEnv <- fmap fst . runWriterT $ foldM P.externsEnv P.primEnv exts
-    let
-      allModuleNames = fmap (P.getModuleName . snd) modules
-    pure (allModuleNames, exts, namesEnv, env)
-  case e of
-    Left err -> print err >> exitFailure
-    Right (allModuleNames, exts, namesEnv, env) -> server allModuleNames exts namesEnv env port
+  args <- getArgs
+  case args of
+    portString : inputGlobs
+      | Just port <- readMaybe portString -> run port inputGlobs
+    _ -> do
+      IO.hPutStrLn IO.stderr "Usage: trypurescript PORT INPUT_GLOB..."
+      exitFailure
+  where
+  run :: Int -> [String] -> IO ()
+  run port inputGlobs = do
+    inputFiles <- concat <$> traverse glob inputGlobs
+    e <- runExceptT $ do
+      modules <- ExceptT $ I.loadAllModules inputFiles
+      (exts, env) <- ExceptT . I.runMake . I.make $ map (second CST.pureResult) modules
+      namesEnv <- fmap fst . runWriterT $ foldM P.externsEnv P.primEnv exts
+      let
+        allModuleNames = fmap (P.getModuleName . snd) modules
+      pure (allModuleNames, exts, namesEnv, env)
+    case e of
+      Left err -> print err >> exitFailure
+      Right (allModuleNames, exts, namesEnv, env) -> server allModuleNames exts namesEnv env port
