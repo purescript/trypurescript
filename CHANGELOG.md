@@ -12,6 +12,12 @@ Bugfixes:
 
 Other improvements:
 
+## [v2026-07-03.1](https://github.com/purescript/trypurescript/releases/tag/v2026-07-03.1)
+
+Other improvements:
+- Update CI to `ubuntu-24.04` runner images, matching the upgraded try.purescript.org server, and update deprecated GitHub Actions (#318 by @thomashoneyman, fixes #317 reported by @pete-murphy)
+- Upgrade the try.purescript.org server from Ubuntu 20.04 to 24.04 and enable the trypurescript service at boot
+
 ## [v2023-12-22.1](https://github.com/purescript/trypurescript/releases/tag/v2023-12-22.1)
 
 Other improvements:
