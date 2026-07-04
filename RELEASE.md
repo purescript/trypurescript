@@ -38,7 +38,9 @@ workspace:
   extraPackages: {}
 EOF
 spago upgrade
-spago install $(spago ls packages --json --quiet | jq -r 'to_entries[] | select(.value.type == "registry") | .key')
+spago install $(spago ls packages --json --quiet \
+  | jq -r 'to_entries[] | select(.value.type == "registry") | .key' \
+  | grep -vxF -f <(awk -F'\t' '!/^#/ && NF {print $1}' excluded-packages.txt))
 popd
 pushd client
 npm run updateConfigVersions
@@ -67,12 +69,16 @@ popd
     version in `stack.yaml` — pin the set explicitly in step 1 instead if the
     latest set targets a compiler you don't want.
 
-3. Install every package in the new set so they're all available in the
-   playground. This overwrites the empty `dependencies` list in
-   `staging/spago.yaml`, then downloads, compiles, and locks them.
+3. Install every package in the new set — except those listed in
+   `staging/excluded-packages.txt` (see [Excluded Packages](#excluded-packages))
+   — so they're all available in the playground. This overwrites the empty
+   `dependencies` list in `staging/spago.yaml`, then downloads, compiles, and
+   locks them.
 
     ```console
-    $ spago install $(spago ls packages --json --quiet | jq -r 'to_entries[] | select(.value.type == "registry") | .key')
+    $ spago install $(spago ls packages --json --quiet \
+        | jq -r 'to_entries[] | select(.value.type == "registry") | .key' \
+        | grep -vxF -f <(awk -F'\t' '!/^#/ && NF {print $1}' excluded-packages.txt))
     ```
 
 4. Update the `client/src/Try/SharedConfig.purs` file by running this command in `client`:
@@ -98,3 +104,24 @@ popd
     $ echo "sha384-$(openssl dgst -sha384 -binary es-module-shims.js | openssl base64 -A)"
     $ rm es-module-shims.js
     ```
+
+### Excluded Packages
+
+`staging/excluded-packages.txt` lists the packages deliberately left out of the
+set, one per line with a tab-separated reason. The install command above
+filters through this file, so re-running the update steps keeps them excluded.
+
+The only exclusion criterion is that a package cannot *run* in the playground:
+its foreign modules (or a dependency's) import bare JS specifiers — npm packages
+or Node builtins — that the import map in `client/public/frame.html` does not
+shim, so the compiled code throws as soon as it executes. Excluding these
+packages also keeps the server inside its memory budget (see the note at the top
+of this section).
+
+To bring an excluded package back: add shims for its imports to the import map
+(step 5 above), then remove its line — along with the lines of any packages
+that were excluded only for depending on it — and re-run the install step.
+
+When upgrading to a new package set, check any packages that are new to the
+set for unshimmed bare imports in their foreign modules, and append them here
+with a reason.

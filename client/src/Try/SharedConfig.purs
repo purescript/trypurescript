@@ -13,7 +13,7 @@ pursReleaseUrl = "https://github.com/purescript/purescript/releases/tag/" <> pur
 
 -- | The registry package set version used by `staging/spago.yaml`.
 packageSetVersion :: String
-packageSetVersion = "77.6.0"
+packageSetVersion = "77.10.2"
 
 packageSetPackageJsonUrl :: String
 packageSetPackageJsonUrl = "https://github.com/purescript/registry/blob/main/package-sets/" <> packageSetVersion <> ".json"

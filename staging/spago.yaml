@@ -2,8 +2,6 @@ package:
   name: try-purescript-server
   dependencies:
     - abc-parser
-    - ace
-    - address-rfc2821
     - aff
     - aff-bus
     - aff-coroutines
@@ -52,10 +50,7 @@ package:
     - chameleon-styled
     - chameleon-transformers
     - channel
-    - chartjs
-    - chartjs-halogen
     - checked-exceptions
-    - choku
     - classless
     - classless-arbitrary
     - classless-decode-json
@@ -75,35 +70,26 @@ package:
     - convertable-options
     - coroutines
     - css
+    - css-frameworks
     - currency
     - data-mvc
     - datetime
     - datetime-parsing
-    - debounce
     - debug
     - decimals
     - default-values
     - deku
-    - deno
     - dissect
     - distributive
     - dodo-printer
     - dom-filereader
     - dom-indexed
     - dom-simple
-    - droplet
     - dts
     - dual-numbers
     - dynamic-buffer
-    - echarts-simple
     - effect
     - either
-    - elmish
-    - elmish-enzyme
-    - elmish-hooks
-    - elmish-html
-    - elmish-testing-library
-    - elmish-time-machine
     - email-validate
     - encoding
     - enums
@@ -114,9 +100,6 @@ package:
     - exists
     - exitcodes
     - expect-inferred
-    - fahrtwind
-    - faker-ffi
-    - fakerjs
     - fallback
     - fast-vect
     - fetch
@@ -156,7 +139,6 @@ package:
     - geojson
     - geometria
     - gesso
-    - gojs
     - grain
     - grain-router
     - grain-virtualized
@@ -167,7 +149,6 @@ package:
     - halogen-canvas
     - halogen-css
     - halogen-declarative-canvas
-    - halogen-echarts-simple
     - halogen-formless
     - halogen-helix
     - halogen-hooks
@@ -181,7 +162,7 @@ package:
     - halogen-use-trigger-hooks
     - halogen-vdom
     - halogen-vdom-string-renderer
-    - halogen-xterm
+    - harmonia
     - heckin
     - heterogeneous
     - homogeneous
@@ -189,20 +170,15 @@ package:
     - huffman
     - humdrum
     - hylograph-canvas
-    - hylograph-d3-kernel
     - hylograph-graph
     - hylograph-layout
     - hylograph-music
     - hylograph-optics
     - hylograph-selection
-    - hylograph-simulation
     - hylograph-simulation-core
-    - hylograph-simulation-halogen
     - hylograph-transitions
     - hylograph-wasm-kernel
     - hyrule
-    - i18next
-    - idb
     - identity
     - identy
     - indexed-db
@@ -230,7 +206,6 @@ package:
     - js-temporal
     - js-timers
     - js-uri
-    - jsdom
     - jsinc
     - json
     - json-codecs
@@ -242,26 +217,21 @@ package:
     - lazy-joe
     - lcg
     - leibniz
-    - leveldb
     - liminal
     - linalg
     - linear
     - lists
     - literals
     - logging
-    - logging-journald
     - machines
     - maps-eager
     - marionette
     - marionette-react-basic-hooks
-    - markdown-it-js
     - matrices
     - matryoshka
     - maybe
     - media-types
     - midi
-    - milkdown
-    - milkis
     - mimetype
     - minibench
     - mmorph
@@ -275,16 +245,10 @@ package:
     - mote
     - motsunabe
     - mvc
-    - mysql
-    - n3
     - nano-id
-    - nanoid
     - naturals
     - nested-functor
     - newtype
-    - nextjs
-    - nextui
-    - node-sqlite3
     - nonempty
     - now
     - npm-package-json
@@ -292,8 +256,6 @@ package:
     - nullable
     - numberfield
     - numbers
-    - oak
-    - oak-debug
     - object-maps
     - ocarina
     - oooooooooorrrrrrrmm-lib
@@ -321,6 +283,7 @@ package:
     - pipes
     - pirates-charm
     - play
+    - pmock
     - point-free
     - pointed-list
     - polymorphic-vectors
@@ -348,22 +311,14 @@ package:
     - rationals
     - rdf
     - react
-    - react-aria
     - react-basic
     - react-basic-classic
-    - react-basic-dnd
     - react-basic-dom
-    - react-basic-emotion
+    - react-basic-dom-beta
     - react-basic-hooks
-    - react-basic-storybook
-    - react-dnd-kit
     - react-dom
     - react-halo
-    - react-markdown
-    - react-virtuoso
-    - reactix
     - read
-    - recharts
     - record
     - record-extra
     - record-extra-srghma
@@ -381,7 +336,6 @@ package:
     - return
     - ring-modules
     - roman
-    - rough-notation
     - routing
     - routing-duplex
     - run
@@ -406,6 +360,8 @@ package:
     - soundfonts
     - sparse-matrices
     - sparse-polynomials
+    - spec
+    - spec-mocha
     - spec-quickcheck
     - splitmix
     - ssrs
@@ -420,13 +376,12 @@ package:
     - substitute
     - supply
     - svg-parser
-    - systemd-journald
     - tagged
     - tailrec
-    - tanstack-query
     - tecton
     - tecton-halogen
     - temporal
+    - test-unit
     - text-formatting
     - thermite
     - thermite-dom
@@ -435,7 +390,6 @@ package:
     - tidy
     - tidy-codegen
     - tldr
-    - toestand
     - transformation-matrix
     - transformers
     - transit
@@ -453,7 +407,6 @@ package:
     - typelevel-rows
     - typisch
     - uint
-    - ulid
     - uncurried-transformers
     - undefined
     - undefined-is-not-a-problem
@@ -468,7 +421,6 @@ package:
     - untagged-union
     - uri
     - url-immutable
-    - url-regex-safe
     - uuid
     - uuidv4
     - validation
@@ -478,8 +430,6 @@ package:
     - vectorfield
     - vectors
     - versions
-    - visx
-    - vitest
     - wasm-base
     - web-chain
     - web-clipboard
@@ -522,35 +472,19 @@ package:
     - webb-string
     - webb-thread
     - webb-writer
-    - webextension-polyfill
     - webgpu
-    - which
-    - xterm
-    - yaml-next
-    - yoga-better-auth
     - yoga-bun-yoga
     - yoga-country
-    - yoga-dynamodb
-    - yoga-elasticsearch
-    - yoga-fastify
-    - yoga-fetch
-    - yoga-heroui
+    - yoga-format
     - yoga-http-api
-    - yoga-jaeger
     - yoga-json
     - yoga-language
-    - yoga-next-fastify
     - yoga-om
     - yoga-om-layer
     - yoga-options
-    - yoga-pino
-    - yoga-postgres
     - yoga-react
     - yoga-react-dom
-    - yoga-react-native
     - yoga-react-om
-    - yoga-redis
-    - yoga-shadcn
     - yoga-sql-types
     - yoga-sse
     - yoga-subtlecrypto
@@ -558,9 +492,8 @@ package:
     - yoga-tree
     - yoga-tree-svg
     - yoga-tree-utils
-    - z3
     - zipperarray
 workspace:
   packageSet:
-    registry: 77.6.0
+    registry: 77.10.2
   extraPackages: {}
