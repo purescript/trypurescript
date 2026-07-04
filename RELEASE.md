@@ -21,6 +21,16 @@ The try.purescript.org server only has a limited amount of memory. If the packag
 
 Before deploying an updated package set, someone (your reviewer) should check that the memory required to hold the package set's externs files does not exceed that of the try.purescript.org server.
 
+To check, run the server locally from `staging/` with the production RTS flags (see `deploy/start`) plus `-s`, which prints a heap summary when the server exits:
+
+```console
+$ cd staging
+$ rm -rf .psci_modules   # start cold: the server's compilation cache
+$ (set -o noglob && stack exec trypurescript -- +RTS -N2 -A128m -M3G -s -RTS 8081 $(spago sources))
+```
+
+Cold boot compiles the whole set, which takes a few minutes. Once the server responds on port 8081, stop the server with Ctrl-C and you should see a summary printed on exit. The number to watch is `bytes maximum residency`. You'll have to run this a _second time_, keeping the `.psci_modules` that the first run produced, to measure the peak memory usage (warm boot has higher max live heap than cold boot without cache).
+
 Update the package set by doing the following. Each step is explained below:
 
 ### Summary
