@@ -3,23 +3,24 @@
   "private": true,
   "scripts": {
     "clean": "rimraf output",
-    "test": "spago test --path config/dev/Try.Config.purs",
-    "build": "spago build --path config/dev/Try.Config.purs",
-    "build:dev": "spago bundle-app --path config/dev/Try.Config.purs --to client.js",
-    "build:production": "spago bundle-app --path config/prod/Try.Config.purs --purs-args '--censor-lib --strict' --to client.js",
-    "bundle": "esbuild --outfile=public/js/index.js --bundle --minify --platform=browser --format=iife --tree-shaking=true client.js",
+    "test": "spago test",
+    "build": "spago build",
+    "build:dev": "spago bundle --outfile client.js --force",
+    "build:production": "spago bundle --outfile client.js --force --strict",
+    "bundle:dev": "esbuild --define:__DEVELOPMENT__=true --outfile=public/js/index.js --bundle --minify --platform=browser --format=iife --tree-shaking=true client.js",
+    "bundle:production": "esbuild --define:__DEVELOPMENT__=false --outfile=public/js/index.js --bundle --minify --platform=browser --format=iife --tree-shaking=true client.js",
     "serve": "http-server public/ -o / --cors=\"Access-Control-Allow-Origin: *\" -c-1",
-    "serve:dev": "npm run build:dev && npm run bundle && npm run serve",
-    "serve:production": "npm run build:production && npm run bundle && npm run serve",
+    "serve:dev": "npm run build:dev && npm run bundle:dev && npm run serve",
+    "serve:production": "npm run build:production && npm run bundle:production && npm run serve",
     "updateConfigVersions": "node updateSharedConfigVersions.mjs src/Try/SharedConfig.purs"
   },
   "devDependencies": {
     "esbuild": "^0.14.43",
     "http-server": "^14.1.0",
-    "purescript": "^0.15.2",
+    "purescript": "^0.15.15",
     "purescript-psa": "^0.8.2",
     "rimraf": "^2.5.4",
-    "spago": "^0.20.9"
+    "spago": "^1.0.4"
   },
   "dependencies": {
     "ace-builds": "^1.5.0",

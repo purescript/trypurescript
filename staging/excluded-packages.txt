@@ -1,0 +1,165 @@
+# Packages excluded from the Try PureScript package set (registry 77.10.2).
+#
+# Criterion: the package cannot execute in the playground. Its foreign modules
+# (or those of a dependency) import bare JS specifiers that are not shimmed by
+# the import map in client/public/frame.html, so the generated code throws as
+# soon as it runs. Nothing here is excluded for size or popularity. Keeping the
+# set small also protects the server's memory budget (see RELEASE.md).
+#
+# The install step in RELEASE.md filters `spago install` through this file.
+#
+# To rescue a package: add a shim for its imports to the frame.html import map
+# (see the "add any new shims" step in RELEASE.md), delete its line here and
+# the lines of any packages excluded only for depending on it, then re-run the
+# install step.
+#
+# Format: <package>\t<reason>
+
+ace	unshimmed imports: ace-builds, ace/anchor, ace/background_tokenizer, ace/document, ace/edit_session, ace/editor, ace/ext/language_tools, ace/range, ace/scrollbar, ace/search, ace/selection, ace/token_iterator, ace/tokenizer, ace/undomanager, ace/virtual_renderer
+address-rfc2821	unshimmed imports: address-rfc2821
+affjax-node	unshimmed imports: url, xhr2
+axon	unshimmed imports: bun, node:http, node:net, node:stream, stream
+benchlib	depends on excluded: node-buffer, node-fs, node-path, node-process
+blessed	unshimmed imports: @shamansir/everblessed, blessed, fs, path, reblessed, terminal-size, url, util
+cbor-stream	unshimmed imports: cbor-x
+chartjs	unshimmed imports: chart.js/auto
+chartjs-halogen	depends on excluded: chartjs
+choku	unshimmed imports: chalk
+compile-fail	depends on excluded: node-buffer, node-child-process, node-execa, node-fs, node-path, node-process
+css-class-name-extractor	depends on excluded: node-buffer, node-fs, node-path
+csv-stream	unshimmed imports: csv-parse, csv-stringify
+debounce	unshimmed imports: debouncing
+deno	unshimmed imports: https://deno.land/std@0.144.0/crypto/mod.ts, https://deno.land/std@0.144.0/dotenv/mod.ts, https://deno.land/std@0.144.0/fs/mod.ts, https://deno.land/std@0.144.0/http/server.ts, https://deno.land/std@0.145.0/datetime/mod.ts, https://deno.land/std@0.145.0/log/mod.ts, https://deno.land/std@0.145.0/uuid/mod.ts
+dotenv	depends on excluded: node-buffer, node-child-process, node-event-emitter, node-fs, node-os, node-process, node-streams
+droplet	unshimmed imports: pg
+echarts-simple	unshimmed imports: echarts
+elmish	unshimmed imports: react-dom/server.js
+elmish-enzyme	unshimmed imports: enzyme
+elmish-hooks	unshimmed imports: stacktrace-parser
+elmish-html	depends on excluded: elmish
+elmish-testing-library	unshimmed imports: @happy-dom/global-registrator, react-dom/test-utils.js
+elmish-time-machine	depends on excluded: elmish, elmish-hooks, elmish-html
+environment	depends on excluded: node-process
+express	unshimmed imports: cookie-parser, express, http, https
+ezfetch	unshimmed imports: buffer, stream
+fahrtwind	depends on excluded: react-basic-emotion
+faker-ffi	unshimmed imports: @faker-js/faker
+fakerjs	unshimmed imports: @faker-js/faker
+framer-motion	unshimmed imports: motion/react
+gojs	unshimmed imports: gojs
+golden-test	depends on excluded: node-buffer, node-fs, node-path, node-process
+golem-fetch	unshimmed imports: node:url
+graphql-client	unshimmed imports: @apollo/client/core/index.js, @apollo/client/link/context/index.js, @apollo/client/link/subscriptions/index.js, @apollo/client/utilities/index.js, @urql/core, graphql-ws, wonka
+halogen-echarts-simple	depends on excluded: echarts-simple
+halogen-xterm	depends on excluded: xterm
+httpurple	depends on excluded: node-buffer, node-event-emitter, node-fs, node-http, node-net, node-process, node-streams
+hylograph-d3-kernel	unshimmed imports: d3-drag, d3-force, d3-selection
+hylograph-simulation	unshimmed imports: d3-drag, d3-force, d3-selection
+hylograph-simulation-halogen	depends on excluded: hylograph-d3-kernel, hylograph-simulation
+i18next	unshimmed imports: i18next, i18next-browser-languagedetector
+idb	unshimmed imports: idb
+ink	unshimmed imports: ink
+jsdom	unshimmed imports: jsdom
+leveldb	unshimmed imports: level
+logging-journald	depends on excluded: systemd-journald
+lumi-components	unshimmed imports: jss, jss-preset-default, qrcode.react, react-media-hook, react-password-strength-bar
+markdown-it-js	unshimmed imports: markdown-it, markdown-it-collapsible
+marked	unshimmed imports: marked
+meowclient	unshimmed imports: keys-converter, meowclient
+milkdown	unshimmed imports: @milkdown/crepe, @milkdown/kit/core, @milkdown/kit/utils
+milkis	unshimmed imports: node-fetch
+motion	unshimmed imports: motion/react, motion/react-m
+mysql	unshimmed imports: mysql
+n3	unshimmed imports: n3
+nanoid	unshimmed imports: nanoid
+next-purs-rsc	unshimmed imports: next/cache, next/dynamic, next/font/google, next/font/local, next/headers, next/image, next/link, next/navigation, next/og, next/script, next/server, next/web-vitals
+nextjs	unshimmed imports: next/document, next/head, next/image.js, next/link, next/navigation, next/script, swr
+nextui	unshimmed imports: @nextui-org/react, next-themes
+node-buffer	unshimmed imports: node:buffer, util
+node-child-process	unshimmed imports: node:child_process
+node-event-emitter	unshimmed imports: node:events
+node-execa	unshimmed imports: process
+node-fs	unshimmed imports: node:fs, util
+node-glob-basic	depends on excluded: node-fs, node-path, node-process
+node-http	unshimmed imports: node:http, node:https
+node-http2	unshimmed imports: node:http2
+node-human-signals	unshimmed imports: os
+node-net	unshimmed imports: net, node:net
+node-os	unshimmed imports: node:os, node:util
+node-path	unshimmed imports: node:path
+node-process	unshimmed imports: process
+node-readline	unshimmed imports: node:readline
+node-sqlite3	unshimmed imports: sqlite3
+node-stream-pipes	unshimmed imports: stream
+node-streams	unshimmed imports: node:stream
+node-tls	unshimmed imports: node:tls
+node-url	unshimmed imports: node:url
+node-workerbees	unshimmed imports: worker_threads
+node-zlib	unshimmed imports: node:zlib
+oak	unshimmed imports: virtual-dom/create-element, virtual-dom/diff, virtual-dom/h, virtual-dom/patch
+oak-debug	depends on excluded: oak
+open-mkdirp-aff	depends on excluded: node-fs, node-path
+optparse	unshimmed imports: child_process
+org-doc	unshimmed imports: instaparse, node:fs
+postgresql	unshimmed imports: buffer, pg, pg-copy-streams, postgres-interval, postgres-range, stream
+prospero	unshimmed imports: @fastify/multipart, graphql, node:crypto
+psa-utils	depends on excluded: node-path
+react-aria	unshimmed imports: @react-aria/button, @react-aria/combobox, @react-aria/focus, @react-aria/interactions, @react-aria/listbox, @react-aria/overlays, @react-aria/utils
+react-basic-dnd	unshimmed imports: react-dnd, react-dnd-html5-backend, react-dnd-test-backend, react-dnd-touch-backend
+react-basic-emotion	unshimmed imports: @emotion/react
+react-basic-storybook	unshimmed imports: @storybook/addon-actions, @storybook/addon-docs, @storybook/testing-library
+react-dnd-kit	unshimmed imports: @dnd-kit/abstract/modifiers, @dnd-kit/collision, @dnd-kit/dom, @dnd-kit/dom/modifiers, @dnd-kit/dom/utilities, @dnd-kit/geometry, @dnd-kit/helpers, @dnd-kit/react, @dnd-kit/react/sortable
+react-icons	unshimmed imports: react-icons/ai, react-icons/bi, react-icons/bs, react-icons/cg, react-icons/ci, react-icons/di, react-icons/fa, react-icons/fa6, react-icons/fc, react-icons/fi, react-icons/gi, react-icons/go, react-icons/gr, react-icons/hi, react-icons/hi2, react-icons/im, react-icons/io, react-icons/io5, react-icons/lia, react-icons/lu, react-icons/md, react-icons/pi, react-icons/ri, react-icons/rx, react-icons/si, react-icons/sl, react-icons/tb, react-icons/tfi, react-icons/ti, react-icons/vsc, react-icons/wi
+react-markdown	unshimmed imports: react-markdown, remark-breaks, remark-gfm
+react-testing-library	unshimmed imports: @testing-library/react/pure.js, @testing-library/user-event
+react-virtuoso	unshimmed imports: react-virtuoso
+reactix	unshimmed imports: @testing-library/react, react-dom/test-utils
+recharts	unshimmed imports: recharts
+rito	unshimmed imports: three/examples/jsm/loaders/GLTFLoader.js, three/examples/jsm/postprocessing/BloomPass.js, three/examples/jsm/postprocessing/EffectComposer.js, three/examples/jsm/postprocessing/GlitchPass.js, three/examples/jsm/postprocessing/RenderPass.js, three/examples/jsm/postprocessing/ShaderPass.js, three/examples/jsm/postprocessing/UnrealBloomPass.js, three/examples/jsm/renderers/CSS2DRenderer.js, three/examples/jsm/renderers/CSS3DRenderer.js, three/src/cameras/PerspectiveCamera.js, three/src/core/BufferAttribute.js, three/src/core/BufferGeometry.js, three/src/core/InstancedBufferAttribute.js, three/src/core/Raycaster.js, three/src/geometries/BoxGeometry.js, three/src/geometries/CapsuleGeometry.js, three/src/geometries/CylinderGeometry.js, three/src/geometries/PlaneGeometry.js, three/src/geometries/SphereGeometry.js, three/src/lights/AmbientLight.js, three/src/lights/DirectionalLight.js, three/src/lights/PointLight.js, three/src/loaders/CubeTextureLoader.js, three/src/loaders/TextureLoader.js, three/src/materials/MeshBasicMaterial.js, three/src/materials/MeshLambertMaterial.js, three/src/materials/MeshPhongMaterial.js, three/src/materials/MeshStandardMaterial.js, three/src/materials/RawShaderMaterial.js, three/src/materials/ShaderMaterial.js, three/src/math/Box3.js, three/src/math/Color.js, three/src/math/Euler.js, three/src/math/Matrix4.js, three/src/math/Quaternion.js, three/src/math/Sphere.js, three/src/math/Vector2.js, three/src/math/Vector3.js, three/src/objects/Group.js, three/src/objects/InstancedMesh.js, three/src/objects/Mesh.js, three/src/objects/Points.js, three/src/renderers/WebGLRenderer.js, three/src/scenes/FogExp2.js, three/src/scenes/Scene.js
+rough-notation	unshimmed imports: rough-notation
+simple-ulid	unshimmed imports: crypto
+spec-discovery	unshimmed imports: fs, path, url
+spec-node	depends on excluded: node-buffer, node-fs, node-process, optparse
+spec-reporter-xunit	depends on excluded: node-buffer, node-fs, node-path
+supabase	unshimmed imports: @supabase/ssr, @supabase/supabase-js
+systemd-journald	unshimmed imports: systemd-journald
+tanstack-query	unshimmed imports: @tanstack/react-query
+toestand	depends on excluded: reactix
+ts-bridge	depends on excluded: node-buffer, node-fs, node-path, node-process
+ulid	unshimmed imports: ulid
+url-regex-safe	unshimmed imports: url-regex-safe
+visx	unshimmed imports: @visx/annotation, @visx/axis, @visx/brush, @visx/clip-path, @visx/curve, @visx/event, @visx/geo, @visx/gradient, @visx/grid, @visx/group, @visx/heatmap, @visx/hierarchy, @visx/legend, @visx/mock-data, @visx/network, @visx/pattern, @visx/responsive, @visx/scale, @visx/shape, @visx/stats, @visx/threshold, @visx/tooltip, @visx/zoom, d3-format, d3-time-format, topojson-client
+vitest	unshimmed imports: vitest
+webb-commandline	unshimmed imports: child_process
+webb-directory	depends on excluded: node-fs, node-path, node-process
+webb-file	depends on excluded: node-buffer, node-fs, webb-directory
+webb-test	depends on excluded: spec-discovery, spec-node
+webextension-polyfill	unshimmed imports: webextension-polyfill
+which	unshimmed imports: which
+whine-core	unshimmed imports: glob, micromatch, vscode, vscode-languageclient/node.js, vscode-languageserver-textdocument, vscode-languageserver/node, yaml
+xterm	unshimmed imports: xterm, xterm-addon-fit, xterm-addon-web-links, xterm-addon-webgl
+yaml-next	unshimmed imports: js-yaml
+yoga-acp-om	unshimmed imports: @anthropic-ai/claude-agent-sdk
+yoga-better-auth	unshimmed imports: better-auth, better-auth/client, better-auth/db, better-auth/plugins, pg
+yoga-config	unshimmed imports: smol-toml, yaml
+yoga-docker-compose	depends on excluded: node-child-process
+yoga-dynamodb	unshimmed imports: @aws-sdk/client-dynamodb, @aws-sdk/lib-dynamodb
+yoga-elasticsearch	unshimmed imports: @elastic/elasticsearch
+yoga-fastify	unshimmed imports: @fastify/cors, @fastify/helmet, @fastify/rate-limit, @fastify/websocket, argon2, fastify, jose
+yoga-fastify-om	depends on excluded: node-buffer, yoga-fastify, yoga-om-strom
+yoga-fetch	unshimmed imports: node-fetch
+yoga-fetch-om	depends on excluded: yoga-om-strom
+yoga-heroui	unshimmed imports: @heroui/react
+yoga-jaeger	unshimmed imports: jaeger-client
+yoga-next-fastify	unshimmed imports: next
+yoga-om-strom	unshimmed imports: node:fs
+yoga-om-workerbees	depends on excluded: node-workerbees
+yoga-opentelemetry	unshimmed imports: @opentelemetry/api, @opentelemetry/api-logs, @opentelemetry/exporter-logs-otlp-http, @opentelemetry/exporter-trace-otlp-http, @opentelemetry/instrumentation-http, @opentelemetry/instrumentation-pino, @opentelemetry/resources, @opentelemetry/sdk-logs, @opentelemetry/sdk-node, @opentelemetry/sdk-trace-base, @opentelemetry/sdk-trace-node, @opentelemetry/semantic-conventions
+yoga-pino	unshimmed imports: @opentelemetry/api-logs, pino
+yoga-postgres	unshimmed imports: pg
+yoga-react-native	unshimmed imports: react-native, react-native-fs, react-native-macos, twrnc
+yoga-redis	unshimmed imports: ioredis
+yoga-shadcn	unshimmed imports: cmdk, embla-carousel-react, input-otp, radix-ui, react-day-picker, react-resizable-panels, sonner, vaul
+yoga-sqlite	unshimmed imports: @libsql/client
+yoga-test-docker	unshimmed imports: child_process
+z3	unshimmed imports: z3-solver

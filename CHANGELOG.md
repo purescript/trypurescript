@@ -11,6 +11,10 @@ New features:
 Bugfixes:
 
 Other improvements:
+- Bump PureScript to `0.15.15` (#316 by @pete-murphy)
+- Bump Spago to `1.0.4` (#316 by @pete-murphy)
+- Update to latest package set (#316 by @pete-murphy)
+- Exclude packages that cannot run in the playground (unshimmed JS imports) from the package set, with per-package reasons recorded in `staging/excluded-packages.txt` (#316 by @pete-murphy)
 
 ## [v2026-07-03.1](https://github.com/purescript/trypurescript/releases/tag/v2026-07-03.1)
 
