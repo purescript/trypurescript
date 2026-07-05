@@ -1,4 +1,4 @@
-resolver: lts-20.9
+resolver: lts-20.26
 packages:
   - "."
 
@@ -8,8 +8,11 @@ extra-deps:
   - process-1.6.13.1
   # The Cabal library is not in Stackage
   - Cabal-3.6.3.0
-  # Protolude is not yet in resolver snapshot
-  - protolude-0.3.1
+  # Protolude is not in the resolver snapshot; 0.3.3 (not 0.3.1) is needed
+  # for compatibility with the bytestring version in lts-20.26
+  - protolude-0.3.3
+  # purescript pins happy ==1.20.0, but lts-20.26 ships happy-1.20.1.1
+  - happy-1.20.0
 
 flags:
   these:

@@ -1,8 +1,8 @@
+cabal-version: 2.4
 name: trypurescript
 version: 1.0.0
-cabal-version: >=1.8
 build-type: Simple
-license: BSD3
+license: BSD-3-Clause
 license-file: LICENSE
 copyright: (c) Phil Freeman 2013
 maintainer: paf31@cantab.net
@@ -10,32 +10,27 @@ synopsis: Interactive PureScript in the Browser
 description: A simple web app for trying out the PureScript compiler
 category: Web
 author: Phil Freeman
-data-dir: ""
 
 executable trypurescript
     -- Since no one depends on this project as a library,
-    -- packages below are `-any` because their versions are determined
-    -- by the `stack.yml` file. Versions correspond to the ones
-    -- specified in the resolver (i.e. the package set)
+    -- packages below are unbounded because their versions are
+    -- determined by the `stack.yaml` file. Versions correspond to the
+    -- ones specified in the resolver (i.e. the package set)
     -- unless it is a versioned library added via `extra-deps` field.
-    build-depends: base -any,
-                   aeson -any,
-                   bytestring -any,
-                   data-default -any,
-                   directory -any,
-                   filepath -any,
-                   Glob -any,
-                   scotty -any,
+    build-depends: base,
+                   aeson,
+                   bytestring,
+                   containers,
+                   data-default,
+                   Glob,
+                   mtl,
                    purescript,
-                   containers -any,
-                   http-types -any,
-                   transformers -any,
-                   mtl -any,
-                   text -any,
-                   time -any,
-                   warp -any
+                   scotty,
+                   text,
+                   time,
+                   transformers,
+                   warp
     hs-source-dirs: server
     main-is: Main.hs
-    buildable: True
-    other-modules: Main
-    ghc-options: -Werror -O2 -threaded -rtsopts
+    default-language: Haskell2010
+    ghc-options: -Wall -Werror -O2 -threaded -rtsopts
