@@ -11,9 +11,10 @@ New features:
 Bugfixes:
 
 Other improvements:
-- Bump the Stackage resolver from `lts-20.9` to `lts-20.26` (GHC 9.2.5 → 9.2.8), the newest snapshot compatible with `purescript-0.15.15` (#320 by @thomashoneyman)
-- Modernize the server build: `cabal-version: 2.4`, build with `-Wall -Werror` (with attendant cleanup in `server/Main.hs`), remove unused dependencies and the redundant `Setup.hs` (#320 by @thomashoneyman)
-- Speed up CI server builds by removing the `-j1` limit; runners have had 4 vCPUs and 16GB of RAM for years (#320 by @thomashoneyman)
+- Bump the Stackage resolver from `lts-20.9` to `lts-20.26` (GHC 9.2.5 → 9.2.8), the newest snapshot compatible with `purescript-0.15.15` (#322 by @thomashoneyman)
+- Modernize the server build: `cabal-version: 2.4`, build with `-Wall -Werror` (with attendant cleanup in `server/Main.hs`), remove unused dependencies and the redundant `Setup.hs` (#322 by @thomashoneyman)
+- Speed up CI server builds by removing the `-j1` limit; runners have had 4 vCPUs and 16GB of RAM for years (#322 by @thomashoneyman)
+- Serve the site and the compiled `/output` modules with `Cache-Control: no-cache` so browsers revalidate via ETag instead of heuristically caching a stale client for months after a deploy (#322 by @thomashoneyman)
 
 ## [v2026-07-05.1](https://github.com/purescript/trypurescript/releases/tag/v2026-07-05.1)
 
