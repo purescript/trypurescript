@@ -34,11 +34,13 @@ package:
     - b64
     - barbies
     - barlow-lens
+    - baskerville-core
     - bifunctors
     - bigints
     - bolson
     - bookhound
     - bower-json
+    - bytestrings
     - call-by-name
     - canvas
     - canvas-action
@@ -162,6 +164,7 @@ package:
     - halogen-use-trigger-hooks
     - halogen-vdom
     - halogen-vdom-string-renderer
+    - halogen-widgets
     - harmonia
     - heckin
     - heterogeneous
@@ -170,6 +173,7 @@ package:
     - huffman
     - humdrum
     - hylograph-canvas
+    - hylograph-components
     - hylograph-graph
     - hylograph-layout
     - hylograph-music
@@ -241,7 +245,6 @@ package:
     - monad-unlift
     - monoid-extras
     - monoidal
-    - morello
     - mote
     - motsunabe
     - mvc
@@ -296,10 +299,13 @@ package:
     - priority-queue
     - profunctor
     - profunctor-lenses
+    - property-area-ranges
     - protobuf
     - ps-spa
     - psci-support
     - punycode
+    - puppy-runtime
+    - puregrain
     - pursfmt
     - qualified-do
     - quantities
@@ -345,6 +351,7 @@ package:
     - selection-foldable
     - selective-functors
     - semirings
+    - seowebchecker
     - shuffle
     - sigil
     - sigil-hats
@@ -390,6 +397,8 @@ package:
     - tidy
     - tidy-codegen
     - tldr
+    - tramaj-halogen
+    - tramaj-purs
     - transformation-matrix
     - transformers
     - transit
@@ -495,5 +504,5 @@ package:
     - zipperarray
 workspace:
   packageSet:
-    registry: 77.10.2
+    registry: 82.1.0
   extraPackages: {}

@@ -7,7 +7,6 @@
 module Main (main) where
 
 import           Control.Monad (foldM)
-import           Control.Monad.IO.Class (liftIO)
 import qualified Control.Monad.State as State
 import           Control.Monad.Trans (lift)
 import           Control.Monad.Trans.Except (ExceptT(..), runExceptT)
@@ -168,7 +167,7 @@ server allModuleNames externs initNamesEnv initEnv port = do
           Scotty.json $ A.object [ "js" .= comp, "warnings" .= warnings ]
 
     get "/search" $ do
-      query <- param "q"
+      query <- queryParam "q"
       Scotty.setHeader "Access-Control-Allow-Origin" "*"
       Scotty.setHeader "Content-Type" "application/json"
       case tryParseType query of

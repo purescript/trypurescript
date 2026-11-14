@@ -5,12 +5,12 @@
 
 packages:
 - completed:
-    hackage: purescript-0.15.15@sha256:8e2a2452b66e29dbfa8269c523487f882c7b94aa71766b06be7e51da4dc85035,21429
+    hackage: purescript-0.15.17@sha256:425c45b03ade7f357fa64b9e62d64120cad0360f8249de3fd336d15dd57da681,21699
     pantry-tree:
-      sha256: c70747a772ab844b7e9b86cfc57a9b22001652ad7bec457eb274df29b7110e17
-      size: 159334
+      sha256: 06e8a2032f48f20fef5bb8ea2e5a6c8c7395d37b2d7e25190d0f15d3d5f644fd
+      size: 147330
   original:
-    hackage: purescript-0.15.15
+    hackage: purescript-0.15.17
 - completed:
     hackage: language-javascript-0.7.0.0@sha256:3eab0262b8ac5621936a4beab6a0f97d0e00a63455a8b0e3ac1547b4088dae7d,3898
     pantry-tree:
@@ -19,36 +19,33 @@ packages:
   original:
     hackage: language-javascript-0.7.0.0
 - completed:
-    hackage: process-1.6.13.1@sha256:c8bb8b7c993ff72d771381b3b56852dd154bce51880a24789c11f57b0688d353,2963
+    hackage: bower-json-1.1.0.0@sha256:a136aaca67bf0d15c336f5864f7e9d40ebe046ca2cb4b25bc4895617ea35f9f6,1864
     pantry-tree:
-      sha256: 58117b15fa330c79b3bca6b29c65f815e45840f79cc0915d3434f25e54ac8fa5
-      size: 1543
+      sha256: 3acd48e7012f246ad44c7c17cd6340362b1dc448c1d93156280814e76d9e0589
+      size: 419
   original:
-    hackage: process-1.6.13.1
+    hackage: bower-json-1.1.0.0
 - completed:
-    hackage: Cabal-3.6.3.0@sha256:ff97c442b0c679c1c9876acd15f73ac4f602b973c45bde42b43ec28265ee48f4,12459
+    hackage: aeson-better-errors-0.9.1.3@sha256:1bfdda3982368cafc7317b9f0c1f7267a6b0bbac9515ae1fad37f2b19178f567,2071
     pantry-tree:
-      sha256: b250a53bdb56844f047a2927833bb565b936a289abfa85dfc2a63148d776368a
-      size: 19757
+      sha256: 1c14247866dfb8052506c179e4725b8a7ce1472a4fb227d61576d862d9494551
+      size: 492
   original:
-    hackage: Cabal-3.6.3.0
+    hackage: aeson-better-errors-0.9.1.3
 - completed:
-    hackage: protolude-0.3.3@sha256:0106615f6fe08de16fe512852c728797db17374d36b4a4ec8187563e924b2439,2261
+    name: cheapskate
     pantry-tree:
-      sha256: 174c107f3c3af1dc23330ff4431445830aac4b4fdba326e3e654eb491d6e9ca6
-      size: 1594
+      sha256: b130a35ad29a61ac64c2d29bb09309ddf07b139342c67ef01ccc59ad4167d529
+      size: 12069
+    sha256: 2b495e2b6d571c33b91ebb76c1b7fe9c9b56ff90ca0804106a3260f2bbdc9a9a
+    size: 62489
+    url: https://github.com/purescript/cheapskate/archive/633c69024e061ad956f1aecfc137fb99a7a7a20b.tar.gz
+    version: 0.1.1.2
   original:
-    hackage: protolude-0.3.3
-- completed:
-    hackage: happy-1.20.0@sha256:5d47dc221a9fe964e36aaaa2e1ab7e8f085a225fd6528d6eff310b92360bbe99,5732
-    pantry-tree:
-      sha256: ff2e7df7cfe8746eedc6f69c225fa8c899c26d28f1c4964eeb00a5d757d30351
-      size: 8749
-  original:
-    hackage: happy-1.20.0
+    url: https://github.com/purescript/cheapskate/archive/633c69024e061ad956f1aecfc137fb99a7a7a20b.tar.gz
 snapshots:
 - completed:
-    sha256: 5a59b2a405b3aba3c00188453be172b85893cab8ebc352b1ef58b0eae5d248a2
-    size: 650475
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/20/26.yaml
-  original: lts-20.26
+    sha256: d133abe75e408a407cce3f032c96ac1bbadf474a93b5156ebf4135b53382d56b
+    size: 683827
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/23/18.yaml
+  original: lts-23.18
