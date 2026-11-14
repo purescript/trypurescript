@@ -1,24 +1,19 @@
-{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternGuards #-}
 
 module Main (main) where
 
 import           Control.Monad (foldM)
-import qualified Control.Monad.State as State
 import           Control.Monad.Trans (lift)
 import           Control.Monad.Trans.Except (ExceptT(..), runExceptT)
 import           Control.Monad.Writer.Strict (runWriterT)
 import qualified Data.Aeson as A
 import           Data.Aeson ((.=))
-import           Data.Bifunctor (second, bimap)
+import           Data.Bifunctor (second)
 import qualified Data.ByteString.Lazy as BL
 import           Data.Default (def)
-import           Data.Function (on)
 import qualified Data.IORef as IORef
-import           Data.List (nubBy)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as M
 import qualified Data.Set as Set
@@ -29,7 +24,6 @@ import           Data.Time.Clock (UTCTime)
 import           GHC.Generics (Generic)
 import qualified Language.PureScript as P
 import qualified Language.PureScript.CST as CST
-import qualified Language.PureScript.CST.Monad as CSTM
 import qualified Language.PureScript.CodeGen.JS as J
 import qualified Language.PureScript.CodeGen.JS.Printer as P
 import qualified Language.PureScript.CoreFn as CF
@@ -39,7 +33,6 @@ import qualified Language.PureScript.Interactive as I
 import qualified Language.PureScript.Make as Make
 import qualified Language.PureScript.Make.Cache as Cache
 import qualified Language.PureScript.Names as N
-import qualified Language.PureScript.TypeChecker.TypeSearch as TS
 import qualified Network.Wai.Handler.Warp as Warp
 import           System.Environment (getArgs)
 import           System.Exit (exitFailure)
@@ -116,8 +109,8 @@ buildMakeActions codegenRef =
   outputPrimDocs :: Make.Make ()
   outputPrimDocs = pure ()
 
-server :: [N.ModuleName] -> [P.ExternsFile] -> P.Env -> P.Environment -> Int -> IO ()
-server allModuleNames externs initNamesEnv initEnv port = do
+server :: [N.ModuleName] -> [P.ExternsFile] -> P.Env -> Int -> IO ()
+server allModuleNames externs initNamesEnv port = do
   codegenRef <- IORef.newIORef Nothing
   let makeActions = buildMakeActions codegenRef
   let modNames = Set.fromList allModuleNames
@@ -166,26 +159,6 @@ server allModuleNames externs initNamesEnv initEnv port = do
         Right (warnings, comp) ->
           Scotty.json $ A.object [ "js" .= comp, "warnings" .= warnings ]
 
-    get "/search" $ do
-      query <- queryParam "q"
-      Scotty.setHeader "Access-Control-Allow-Origin" "*"
-      Scotty.setHeader "Content-Type" "application/json"
-      case tryParseType query of
-        Nothing -> Scotty.json $ A.object [ "error" .= ("Cannot parse type" :: Text) ]
-        Just ty -> do
-          let elabs = lookupAllConstructors initEnv ty
-              search = fst . TS.typeSearch (Just []) initEnv (P.emptyCheckState initEnv)
-              results = nubBy ((==) `on` fst) $ do
-                elab <- elabs
-                let mkSkolemType nm s = P.Skolem P.NullSourceAnn nm Nothing s (P.SkolemScope 0)
-                    strictMatches = search (replaceTypeVariablesAndDesugar mkSkolemType elab)
-                    flexMatches = search (replaceTypeVariablesAndDesugar (const (P.TUnknown P.NullSourceAnn)) elab)
-                take 50 (strictMatches ++ flexMatches)
-          Scotty.json $ A.object [ "results" .= [ P.showQualified id k
-                                                | (k, _) <- take 50 results
-                                                ]
-                                 ]
-
 getOpts :: Int -> Scotty.Options
 getOpts port = def
   { settings =
@@ -193,46 +166,6 @@ getOpts port = def
       $ Warp.setPort port
       $ Warp.defaultSettings
   }
-
-lookupAllConstructors :: P.Environment -> P.SourceType -> [P.SourceType]
-lookupAllConstructors env = P.everywhereOnTypesM $ \case
-    P.TypeConstructor ann (P.Qualified (N.BySourcePos _) tyCon) -> P.TypeConstructor ann <$> lookupConstructor env tyCon
-    other -> pure other
-  where
-    lookupConstructor :: P.Environment -> P.ProperName 'P.TypeName -> [P.Qualified (P.ProperName 'P.TypeName)]
-    lookupConstructor env' nm =
-      [ q
-      | (q@(P.Qualified (N.ByModuleName _) thisNm), _) <- M.toList (P.types env')
-      , thisNm == nm
-      ]
-
--- | (Consistently) replace unqualified type constructors and type variables with unknowns.
---
--- Also remove the @ParensInType@ Constructor (we need to deal with type operators later at some point).
-replaceTypeVariablesAndDesugar :: (Text -> Int -> P.SourceType) -> P.SourceType -> P.SourceType
-replaceTypeVariablesAndDesugar f ty = State.evalState (P.everywhereOnTypesM go ty) (0, M.empty) where
-  go = \case
-    P.ParensInType _ inner -> pure inner
-    P.TypeVar _ s -> do
-      (n, m) <- State.get
-      case M.lookup s m of
-        Nothing -> do
-          let unknown = f s n
-          State.put (n + 1, M.insert s unknown m)
-          pure unknown
-        Just unknown -> pure unknown
-    other -> pure other
-
-tryParseType :: Text -> Maybe P.SourceType
-tryParseType = hush . fmap (CST.convertType "<file>") . runParser CST.parseTypeP
-  where
-    hush = either (const Nothing) Just
-
-    runParser :: CST.Parser a -> Text -> Either String a
-    runParser p =
-      bimap (CST.prettyPrintError . NE.head) snd
-        . CST.runTokenParser (p <* CSTM.token CST.TokEof)
-        . CST.lexTopLevel
 
 main :: IO ()
 main = do
@@ -251,11 +184,11 @@ main = do
     inputFiles <- concat <$> traverse glob inputGlobs
     e <- runExceptT $ do
       modules <- ExceptT $ I.loadAllModules inputFiles
-      (exts, env) <- ExceptT . I.runMake . I.make $ map (second CST.pureResult) modules
+      (exts, _) <- ExceptT . I.runMake . I.make $ map (second CST.pureResult) modules
       namesEnv <- fmap fst . runWriterT $ foldM P.externsEnv P.primEnv exts
       let
         allModuleNames = fmap (P.getModuleName . snd) modules
-      pure (allModuleNames, exts, namesEnv, env)
+      pure (allModuleNames, exts, namesEnv)
     case e of
       Left err -> print err >> exitFailure
-      Right (allModuleNames, exts, namesEnv, env) -> server allModuleNames exts namesEnv env port
+      Right (allModuleNames, exts, namesEnv) -> server allModuleNames exts namesEnv port

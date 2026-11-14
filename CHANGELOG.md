@@ -5,6 +5,7 @@ Notable changes to this project are documented in this file. The format is based
 ## [Unreleased]
 
 Breaking changes:
+- Remove the undocumented `/search` type-search endpoint, which no client used and which has answered every query with "Cannot parse type" since the update to PureScript 0.13 (#326 by @thomashoneyman)
 
 New features:
 
