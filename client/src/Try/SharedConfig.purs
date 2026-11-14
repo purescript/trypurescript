@@ -6,14 +6,14 @@ module Try.SharedConfig where
 import Prelude
 
 pursVersion :: String
-pursVersion = "v0.15.15"
+pursVersion = "v0.15.17"
 
 pursReleaseUrl :: String
 pursReleaseUrl = "https://github.com/purescript/purescript/releases/tag/" <> pursVersion
 
 -- | The registry package set version used by `staging/spago.yaml`.
 packageSetVersion :: String
-packageSetVersion = "77.10.2"
+packageSetVersion = "82.1.0"
 
 packageSetPackageJsonUrl :: String
 packageSetPackageJsonUrl = "https://github.com/purescript/registry/blob/main/package-sets/" <> packageSetVersion <> ".json"

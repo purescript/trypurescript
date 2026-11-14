@@ -11,6 +11,9 @@ New features:
 Bugfixes:
 
 Other improvements:
+- Bump PureScript to `0.15.17`, which adds attached `derive` clauses on `data` and `newtype` declarations (#324 by @thomashoneyman)
+- Bump the Stackage resolver from `lts-20.26` to `lts-23.18` (GHC 9.2.8 → 9.8.4) to match `purescript-0.15.17` (#324 by @thomashoneyman)
+- Update to registry package set `82.1.0`, excluding the new packages that cannot run in the playground (#324 by @thomashoneyman)
 
 ## [v2026-07-05.2](https://github.com/purescript/trypurescript/releases/tag/v2026-07-05.2)
 

@@ -1,4 +1,4 @@
-# Packages excluded from the Try PureScript package set (registry 77.10.2).
+# Packages excluded from the Try PureScript package set (registry 82.1.0).
 #
 # Criterion: the package cannot execute in the playground. Its foreign modules
 # (or those of a dependency) import bare JS specifiers that are not shimmed by
@@ -19,6 +19,7 @@ ace	unshimmed imports: ace-builds, ace/anchor, ace/background_tokenizer, ace/doc
 address-rfc2821	unshimmed imports: address-rfc2821
 affjax-node	unshimmed imports: url, xhr2
 axon	unshimmed imports: bun, node:http, node:net, node:stream, stream
+baskerville-mycroft	depends on excluded: mycroft
 benchlib	depends on excluded: node-buffer, node-fs, node-path, node-process
 blessed	unshimmed imports: @shamansir/everblessed, blessed, fs, path, reblessed, terminal-size, url, util
 cbor-stream	unshimmed imports: cbor-x
@@ -38,7 +39,7 @@ elmish-enzyme	unshimmed imports: enzyme
 elmish-hooks	unshimmed imports: stacktrace-parser
 elmish-html	depends on excluded: elmish
 elmish-testing-library	unshimmed imports: @happy-dom/global-registrator, react-dom/test-utils.js
-elmish-time-machine	depends on excluded: elmish, elmish-hooks, elmish-html
+env	depends on excluded: node-process
 environment	depends on excluded: node-process
 express	unshimmed imports: cookie-parser, express, http, https
 ezfetch	unshimmed imports: buffer, stream
@@ -69,6 +70,8 @@ meowclient	unshimmed imports: keys-converter, meowclient
 milkdown	unshimmed imports: @milkdown/crepe, @milkdown/kit/core, @milkdown/kit/utils
 milkis	unshimmed imports: node-fetch
 motion	unshimmed imports: motion/react, motion/react-m
+mycroft	unshimmed imports: node:child_process
+mycroft-z3-wasm	unshimmed imports: z3-solver
 mysql	unshimmed imports: mysql
 n3	unshimmed imports: n3
 nanoid	unshimmed imports: nanoid
@@ -76,6 +79,7 @@ next-purs-rsc	unshimmed imports: next/cache, next/dynamic, next/font/google, nex
 nextjs	unshimmed imports: next/document, next/head, next/image.js, next/link, next/navigation, next/script, swr
 nextui	unshimmed imports: @nextui-org/react, next-themes
 node-buffer	unshimmed imports: node:buffer, util
+node-buffer-blob	unshimmed imports: buffer
 node-child-process	unshimmed imports: node:child_process
 node-event-emitter	unshimmed imports: node:events
 node-execa	unshimmed imports: process
@@ -89,6 +93,7 @@ node-os	unshimmed imports: node:os, node:util
 node-path	unshimmed imports: node:path
 node-process	unshimmed imports: process
 node-readline	unshimmed imports: node:readline
+node-sqlite	unshimmed imports: node:sqlite
 node-sqlite3	unshimmed imports: sqlite3
 node-stream-pipes	unshimmed imports: stream
 node-streams	unshimmed imports: node:stream
@@ -159,7 +164,9 @@ yoga-pino	unshimmed imports: @opentelemetry/api-logs, pino
 yoga-postgres	unshimmed imports: pg
 yoga-react-native	unshimmed imports: react-native, react-native-fs, react-native-macos, twrnc
 yoga-redis	unshimmed imports: ioredis
+yoga-scylladb	unshimmed imports: cassandra-driver
 yoga-shadcn	unshimmed imports: cmdk, embla-carousel-react, input-otp, radix-ui, react-day-picker, react-resizable-panels, sonner, vaul
 yoga-sqlite	unshimmed imports: @libsql/client
+yoga-sqlite-om	depends on excluded: yoga-sqlite
 yoga-test-docker	unshimmed imports: child_process
 z3	unshimmed imports: z3-solver
